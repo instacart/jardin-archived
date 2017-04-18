@@ -4,9 +4,9 @@ Jardin is a `pandas.DataFrame`-based ORM for Python applications.
 
 ## Getting started
 
-In your working directory (the root of your app), create a file named `jardin_databases.py`:
+In your working directory (the root of your app), create a file named `jardin_conf.py`:
 ```python
-# jardin_databases.py
+# jardin_conf.py
 
 DATABASES = {
   'my_first_database': 'https://username:password@database.url:port',
