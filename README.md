@@ -13,7 +13,7 @@ DATABASES = {
   'my_second_database': 'https://username:password@database.url:port'
 }
 ```
-Then, in your app, say you have a table called `users`,
+Then, in your app, say you have a table called `users`:
 ```python
 # app.py
 import jardin
@@ -24,12 +24,12 @@ class Users(jardin.Model):
 In the console:
 ```python
 >>> from app import Users
->>> users = Users.last(2)
-SELECT * FROM users ORDER BY created_at DESC LIMIT 2
+>>> users = Users.last(4)
+# SELECT * FROM users ORDER BY created_at DESC LIMIT 4
 >> users
-id   name    email
-0    John    john@beatl.es
-1    Paul    paul@beatl.es
-2    George  george@beatl.es
-3    Ringo   ringo@beatl.es
+id   name    email              ...
+0    John    john@beatl.es      ...
+1    Paul    paul@beatl.es      ...
+2    George  george@beatl.es    ...
+3    Ringo   ringo@beatl.es     ...
 ```
