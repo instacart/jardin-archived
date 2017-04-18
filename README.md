@@ -1,3 +1,3 @@
 # jardin
 
-Jardin is a `pandas.dataframe`-based ORM for Python applications.
+Jardin is a `pandas.DataFrame`-based ORM for Python applications.
