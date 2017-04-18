@@ -1,5 +1,7 @@
 from memoized_property import memoized_property
 from datetime import date, datetime
+import pandas as pd
+import model
 
 
 class PGQueryBuilder():
@@ -134,7 +136,7 @@ class SelectQueryBuilder(PGQueryBuilder):
       for j in joins:
         if isinstance(j, str):
           js += ["INNER JOIN %s" % j]
-        elif issubclass(j, LogisticsModels):
+        elif issubclass(j, model.Model):
           js += [self.build_join(j, how = 'INNER')]
       return ' '.join(js)
 
