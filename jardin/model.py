@@ -41,7 +41,7 @@ class Model(pd.DataFrame):
     return self.db_adapter().select(**kwargs)[0][0]['count']
 
   @classmethod
-  def insert(self, **kwargs):
+  def save(self, **kwargs):
     return self.instance(self.db_adapter(rw = 'write').insert(**kwargs))
 
   @classmethod
