@@ -21,11 +21,12 @@ class Model(pd.DataFrame):
 
   @classmethod
   def create_relationships(self):
+    this_table_name = self.model_metadata()['table_name']
     for h in self.has_many:
-      table_name = self.model_metadata()['table_name']
+      other_table_name = h.model_metadata()['table_name']
       def func(self):
-        return h.select(where = {h.belongs_to[table_name]: self.id})
-      setattr(self, table_name, func)
+        return h.select(where = {h.belongs_to[this_table_name]: self.id})
+      setattr(self, other_table_name, func)
 
   @classmethod
   def instance(self, result):
