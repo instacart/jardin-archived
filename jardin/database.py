@@ -28,7 +28,7 @@ class DatabaseConnections():
   @classmethod
   def urls(self, name):
     if len(self._urls) == 0:
-      jardin_conf = imp.load_source('jardin_conf', os.getcwd() + '/jardin_conf.py')
+      jardin_conf = imp.load_source('jardin_conf', os.environ.get('JARDIN_CONF', 'jardin_conf.py'))
       for nme, url in jardin_conf.DATABASES.iteritems():
         self._urls[nme] = urlparse.urlparse(url)
     return self._urls[name]
