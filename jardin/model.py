@@ -37,7 +37,7 @@ class Model(pd.DataFrame):
     return self.instance(self.db_adapter(db_name = kwargs.get('db')).select(**kwargs))
 
   @classmethod
-  def count(self, **kwargs):
+  def _count(self, **kwargs):
     kwargs['select'] = 'COUNT(*)'
     return self.db_adapter().select(**kwargs)[0][0]['count']
 
