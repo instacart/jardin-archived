@@ -27,6 +27,10 @@ class PGQueryBuilder():
     return self.model_metadata['belongs_to']
 
   @memoized_property
+  def scopes(self):
+    return self.model_metadata['scopes']
+
+  @memoized_property
   def now(self):
     return datetime.utcnow()
 
@@ -57,34 +61,34 @@ class SelectQueryBuilder(PGQueryBuilder):
       return self.table_name
 
   @memoized_property
+  def scope_wheres(self):
+    scopes = self.kwargs.get('scopes', [])
+    if not isinstance(scopes, list): scopes = [scopes]
+    results = []
+    for scope in scopes:
+      scp = self.scopes[scope]
+      if not isinstance(scp, list): scp = [scp]
+      results += scp
+    return results
+
+  @memoized_property
   def wheres(self):
+    self.where_values = {}
     wheres = self.kwargs.get('where', None)
-    if isinstance(wheres, str):
-      return wheres
-    elif isinstance(wheres, dict):
-      self.where_values = wheres
-      extrapolators = []
-      for field in wheres.keys():
-        if isinstance(wheres[field], list) or isinstance(wheres[field], tuple) or isinstance(wheres[field], pd.Series):
-          operator = 'IN'
-        else: 
-          operator = '='
-        extrapolators += [field + ' ' + operator + ' %(' + field + ')s']
-      return ' AND '.join(extrapolators)
-    elif isinstance(wheres, tuple):
-      self.where_values = wheres[1]
-      return wheres[0]
-    elif isinstance(wheres, list):
-      res = [self.where_items(where) for where in wheres]
-      results = [item for sublist in res for item in sublist]
-      return ' AND '.join(results)
+    if not isinstance(wheres, list): wheres = [wheres]
+    wheres += self.scope_wheres
+    res = [self.where_items(where) for where in wheres]
+    results = [item for sublist in res for item in sublist]
+    return ' AND '.join(results)
 
   def where_items(self, where):
     results = []
     if isinstance(where, str):
       results += [where]
+    elif isinstance(where, tuple):
+      self.where_values.update(wheres[1])
+      results += [wheres[0]]
     elif isinstance(where, dict):
-      if self.where_values is None: self.where_values = {}
       for k, v in where.iteritems():
         if isinstance(v, tuple):
           from_label = k + '_from'

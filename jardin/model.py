@@ -10,6 +10,7 @@ class Model(pd.DataFrame):
   db_names = {}
   has_many = []
   belongs_to = {}
+  scopes = {}
 
   def __init__(self, *args, **kwargs):
     self.create_relationships()
@@ -74,7 +75,8 @@ class Model(pd.DataFrame):
     return {
     'table_name': tn,
     'table_alias': table_alias,
-    'belongs_to': self.belongs_to
+    'belongs_to': self.belongs_to,
+    'scopes': self.scopes
     }
 
   @classmethod
