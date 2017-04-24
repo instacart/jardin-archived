@@ -1,7 +1,7 @@
 from memoized_property import memoized_property
 from datetime import date, datetime
 import pandas as pd
-import model
+import model, config
 
 
 class PGQueryBuilder():
@@ -41,7 +41,7 @@ class PGQueryBuilder():
 
   @staticmethod
   def watermark():
-    return " /*[logistics:batching]*/ "
+    return "/*%s*/ " % config.WATERMARK
 
 class SelectQueryBuilder(PGQueryBuilder):
 
@@ -96,6 +96,8 @@ class SelectQueryBuilder(PGQueryBuilder):
           results += [k + ' BETWEEN %(' + from_label + ')s AND %(' + to_label + ')s']
           self.where_values[from_label] = v[0]
           self.where_values[to_label] = v[1]
+        elif pd.isnull(v):
+          results += [k + ' IS NULL']
         else:
           self.where_values[k] = v
           if isinstance(v, list) or isinstance(v, pd.Series):

@@ -3,6 +3,7 @@ from psycopg2 import extras
 from memoized_property import memoized_property
 import urlparse, os, imp, logging
 from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder
+import config
 
 class DatabaseConnections():
   
@@ -19,17 +20,14 @@ class DatabaseConnections():
   def build_connection(self, name):
     db = self.urls(name)
     connection = pg.connect(connection_factory = extras.MinTimeLoggingConnection, database = db.path[1:], user = db.username, password = db.password, host = db.hostname, port = db.port, connect_timeout = 5)
-    logging.basicConfig(level = logging.INFO)
-    logger = logging.getLogger('jardin')
-    connection.initialize(logger)
+    connection.initialize(config.logger)
     connection.autocommit = True
     return connection
 
   @classmethod
   def urls(self, name):
     if len(self._urls) == 0:
-      jardin_conf = imp.load_source('jardin_conf', os.environ.get('JARDIN_CONF', 'jardin_conf.py'))
-      for nme, url in jardin_conf.DATABASES.iteritems():
+      for nme, url in config.DATABASES.iteritems():
         self._urls[nme] = urlparse.urlparse(url)
     return self._urls[name]
 
@@ -46,6 +44,7 @@ class DatabaseAdapter():
   def select(self, **kwargs):
     kwargs['model_metadata'] = self.model_metadata
     query = SelectQueryBuilder(**kwargs).query
+    config.logger.debug(query)
     self.cursor.execute(*query)
     return self.cursor.fetchall(), self.columns()
 
