@@ -1,5 +1,5 @@
 from memoized_property import memoized_property
-from datetime import date, datetime
+from datetime import datetime
 import pandas as pd
 import model, config
 
@@ -86,8 +86,8 @@ class SelectQueryBuilder(PGQueryBuilder):
     if isinstance(where, str):
       results += [where]
     elif isinstance(where, tuple):
-      self.where_values.update(wheres[1])
-      results += [wheres[0]]
+      self.where_values.update(where[1])
+      results += [where[0]]
     elif isinstance(where, dict):
       for k, v in where.iteritems():
         if isinstance(v, tuple):
@@ -96,7 +96,7 @@ class SelectQueryBuilder(PGQueryBuilder):
           results += [k + ' BETWEEN %(' + from_label + ')s AND %(' + to_label + ')s']
           self.where_values[from_label] = v[0]
           self.where_values[to_label] = v[1]
-        elif pd.isnull(v):
+        elif not isinstance(v, list) and pd.isnull(v):
           results += [k + ' IS NULL']
         else:
           self.where_values[k] = v
