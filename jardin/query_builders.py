@@ -96,7 +96,10 @@ class SelectQueryBuilder(PGQueryBuilder):
           results += [k + ' BETWEEN %(' + from_label + ')s AND %(' + to_label + ')s']
           self.where_values[from_label] = v[0]
           self.where_values[to_label] = v[1]
-        elif not isinstance(v, list) and pd.isnull(v):
+        elif isinstance(v, dict):
+          for kk, vv in v.iteritems():
+            results += [k + "->>'" + kk + "'"]
+        elif not isinstance(v, list) and not isinstance(v, pd.Series) and pd.isnull(v):
           results += [k + ' IS NULL']
         else:
           self.where_values[k] = v
