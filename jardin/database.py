@@ -1,7 +1,7 @@
 import psycopg2 as pg
 from psycopg2 import extras
 from memoized_property import memoized_property
-import urlparse, os, imp, logging
+import urlparse
 from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder
 import config
 
@@ -27,6 +27,7 @@ class DatabaseConnections():
   @classmethod
   def urls(self, name):
     if len(self._urls) == 0:
+      config.init()
       for nme, url in config.DATABASES.iteritems():
         self._urls[nme] = urlparse.urlparse(url)
     return self._urls[name]

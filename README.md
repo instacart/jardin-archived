@@ -12,6 +12,10 @@ DATABASES = {
   'my_first_database': 'https://username:password@database.url:port',
   'my_second_database': 'https://username:password@database.url:port'
 }
+
+LOG_LEVEL = logging.DEBUG
+
+WATERMARK = 'My Great App'
 ```
 Then, in your app, say you have a table called `users`:
 ```python
