@@ -98,7 +98,15 @@ class SelectQueryBuilder(PGQueryBuilder):
           self.where_values[to_label] = v[1]
         elif isinstance(v, dict):
           for kk, vv in v.iteritems():
-            results += [k + "->>'" + kk + "'"]
+            res = "(" + k + "->>'" + kk + "')"
+            if isinstance(vv, int):
+              res += '::INTEGER'
+            elif isinstance(vv, float):
+              res += '::FLOAT'
+            label = k + '_' + kk
+            res += " = %(" + label + ")s"
+            results += [res]
+            self.where_values[label] = vv
         elif not isinstance(v, list) and not isinstance(v, pd.Series) and pd.isnull(v):
           results += [k + ' IS NULL']
         else:
