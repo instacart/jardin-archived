@@ -1,6 +1,7 @@
 from memoized_property import memoized_property
 from datetime import datetime
 import pandas as pd
+import numpy as np
 import model, config
 
 
@@ -107,7 +108,7 @@ class SelectQueryBuilder(PGQueryBuilder):
             res += " = %(" + label + ")s"
             results += [res]
             self.where_values[label] = vv
-        elif not isinstance(v, list) and not isinstance(v, pd.Series) and pd.isnull(v):
+        elif not isinstance(v, list) and not isinstance(v, pd.Series) and not isinstance(v, np.ndarray) and pd.isnull(v):
           results += [k + ' IS NULL']
         else:
           self.where_values[k] = v
@@ -136,11 +137,7 @@ class SelectQueryBuilder(PGQueryBuilder):
   @memoized_property
   def left_joins(self):
     joins = self.kwargs.get('left_join', None)
-    if joins is None: return
-    if isinstance(joins, str): 
-      return "LEFT JOIN %s" % joins
-    elif isinstance(joins, list):
-      return ' '.join(["LEFT JOIN %s" % j for j in joins])
+    return self.joins(joins, 'LEFT')
 
   @memoized_property
   def inner_joins(self):
@@ -155,6 +152,19 @@ class SelectQueryBuilder(PGQueryBuilder):
           js += ["INNER JOIN %s" % j]
         elif issubclass(j, model.Model):
           js += [self.build_join(j, how = 'INNER')]
+      return ' '.join(js)
+
+  def joins(self, joins, how):
+    if joins is None: return
+    if isinstance(joins, str):
+      return "%s JOIN %s" % (how, joins)
+    elif isinstance(joins, list):
+      js = []
+      for j in joins:
+        if isinstance(j, str):
+          js += ["%s JOIN %s" % (how, j)]
+        elif issubclass(j, model.Model):
+          js += [self.build_join(j, how = how)]
       return ' '.join(js)
 
   def build_join(self, join_model, how = 'INNER'):
