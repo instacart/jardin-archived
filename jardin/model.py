@@ -1,5 +1,5 @@
 from database import DatabaseAdapter, DatabaseConnections
-from memoized_property import memoized_property
+from record import Record
 import pandas as pd
 import numpy as np
 import re
@@ -58,7 +58,7 @@ class Model(pd.DataFrame):
 
   @classmethod
   def find(self, id):
-    return self.db_adapter().select(where = {'id': id}, limit = 1)[0][0]
+    return Record(**self.db_adapter().select(where = {'id': id}, limit = 1)[0][0])
 
   @classmethod
   def db_adapter(self, rw = 'read', db_name = None):
