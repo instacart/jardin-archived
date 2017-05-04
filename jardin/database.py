@@ -29,7 +29,8 @@ class DatabaseConnections():
     if len(self._urls) == 0:
       config.init()
       for nme, url in config.DATABASES.iteritems():
-        self._urls[nme] = urlparse.urlparse(url)
+        if url:
+          self._urls[nme] = urlparse.urlparse(url)
     return self._urls[name]
 
 class DatabaseAdapter():
