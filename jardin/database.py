@@ -4,6 +4,7 @@ from memoized_property import memoized_property
 import urlparse
 from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder
 import config
+import pandas.io.sql as psql
 
 class DatabaseConnections():
   
@@ -47,8 +48,11 @@ class DatabaseAdapter():
     kwargs['model_metadata'] = self.model_metadata
     query = SelectQueryBuilder(**kwargs).query
     config.logger.debug(query)
-    self.cursor.execute(*query)
-    return self.cursor.fetchall(), self.columns()
+    if kwargs.get('raw', False):
+      return psql.read_sql(sql = query[0], params = query[1], con = self.db)
+    else:
+      self.cursor.execute(*query)
+      return self.cursor.fetchall(), self.columns()
 
   def insert(self, **values):
     query = InsertQueryBuilder(values = values, model_metadata = self.model_metadata).query

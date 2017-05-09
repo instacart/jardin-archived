@@ -2,7 +2,7 @@ from database import DatabaseAdapter, DatabaseConnections
 from record import Record
 import pandas as pd
 import numpy as np
-import re, inspect, tools
+import re, inspect
 
 class Model(pd.DataFrame):
   table_name = None
@@ -33,13 +33,7 @@ class Model(pd.DataFrame):
 
   @classmethod
   def instance(self, result):
-    columns = result[1]
-    df = None
-    for res in tools.grouper(result[0], 500000):
-      if res[-1] is None: res = tools.remove_none(res)
-      this_df = self.from_records(res, columns = columns, coerce_float = True)
-      df = this_df if df is None else pd.concat([df, this_df])
-    return df
+    return self.from_records(result[0], columns = result[1], coerce_float = True)
 
   @classmethod
   def stack_mark(self, stack):
