@@ -2,7 +2,7 @@ from database import DatabaseAdapter, DatabaseConnections
 from record import Record
 import pandas as pd
 import numpy as np
-import re
+import re, inspect, tools
 
 class Model(pd.DataFrame):
   table_name = None
@@ -33,11 +33,29 @@ class Model(pd.DataFrame):
 
   @classmethod
   def instance(self, result):
-    return self.from_records(result[0], columns = result[1], coerce_float = True)
+    columns = result[1]
+    df = None
+    for res in tools.grouper(result[0], 500000):
+      if res[-1] is None: res = tools.remove_none(res)
+      this_df = self.from_records(res, columns = columns, coerce_float = True)
+      df = this_df if df is None else pd.concat([df, this_df])
+    return df
+
+  @classmethod
+  def stack_mark(self, stack):
+    filename = stack[1][1]
+    function_name = stack[1][3]
+    line_number = stack[1][2]
+    return ':'.join([filename, function_name, str(line_number)])
 
   @classmethod
   def select(self, **kwargs):
-    return self.instance(self.db_adapter(db_name = kwargs.get('db')).select(**kwargs))
+    kwargs['stack'] = self.stack_mark(inspect.stack())
+    results = self.db_adapter(db_name = kwargs.get('db')).select(**kwargs)
+    if kwargs.get('raw', False):
+      return results
+    else:
+      return self.instance(results)
 
   @classmethod
   def count(self, **kwargs):

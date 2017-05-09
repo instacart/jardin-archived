@@ -40,9 +40,13 @@ class PGQueryBuilder():
     for field in fields: extrapolators.append('%(' + '%s' % field + ')s')
     return sep.join(extrapolators)
 
-  @staticmethod
-  def watermark():
-    return "/*%s*/ " % config.WATERMARK
+  @memoized_property
+  def stack(self):
+    return self.kwargs.get('stack', '')
+
+  @memoized_property
+  def watermark(self):
+    return "/*%s | %s */ " % (config.WATERMARK, self.stack)
 
 class SelectQueryBuilder(PGQueryBuilder):
 
@@ -181,7 +185,7 @@ class SelectQueryBuilder(PGQueryBuilder):
 
   @memoized_property
   def query(self):
-    query = self.__class__.watermark() + "SELECT " + self.selects + ' FROM ' + self.froms
+    query = self.watermark + "SELECT " + self.selects + ' FROM ' + self.froms
     if self.left_joins: query += ' ' + self.left_joins
     if self.inner_joins: query += ' ' + self.inner_joins
     if self.wheres: query += ' WHERE ' + self.wheres
@@ -219,7 +223,7 @@ class InsertQueryBuilder(PGQueryBuilder):
 
   @memoized_property
   def query(self):
-    query = self.__class__.watermark() + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES (" + self.extrapolators(self.field_array, sep = ', ') + ") RETURNING id;"
+    query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES (" + self.extrapolators(self.field_array, sep = ', ') + ") RETURNING id;"
     return (query, self.values)
 
 class UpdateQueryBuilder(PGQueryBuilder):
@@ -235,5 +239,5 @@ class UpdateQueryBuilder(PGQueryBuilder):
 
   @memoized_property
   def query(self):
-    query = self.__class__.watermark() + "UPDATE " + self.table_name + " SET " + self.fields
+    query = self.watermark + "UPDATE " + self.table_name + " SET " + self.fields
     if self.wheres: query += " WHERE " + self.wheres
