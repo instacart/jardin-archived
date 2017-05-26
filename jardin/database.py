@@ -56,6 +56,7 @@ class DatabaseAdapter():
 
   def insert(self, **values):
     query = InsertQueryBuilder(values = values, model_metadata = self.model_metadata).query
+    config.logger.debug(query)
     self.cursor.execute(*query)
     row_id = self.cursor.fetchone()['id']
     return self.select(where = {'id': row_id})
@@ -63,7 +64,10 @@ class DatabaseAdapter():
   def update(self, **kwargs):
     kwargs['model_metadata'] = self.model_metadata
     query = UpdateQueryBuilder(**kwargs).query
+    config.logger.debug(query)
     self.cursor.execute(*query)
+    row_id = self.cursor.fetchone()['id']
+    return self.select(where = {'id': row_id})
 
   def columns(self):
     return [col_desc[0] for col_desc in self.cursor.description]

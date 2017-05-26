@@ -2,14 +2,13 @@ from memoized_property import memoized_property
 from datetime import datetime
 import pandas as pd
 import numpy as np
-import model, config
+import model, config, re, collections
 
 
 class PGQueryBuilder():
 
   def __init__(self, **kwargs):
     self.kwargs = kwargs
-    self.where_values = None
 
   @memoized_property
   def model_metadata(self):
@@ -50,6 +49,9 @@ class PGQueryBuilder():
 
 class SelectQueryBuilder(PGQueryBuilder):
 
+  where_values_prefix = ''
+  where_values = {}
+
   @memoized_property
   def selects(self):
     selects = self.kwargs.get('select', '*')
@@ -86,21 +88,29 @@ class SelectQueryBuilder(PGQueryBuilder):
     results = [item for sublist in res for item in sublist]
     return ' AND '.join(results)
 
+  def add_to_where_values(self, values):
+    for k, v in values.iteritems():
+      if isinstance(v, pd.Series) or isinstance(v, list):
+        v = tuple(v)
+      self.where_values[self.where_label(k)] = v
+
+  def where_label(self, label):
+    return self.where_values_prefix + label
+
   def where_items(self, where):
     results = []
     if isinstance(where, str):
       results += [where]
     elif isinstance(where, tuple):
-      self.where_values.update(where[1])
+      self.add_to_where_values(where[1])
       results += [where[0]]
     elif isinstance(where, dict):
       for k, v in where.iteritems():
         if isinstance(v, tuple):
-          from_label = k + '_from'
-          to_label = k + '_to'
+          from_label = self.where_label(k + '_from')
+          to_label = self.where_label(k + '_to')
           results += [k + ' BETWEEN %(' + from_label + ')s AND %(' + to_label + ')s']
-          self.where_values[from_label] = v[0]
-          self.where_values[to_label] = v[1]
+          self.add_to_where_values({from_label: v[0], to_label: v[1]})
         elif isinstance(v, dict):
           for kk, vv in v.iteritems():
             res = "(" + k + "->>'" + kk + "')"
@@ -109,21 +119,24 @@ class SelectQueryBuilder(PGQueryBuilder):
             elif isinstance(vv, float):
               res += '::FLOAT'
             label = k + '_' + kk
-            res += " = %(" + label + ")s"
+            res += " = %(" + self.where_label(label) + ")s"
             results += [res]
-            self.where_values[label] = vv
+            self.add_to_where_values({label: vv})
         elif not isinstance(v, list) and not isinstance(v, pd.Series) and not isinstance(v, np.ndarray) and pd.isnull(v):
           results += [k + ' IS NULL']
         else:
-          self.where_values[k] = v
+          self.add_to_where_values({k: v})
           if isinstance(v, list) or isinstance(v, pd.Series):
             operator = 'IN'
           else: 
             operator = '='
-          results += [k + ' ' + operator + ' %(' + k + ')s']
+          results += [k + ' ' + operator + ' %(' + self.where_label(k) + ')s']
     elif isinstance(where, list):
-      for k, v in where[1].iteritems(): self.where_values[k] = v
-      results += [where[0]]
+      self.add_to_where_values(where[1])
+      result = where[0]
+      for l in re.findall('%\((\S+)\)s', result):
+        result = re.sub('%\(' + l + '\)s', '%(' + self.where_label(l) + ')s', result)
+      results += [result]
     return results
 
   @memoized_property
@@ -193,51 +206,48 @@ class SelectQueryBuilder(PGQueryBuilder):
     if self.order_bys: query += ' ORDER BY ' + self.order_bys
     if self.limit: query += ' LIMIT ' + str(self.limit)
     query += ';'
-    if self.where_values:
-      self.prepare_where_values()
-      return (query, self.where_values)
-    else:
-      return (query, )
+    return (query, self.where_values)
 
-  def prepare_where_values(self):
-    for k, v in self.where_values.iteritems():
-      if isinstance(v, pd.Series) or isinstance(v, list):
-        self.where_values[k] = tuple(v)
-
-class InsertQueryBuilder(PGQueryBuilder):
+class WriteQueryBuilder(PGQueryBuilder):
 
   @memoized_property
   def values(self):
-    values = self.kwargs['values']
-    values['created_at'] = self.now
+    values = collections.OrderedDict()
+    for k, v in self.kwargs['values'].iteritems():
+      values[k] = v
     values['updated_at'] = self.now
-    return values
+    return values  
 
   @memoized_property
-  def field_array(self):
-    return self.values.keys()
+  def field_array(self): return self.values.keys()
 
   @memoized_property
   def fields(self):
     return ', '.join(self.field_array)
+
+class InsertQueryBuilder(WriteQueryBuilder):
+
+  @memoized_property
+  def values(self):
+    values = super(InsertQueryBuilder, self).values
+    values['created_at'] = self.now
+    return values
 
   @memoized_property
   def query(self):
     query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES (" + self.extrapolators(self.field_array, sep = ', ') + ") RETURNING id;"
     return (query, self.values)
 
-class UpdateQueryBuilder(PGQueryBuilder):
 
-  @memoized_property
-  def values(self):
-    values = self.kwargs['values']
-    values['updated_at'] = self.now
-    return values
+class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
-  @memoized_property
-  def fields(self): pass
+  where_values_prefix = 'w_'
 
   @memoized_property
   def query(self):
-    query = self.watermark + "UPDATE " + self.table_name + " SET " + self.fields
+    query = self.watermark + 'UPDATE ' + self.table_name + ' SET (' + self.fields + ') = (' + self.extrapolators(self.field_array, sep = ', ') + ')'
     if self.wheres: query += " WHERE " + self.wheres
+    query += ' RETURNING id;'
+    values = self.where_values
+    values.update(self.values)
+    return (query, values)

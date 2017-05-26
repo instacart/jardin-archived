@@ -16,6 +16,7 @@ class Model(pd.DataFrame):
     self.create_relationships()
     self.count = self._instance_count
     self.insert = self._instance_insert
+    self.update = self._instance_update
     super(Model, self).__init__(*args, **kwargs)
 
   @property
@@ -63,6 +64,12 @@ class Model(pd.DataFrame):
     return self.instance(self.db_adapter(rw = 'write').insert(**kwargs))
 
   def _instance_insert(self, *args, **kwargs): return super(Model, self).insert(*args, **kwargs)
+
+  @classmethod
+  def update(self, **kwargs):
+    return self.instance(self.db_adapter(rw = 'write').update(**kwargs))
+
+  def _instance_update(self, *args, **kwargs): return super(Model, self).update(*args, **kwargs)
 
   @classmethod
   def last(self, limit = 1):
