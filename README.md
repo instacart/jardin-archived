@@ -41,7 +41,7 @@ id   name    email              ...
 ## SELECT queries
 
 Here is the basic syntax to select records from the database
-```
+```python
 >>> users = Users.select(select = ['id', 'name'], where = {'email': 'paul@beatl.es'}, order = 'id ASC', limit = 1)
 # /* My Great App */ SELECT u.id, u.name FROM users WHERE email = 'paul@beatl.es' ORDER BY id ASC LIMIT 1;
 >>> users
