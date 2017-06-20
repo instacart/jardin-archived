@@ -5,7 +5,7 @@ import numpy as np
 import model, config, re, collections
 
 
-class PGQueryBuilder():
+class PGQueryBuilder(object):
 
   def __init__(self, **kwargs):
     self.kwargs = kwargs
