@@ -50,6 +50,8 @@ Here is the basic syntax to select records from the database
 id   name
 1    Paul
 ```
+#### Arguments
+* __select__ – The list of columns to return. If not provided, all columns will be returned.
 
 ### INSERT queries
 ```python
