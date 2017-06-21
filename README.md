@@ -41,6 +41,7 @@ id   name    email              ...
 ## Queries
 
 ### SELECT queries
+
 Here is the basic syntax to select records from the database
 ```python
 >>> users = Users.select(select = ['id', 'name'], where = {'email': 'paul@beatl.es'},
@@ -50,7 +51,9 @@ Here is the basic syntax to select records from the database
 id   name
 1    Paul
 ```
+
 #### Arguments
+
 * `select` – The list of columns to return. If not provided, all columns will be returned.
 * `where` – conditions. Many different formats can be used to provide conditions. See [docs](#where-argument).
 * `inner_join`, `left_join` – List of tables to join with their join condition. Can also be a list of classes if the appropriate associations have been declared. See docs.
@@ -58,13 +61,27 @@ id   name
 * `limit` – limit clause
 * `group` – grouping clause
 * `scopes` – list of pre-defined scopes. See docs.
+
 ##### `where` argument
+
 Here are the different ways to feed a condition clause to a query.
 * `where = "name = 'John'"`
 * `where = {'name': 'John'}`
 * `where = {'id': (0, 3)}` – selects where `id` is between 0 and 3
 * `where = {'id': [0, 1, 2]}` – selects where `id` is in the array
-* `where = [{'id': (0, 10)}, ["created_at > %(created_at)s", {'created_at': '1963-03-22'}]]`
+* `where = [{'id': (0, 10), 'instrument': 'drums'}, ["created_at > %(created_at)s", {'created_at': '1963-03-22'}]]`
+
+##### `inner_join`, `left_join` arguments
+
+The simplest way to join another table is as follows
+```
+>>> Users.select(inner_join = ["instruments i ON i.id = u.instrument_id"])
+```
+If you have configured your models associations, see here, you can simply pass the class as argument:
+```
+>>> Users.select(inner_join = [Instruments])
+```
+
 ### INSERT queries
 ```python
 >>> user = Users.insert(name = 'Pete', email = 'pete@beatl.es')
