@@ -85,7 +85,7 @@ The simplest way to join another table is as follows
 ```python
 >>> Users.select(inner_join = ["instruments i ON i.id = u.instrument_id"])
 ```
-If you have configured your models associations, see here, you can simply pass the class as argument:
+If you have configured your models associations, see [here](#associations), you can simply pass the class as argument:
 ```python
 >>> Users.select(inner_join = [Instruments])
 ```
@@ -94,7 +94,7 @@ If you have configured your models associations, see here, you can simply pass t
 You can also look-up a single record by id:
 ```python
 >>> Users.find(1)
-/* My Great App */ SELECT * FROM users u WHERE u.id = 1;
+# /* My Great App */ SELECT * FROM users u WHERE u.id = 1;
 {'id': 1, 'name': 'Paul', 'email': 'paul@beatl.es', ...}
 ```
 Note that the returned object is a `Record` object which allows you to access attributes in those way:
@@ -142,7 +142,9 @@ class Users(MyModel):
 and then you can query the associated records:
 ```python
 >>> users = Users.select()
+# /* My Great App */ SELECT * FROM users u;
 >>> instruments = users.instruments()
+# /* My Great App */ SELECT * FROM instruments i WHERE i.id IN (0, 1, ...);
 ```
 Or you can declare joins more easily
 ```python
@@ -150,6 +152,21 @@ Or you can declare joins more easily
 ```
 
 ## Scopes
+Queries conditions can be generalized across your app:
+```python
+# app.py
+
+class Users(jardin.Model):
+  scopes = {
+    'alive': {'name': ['Paul', 'Ringo']},
+    'guitarists': {'name': ['John', 'George']}
+  }
+```
+And use them as such:
+```python
+>>> users = Users.select(scopes = ['alive'], ...)
+# /* My Great App */ SELECT * FROM users u WHERE u.name IN ('Paul', 'Ringo') AND ...;
+
 ## Misc
 
 ### Watermark and trace
