@@ -56,6 +56,10 @@ id   name
 * `inner_join`, `left_join` – List of tables to join with their join condition. Can also be a list of classes if the appropriate associations have been declared. See docs.
 * `order` – order clause
 * `limit` – limit clause
+* `group` – grouping clause
+* `scopes` – list of pre-defined scopes. See docs.
+##### `where` argument
+Here are the different ways to feed a condition clause to a query.
 
 ### INSERT queries
 ```python
