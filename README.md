@@ -168,7 +168,7 @@ Use them as such:
 ```python
 >>> users = Users.select(scopes = ['alive'], ...)
 # /* My Great App */ SELECT * FROM users u WHERE u.name IN ('Paul', 'Ringo') AND ...;
-
+```
 ## Misc
 
 ### Watermark and trace
