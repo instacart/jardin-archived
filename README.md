@@ -60,7 +60,11 @@ id   name
 * `scopes` – list of pre-defined scopes. See docs.
 ##### `where` argument
 Here are the different ways to feed a condition clause to a query.
-
+* `where = "name = 'John'"`
+* `where = {'name': 'John'}`
+* `where = {'id': (0, 3)}` – selects where `id` is between 0 and 3
+* `where = {'id': [0, 1, 2]}` – selects where `id` is in the array
+* `where = [{'id': (0, 10)}, ["created_at > %(created_at)s", {'created_at': '1963-03-22'}]]`
 ### INSERT queries
 ```python
 >>> user = Users.insert(name = 'Pete', email = 'pete@beatl.es')
