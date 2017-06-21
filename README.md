@@ -56,7 +56,7 @@ id   name
 
 * `select` – The list of columns to return. If not provided, all columns will be returned.
 * `where` – conditions. Many different formats can be used to provide conditions. See [docs](#where-argument).
-* `inner_join`, `left_join` – List of tables to join with their join condition. Can also be a list of classes if the appropriate associations have been declared. See docs.
+* `inner_join`, `left_join` – List of tables to join with their join condition. Can also be a list of classes if the appropriate associations have been declared. See [docs](#inner_join-left_join-arguments).
 * `order` – order clause
 * `limit` – limit clause
 * `group` – grouping clause
@@ -82,6 +82,21 @@ If you have configured your models associations, see here, you can simply pass t
 >>> Users.select(inner_join = [Instruments])
 ```
 
+#### Individual record selection
+You can also look-up a single record by id:
+```python
+>>> Users.find(1)
+/* My Great App */ SELECT * FROM users u WHERE u.id = 1;
+{'id': 1, 'name': 'Paul', 'email': 'paul@beatl.es', ...}
+```
+Note that the returned object is a `Record` object which allows you to access attributes in those way:
+```python
+>>> user['name']
+Paul
+>>> user.name
+Paul
+```
+
 ### INSERT queries
 ```python
 >>> user = Users.insert(name = 'Pete', email = 'pete@beatl.es')
@@ -91,3 +106,16 @@ If you have configured your models associations, see here, you can simply pass t
 id   name    email
 4    Pete    pete@beatl.es
 ```
+
+### UPDATE queries
+```python
+>>> users = Users.update(values = {'hair': 'long'}, where = {'name': 'John'})
+# /* My Great App */ UPDATE users u SET (u.hair) = ('long') WHERE u.name = 'John' RETURNING id;
+# /* My Great App */ SELECT * FROM users u WHERE u.name = 'John';
+```
+
+## Misc
+
+### Watermark and trace
+
+### Multiple databases
