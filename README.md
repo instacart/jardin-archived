@@ -162,7 +162,9 @@ class Users(jardin.Model):
     'guitarists': {'name': ['John', 'George']}
   }
 ```
-And use them as such:
+The key is the name of the scope, and the value is the conditions to be applied. Anything that can be fed to the `where` argument of `Model#select` can be used to define a scope.
+
+Use them as such:
 ```python
 >>> users = Users.select(scopes = ['alive'], ...)
 # /* My Great App */ SELECT * FROM users u WHERE u.name IN ('Paul', 'Ringo') AND ...;
