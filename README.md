@@ -74,11 +74,11 @@ Here are the different ways to feed a condition clause to a query.
 ##### `inner_join`, `left_join` arguments
 
 The simplest way to join another table is as follows
-```
+```python
 >>> Users.select(inner_join = ["instruments i ON i.id = u.instrument_id"])
 ```
 If you have configured your models associations, see here, you can simply pass the class as argument:
-```
+```python
 >>> Users.select(inner_join = [Instruments])
 ```
 
