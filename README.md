@@ -51,7 +51,11 @@ id   name
 1    Paul
 ```
 #### Arguments
-* __select__ – The list of columns to return. If not provided, all columns will be returned.
+* `select` – The list of columns to return. If not provided, all columns will be returned.
+* `where` – conditions. Many different formats can be used to provide conditions. See docs.
+* `inner_join`, `left_join` – List of tables to join with their join condition. Can also be a list of classes if the appropriate associations have been declared. See docs.
+* `order` – order clause
+* `limit` – limit clause
 
 ### INSERT queries
 ```python
