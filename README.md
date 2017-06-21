@@ -37,6 +37,14 @@ id   name    email              ...
 2    George  george@beatl.es    ...
 3    Ringo   ringo@beatl.es     ...
 ```
+The resulting object is a pandas dataframe:
+```python
+>>> import pandas
+>>> isinstance(users, pandas.DataFrame)
+True
+>>> isinstance(users, jardin.Model)
+True
+```
 
 ## Queries
 
@@ -114,6 +122,34 @@ id   name    email
 # /* My Great App */ SELECT * FROM users u WHERE u.name = 'John';
 ```
 
+## Associations
+It is possible to define associations between models. For example, if each user has multiple instruments:
+
+```python
+# app.py
+
+import jardin
+
+class MyModel(jardin.Model):
+  db_names = {'read': 'my_first_database', 'write': 'my_second_database'}
+
+class Instruments(MyModel):
+  belongs_to = {'users': 'user_id'}
+
+class Users(MyModel):
+  has_many = [Instruments]
+```
+and then you can query the associated records:
+```python
+>>> users = Users.select()
+>>> instruments = users.instruments()
+```
+Or you can declare joins more easily
+```python
+>>> users = Users.select(inner_join = [Instruments])
+```
+
+## Scopes
 ## Misc
 
 ### Watermark and trace
