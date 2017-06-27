@@ -251,3 +251,10 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     values = self.where_values
     values.update(self.values)
     return (query, values)
+
+class DeleteQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
+
+  @memoized_property
+  def query(self):
+    query = self.watermark + 'DELETE FROM ' +self.table_name + ' WHERE ' + self.wheres + ';'
+    return (query, self.where_values)

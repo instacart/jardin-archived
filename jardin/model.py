@@ -72,6 +72,10 @@ class Model(pd.DataFrame):
   def _instance_update(self, *args, **kwargs): return super(Model, self).update(*args, **kwargs)
 
   @classmethod
+  def delete(self, **kwargs):
+    return self.db_adapter(rw = 'write').delete(**kwargs)
+
+  @classmethod
   def last(self, limit = 1):
     return self.instance(self.db_adapter().select(where = 'created_at IS NOT NULL', order = 'created_at DESC', limit = limit))
 

@@ -2,11 +2,11 @@ import psycopg2 as pg
 from psycopg2 import extras
 from memoized_property import memoized_property
 import urlparse
-from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder
+from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder, DeleteQueryBuilder
 import config
 import pandas.io.sql as psql
 
-class DatabaseConnections():
+class DatabaseConnections(object):
   
   _connections = {}
   _urls = {}
@@ -34,7 +34,7 @@ class DatabaseConnections():
           self._urls[nme] = urlparse.urlparse(url)
     return self._urls[name]
 
-class DatabaseAdapter():
+class DatabaseAdapter(object):
 
   def __init__(self, db, model_metadata):
     self.db = db
@@ -68,6 +68,14 @@ class DatabaseAdapter():
     self.cursor.execute(*query)
     row_id = self.cursor.fetchone()['id']
     return self.select(where = {'id': row_id})
+
+  def delete(self, **kwargs):
+    kwargs['model_metadata'] = self.model_metadata
+    query = DeleteQueryBuilder(**kwargs).query
+    config.logger.debug(query)
+    self.cursor.execute(*query)
+    return
+
 
   def columns(self):
     return [col_desc[0] for col_desc in self.cursor.description]
