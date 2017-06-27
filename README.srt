@@ -121,7 +121,11 @@ id   name    email
 # /* My Great App */ UPDATE users u SET (u.hair) = ('long') WHERE u.name = 'John' RETURNING id;
 # /* My Great App */ SELECT * FROM users u WHERE u.name = 'John';
 ```
-
+### DELETE queries
+```python
+>>> Users.delete(where = {'id': 1})
+# /* My Great App */ DELETE FROM users u WHERE u.id = 1;
+```
 ## Associations
 It is possible to define associations between models. For example, if each user has multiple instruments:
 
