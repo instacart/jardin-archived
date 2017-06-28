@@ -117,6 +117,12 @@ class User(jardin.Record):
 class Users(jardin.Model):
   record_class = User
 ```
+And then
+```python
+>>> user = User.find(1)
+>>> user.is_drummer()
+False
+```
 ### INSERT queries
 ```python
 >>> user = Users.insert(name = 'Pete', email = 'pete@beatl.es')
