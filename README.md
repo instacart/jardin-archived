@@ -104,7 +104,19 @@ Paul
 >>> user.name
 Paul
 ```
+It possible to define your own record classes.
+```python
+# app.py
+import jardin
 
+class User(jardin.Record):
+
+  def is_drummer(self):
+    return self.name == 'Ringo'
+
+class Users(jardin.Model):
+  record_class = User
+```
 ### INSERT queries
 ```python
 >>> user = Users.insert(name = 'Pete', email = 'pete@beatl.es')
