@@ -119,7 +119,7 @@ class Users(jardin.Model):
 ```
 And then
 ```python
->>> user = User.find(1)
+>>> user = Users.find(1)
 >>> user.is_drummer()
 False
 ```
