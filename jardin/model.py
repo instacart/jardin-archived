@@ -11,6 +11,7 @@ class Model(pd.DataFrame):
   has_many = []
   belongs_to = {}
   scopes = {}
+  record_class = Record
 
   def __init__(self, *args, **kwargs):
     self.create_relationships()
@@ -81,7 +82,7 @@ class Model(pd.DataFrame):
 
   @classmethod
   def find(self, id):
-    return Record(**self.db_adapter().select(where = {'id': id}, limit = 1)[0][0])
+    return self.record_class(**self.db_adapter().select(where = {'id': id}, limit = 1)[0][0])
 
   @classmethod
   def db_adapter(self, rw = 'read', db_name = None):
