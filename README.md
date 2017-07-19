@@ -206,7 +206,7 @@ And then
 User.select()
 ```
 Will output
-```python
+```SQL
 /* My Great App:/path/to/app.py:2 */ SELECT * FROM users u;
 ```
 
