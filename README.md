@@ -195,4 +195,19 @@ Use them as such:
 
 ### Watermark and trace
 
+A watermark string can be set in the `jardin_conf.py` file. It will be printed alongside the location of the code triggering the query in each log.
+```python
+# jardin_conf.py
+WATERMARK = 'My Great App'
+```
+And then
+```python
+# app.py
+User.select()
+```
+Will output
+```python
+/* My Great App:/path/to/app.py:2 */ SELECT * FROM users u;
+```
+
 ### Multiple databases
