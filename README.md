@@ -211,3 +211,29 @@ Will output
 ```
 
 ### Multiple databases
+
+If you are reading tables from multiple databases, each with a read-only replica, you can define them as such in your `jardin_conf.py` file:
+```python
+# jardin_conf.py
+DATABASES = {
+  'mydb1': 'https://username:password@db1.url:port',
+  'mydb1-replica': 'https://username:password@db1-replica.url:port',
+  'mydb2': 'https://username:password@db2.url:port',
+  'mydb2-replica': 'https://username:password@db2-replica.url:port',
+}
+```
+And then define your models
+```python
+# app.py
+import jardin
+
+class Db1Model(jardin.Model):
+  db_names = {'write': 'mydb1', 'read': 'mydb1-replica'}
+
+class Db2Model(jardin.Model):
+  db_names = {'write': 'mydb2', 'read': 'mydb2-replica'}
+
+class Users(Db1Model): pass
+
+class Instruments(Db2Model): pass
+```
