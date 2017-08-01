@@ -104,7 +104,7 @@ Paul
 >>> user.name
 Paul
 ```
-It possible to define your own record classes.
+It is possible to define your own record classes.
 ```python
 # app.py
 import jardin
