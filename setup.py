@@ -6,7 +6,7 @@ with open(path.join(here, 'README.rst')) as f:
     long_description = f.read()
 
 setup(name = 'jardin',
-      version = '0.3',
+      version = '0.3.1',
       description = 'A dataframe-base ORM',
       long_description = long_description,
       url = 'https://github.com/instacart/jardin',
