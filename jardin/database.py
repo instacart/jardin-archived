@@ -53,12 +53,15 @@ class DatabaseConnection(object):
     return self._cursor
 
   def execute(self, *query):
-    try:
-      return self.cursor().execute(*query)
-    except pg.InterfaceError:
-      self._connection = None
-      self._cursor = None
-      return self.execute(*query)
+    retries = 0
+    while retries < 3:
+      retries += 1
+      try:
+        return self.cursor().execute(*query)
+      except pg.extensions.TransactionRollbackError: pass
+      except pg.InterfaceError:
+        self._connection = None
+        self._cursor = None
 
 
 class DatabaseAdapter(object):
