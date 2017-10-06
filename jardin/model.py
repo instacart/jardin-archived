@@ -3,6 +3,7 @@ from record import Record
 import pandas as pd
 import numpy as np
 import re, inspect
+import os
 
 class Model(pd.DataFrame):
   table_name = None
@@ -52,6 +53,13 @@ class Model(pd.DataFrame):
       return results
     else:
       return self.instance(results)
+
+  @classmethod
+  def query_from(self, sql=None, filename=None, **kwargs):
+    kwargs['stack'] = self.stack_mark(inspect.stack())
+    if filename:
+      filename = os.path.join(os.path.dirname(inspect.stack()[1][1]), filename)
+    return self.db().dataframe(sql=sql, filename=filename, **kwargs)
 
   @classmethod
   def count(self, **kwargs):

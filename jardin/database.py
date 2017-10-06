@@ -2,15 +2,17 @@ import psycopg2 as pg
 from psycopg2 import extras
 from memoized_property import memoized_property
 import urlparse
+import re
 from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder, DeleteQueryBuilder
 import config
+import pandas as pd
 import pandas.io.sql as psql
 
 class DatabaseConnections(object):
-  
+
   _connections = {}
   _urls = {}
-  
+
   @classmethod
   def connection(self, db_name):
     if db_name not in self._connections:
@@ -62,6 +64,32 @@ class DatabaseConnection(object):
       except pg.InterfaceError:
         self._connection = None
         self._cursor = None
+
+  ## TODO: use the retry decorator (other PR https://github.com/instacart/jardin/pull/3)
+  def dataframe(self, sql=None, filename=None, **kwargs):
+    stack = kwargs.pop("stack", None)
+    sql = self.__prepare(sql, filename, kwargs)
+    sql = "/*%s | %s */ %s " % (config.WATERMARK, stack, sql)
+    return self._dataframe(sql=sql)
+
+  def _dataframe(self, sql):
+    return pd.io.sql.read_sql(sql=sql, con=self.connection())
+
+  def __prepare(self, sql, filename, bindings):
+    if sql is None and filename is not None:
+      with open(filename) as file:
+        sql = file.read()
+    sql = re.sub(r'\{(\w+?)\}', r'%(\1)s', sql)
+    if self.cursor():
+      cursor = self.cursor()
+    else:
+      try:
+        cursor = pg.extras.RealDictCursor(conn=pg.extensions.connection(dsn=''))
+      except pg.OperationalError:
+        self._connection = None
+        self._cursor = None
+        cursor = self.cursor()
+    return cursor.mogrify(sql, bindings).decode('utf-8')
 
 
 class DatabaseAdapter(object):
