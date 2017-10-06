@@ -66,6 +66,11 @@ class DatabaseConnection(object):
     self._connection.autocommit = True
     self._cursor = self._connection.cursor(cursor_factory=pg.extras.RealDictCursor)
 
+  def cursor(self):
+    if self._cursor is None:
+      self.connect()
+    return self._cursor
+
   @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError), tries=3)
   def execute(self, *query):
     self.connect()
