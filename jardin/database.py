@@ -31,6 +31,7 @@ class DatabaseConnections(object):
           self._urls[nme] = urlparse.urlparse(url)
     return self._urls[name]
 
+
 class DatabaseConnection(object):
 
   _connection = None
@@ -39,12 +40,24 @@ class DatabaseConnection(object):
   def __init__(self, db_config):
     self.db_config = db_config
 
+  @retry(pg.OperationalError, tries=3)
+  def connect(self):
+    self._cursor = None
+    connection = pg.connect(
+      connection_factory=extras.MinTimeLoggingConnection,
+      database=self.db_config.path[1:],
+      user=self.db_config.username,
+      password=self.db_config.password,
+      host=self.db_config.hostname,
+      port=self.db_config.port,
+      connect_timeout=5)
+    connection.initialize(config.logger)
+    connection.autocommit = True
+    return connection
+
   def connection(self):
     if self._connection is None:
-      self._cursor = None
-      self._connection = pg.connect(connection_factory = extras.MinTimeLoggingConnection, database = self.db_config.path[1:], user = self.db_config.username, password = self.db_config.password, host = self.db_config.hostname, port = self.db_config.port, connect_timeout = 5)
-      self._connection.initialize(config.logger)
-      self._connection.autocommit = True
+      self._connection = self.connect()
     return self._connection
 
   def cursor(self):

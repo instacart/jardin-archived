@@ -55,6 +55,7 @@ class Model(pd.DataFrame):
     kwargs['stack'] = self.stack_mark(inspect.stack())
     if filename:
       filename = os.path.join(os.environ['PWD'], filename)
+    kwargs['where'] = kwargs['where'] or kwargs['params']
     return self.instance(self.db_adapter(rw='read').raw_query(sql=sql, filename=filename, **kwargs))
 
   @classmethod

@@ -19,7 +19,7 @@ setup(name = 'jardin',
       'numpy',
       'psycopg2'
       ],
-      python_requires='>=2.7, <3'
+      python_requires='>=2.7, <3',
       classifiers = [
       'Intended Audience :: Developers',
       'License :: OSI Approved :: MIT License',
