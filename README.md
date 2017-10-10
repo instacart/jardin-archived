@@ -52,8 +52,8 @@ True
 
 Here is the basic syntax to select records from the database
 ```python
->>> users = Users.select(select = ['id', 'name'], where = {'email': 'paul@beatl.es'},
-                         order = 'id ASC', limit = 1)
+>>> users = Users.select(select=['id', 'name'], where={'email': 'paul@beatl.es'},
+                         order='id ASC', limit=1)
 # /* My Great App */ SELECT u.id, u.name FROM users u WHERE u.email = 'paul@beatl.es' ORDER BY u.id ASC LIMIT 1;
 >>> users
 id   name
@@ -83,11 +83,11 @@ Here are the different ways to feed a condition clause to a query.
 
 The simplest way to join another table is as follows
 ```python
->>> Users.select(inner_join = ["instruments i ON i.id = u.instrument_id"])
+>>> Users.select(inner_join=["instruments i ON i.id = u.instrument_id"])
 ```
 If you have configured your models associations, see [here](#associations), you can simply pass the class as argument:
 ```python
->>> Users.select(inner_join = [Instruments])
+>>> Users.select(inner_join=[Instruments])
 ```
 
 #### Individual record selection
@@ -125,7 +125,7 @@ False
 ```
 ### INSERT queries
 ```python
->>> user = Users.insert(name = 'Pete', email = 'pete@beatl.es')
+>>> user = Users.insert(name='Pete', email='pete@beatl.es')
 # /* My Great App */ INSERT INTO users (name, email) VALUES ('Pete', 'pete@beatl.es') RETURNING id;
 # /* My Great App */ SELECT u.* FROM users WHERE u.id = 4;
 >>> user
@@ -135,15 +135,25 @@ id   name    email
 
 ### UPDATE queries
 ```python
->>> users = Users.update(values = {'hair': 'long'}, where = {'name': 'John'})
+>>> users = Users.update(values={'hair': 'long'}, where={'name': 'John'})
 # /* My Great App */ UPDATE users u SET (u.hair) = ('long') WHERE u.name = 'John' RETURNING id;
 # /* My Great App */ SELECT * FROM users u WHERE u.name = 'John';
 ```
 ### DELETE queries
 ```python
->>> Users.delete(where = {'id': 1})
+>>> Users.delete(where={'id': 1})
 # /* My Great App */ DELETE FROM users u WHERE u.id = 1;
 ```
+### Raw queries
+```python
+>>> Users.query(sql='SELECT * FROM users LIMIT 10;')
+# /* My Great App */ SELECT * FROM users LIMIT 10;
+```
+### Query from SQL file
+```python
+>>> Users.query(filename='path/to/file.sql')
+```
+The path is relative to the working directory (i.e. where your app was launched).
 ## Associations
 It is possible to define associations between models. For example, if each user has multiple instruments:
 
@@ -170,7 +180,7 @@ and then you can query the associated records:
 ```
 Or you can declare joins more easily
 ```python
->>> users = Users.select(inner_join = [Instruments])
+>>> users = Users.select(inner_join=[Instruments])
 ```
 
 ## Scopes
@@ -188,7 +198,7 @@ The key is the name of the scope, and the value is the conditions to be applied.
 
 Use them as such:
 ```python
->>> users = Users.select(scopes = ['alive'], ...)
+>>> users = Users.select(scopes=['alive'], ...)
 # /* My Great App */ SELECT * FROM users u WHERE u.name IN ('Paul', 'Ringo') AND ...;
 ```
 ## Misc
