@@ -4,6 +4,8 @@
 
 Jardin is a `pandas.DataFrame`-based ORM for Python applications.
 
+[![PyPI version](https://badge.fury.io/py/jardin.svg)](https://badge.fury.io/py/jardin)
+
 ## Getting started
 
 In your working directory (the root of your app), create a file named `jardin_conf.py`:
