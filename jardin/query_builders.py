@@ -234,6 +234,7 @@ class InsertQueryBuilder(WriteQueryBuilder):
   def values(self):
     values = super(InsertQueryBuilder, self).values
     values['created_at'] = self.now
+    del values['stack']
     return values
 
   @memoized_property
