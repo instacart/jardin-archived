@@ -6,7 +6,7 @@ with open(path.join(here, 'README.rst')) as f:
     long_description = f.read()
 
 setup(name = 'jardin',
-      version = '0.3.1',
+      version = '0.4.0',
       description = 'A dataframe-base ORM',
       long_description = long_description,
       url = 'https://github.com/instacart/jardin',
@@ -19,6 +19,7 @@ setup(name = 'jardin',
       'numpy',
       'psycopg2'
       ],
+      python_requires='>=2.7, <3'
       classifiers = [
       'Intended Audience :: Developers',
       'License :: OSI Approved :: MIT License',
