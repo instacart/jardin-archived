@@ -1,16 +1,15 @@
 import psycopg2 as pg
 from psycopg2 import extras
-from memoized_property import memoized_property
 import urlparse
-from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder, DeleteQueryBuilder
+from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder, DeleteQueryBuilder, RawQueryBuilder
 import config
-import pandas.io.sql as psql
+
 
 class DatabaseConnections(object):
-  
+
   _connections = {}
   _urls = {}
-  
+
   @classmethod
   def connection(self, db_name):
     if db_name not in self._connections:
@@ -74,11 +73,8 @@ class DatabaseAdapter(object):
     kwargs['model_metadata'] = self.model_metadata
     query = SelectQueryBuilder(**kwargs).query
     config.logger.debug(query)
-    if kwargs.get('raw', False):
-      return psql.read_sql(sql = query[0], params = query[1], con = self.db)
-    else:
-      self.db.execute(*query)
-      return self.db.cursor().fetchall(), self.columns()
+    self.db.execute(*query)
+    return self.db.cursor().fetchall(), self.columns()
 
   def insert(self, **values):
     query = InsertQueryBuilder(values = values, model_metadata = self.model_metadata).query
@@ -100,6 +96,12 @@ class DatabaseAdapter(object):
     query = DeleteQueryBuilder(**kwargs).query
     config.logger.debug(query)
     self.db.execute(*query)
+
+  def raw_query(self, **kwargs):
+    query = RawQueryBuilder(**kwargs).query
+    config.logger.debug(query)
+    self.db.execute(*query)
+    return self.db.cursor().fetchall(), self.columns()
 
   def columns(self):
     return [col_desc[0] for col_desc in self.db.cursor().description]
