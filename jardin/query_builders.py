@@ -268,7 +268,7 @@ class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
   @memoized_property
   def sql(self):
-    if 'sql' in self.kwargs:
+    if 'sql' in self.kwargs and self.kwargs['sql']:
       raw_sql = self.kwargs['sql']
     if 'filename' in self.kwargs and self.kwargs['filename']:
       with open(self.kwargs['filename']) as file:
