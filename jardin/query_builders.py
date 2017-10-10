@@ -218,7 +218,7 @@ class WriteQueryBuilder(PGQueryBuilder):
     for k, v in self.kwargs['values'].iteritems():
       values[k] = v
     values['updated_at'] = self.now
-    del values['stack']
+    if 'stack' in values: del values['stack']
     return values  
 
   @memoized_property
