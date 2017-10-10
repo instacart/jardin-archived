@@ -3,6 +3,7 @@ from psycopg2 import extras
 import urlparse
 from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder, DeleteQueryBuilder, RawQueryBuilder
 import config
+from tools import retry
 
 
 class DatabaseConnections(object):
@@ -51,16 +52,14 @@ class DatabaseConnection(object):
       self._cursor = self.connection().cursor(cursor_factory = pg.extras.RealDictCursor)
     return self._cursor
 
+  @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError), tries=3)
   def execute(self, *query):
-    retries = 0
-    while retries < 3:
-      retries += 1
-      try:
-        return self.cursor().execute(*query)
-      except pg.extensions.TransactionRollbackError: pass
-      except pg.InterfaceError:
-        self._connection = None
-        self._cursor = None
+    try:
+      return self.cursor().execute(*query)
+    except pg.InterfaceError:
+      self._connection = None
+      self._cursor = None
+      raise
 
 
 class DatabaseAdapter(object):
