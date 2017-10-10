@@ -1,5 +1,7 @@
 # jardin
 
+**jardin** *(noun, french)* – garden, yard, grove.
+
 Jardin is a `pandas.DataFrame`-based ORM for Python applications.
 
 ## Getting started
