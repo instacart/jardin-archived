@@ -1,11 +1,10 @@
 import psycopg2 as pg
 from psycopg2 import extras
-from memoized_property import memoized_property
 import urlparse
-from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder, DeleteQueryBuilder
+from query_builders import SelectQueryBuilder, InsertQueryBuilder, UpdateQueryBuilder, DeleteQueryBuilder, RawQueryBuilder
 import config
-import pandas.io.sql as psql
 from tools import retry
+
 
 class DatabaseConnections(object):
 
@@ -34,48 +33,29 @@ class DatabaseConnections(object):
 
 class DatabaseConnection(object):
 
-  def __init__(self, db_config, autoconnect=False):
+  _connection = None
+  _cursor = None
+
+  def __init__(self, db_config):
     self.db_config = db_config
-    self._connection = None
-    self._cursor = None
-    if autoconnect:
-      self.connect()
 
-  def __str__(self):
-    return "Connection[{hostname}]:{port} > {user}@{dbname}".format(
-      hostname=self.db_config.hostname, port=self.db_config.port, user=self.db_config.username, dbname=self.db_config.path[1:])
-
-  def __repr__(self):
-    return self.__str__()
-
-  @retry(pg.OperationalError, tries=3)
-  def connect(self):
-    if self._connection:
-      return
-
-    self._connection = pg.connect(
-      connection_factory=extras.MinTimeLoggingConnection,
-      database=self.db_config.path[1:],
-      user=self.db_config.username,
-      password=self.db_config.password,
-      host=self.db_config.hostname,
-      port=self.db_config.port,
-      connect_timeout=5
-    )
-    self._connection.initialize(config.logger)
-    self._connection.autocommit = True
-    self._cursor = self._connection.cursor(cursor_factory=pg.extras.RealDictCursor)
+  def connection(self):
+    if self._connection is None:
+      self._cursor = None
+      self._connection = pg.connect(connection_factory = extras.MinTimeLoggingConnection, database = self.db_config.path[1:], user = self.db_config.username, password = self.db_config.password, host = self.db_config.hostname, port = self.db_config.port, connect_timeout = 5)
+      self._connection.initialize(config.logger)
+      self._connection.autocommit = True
+    return self._connection
 
   def cursor(self):
     if self._cursor is None:
-      self.connect()
+      self._cursor = self.connection().cursor(cursor_factory = pg.extras.RealDictCursor)
     return self._cursor
 
   @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError), tries=3)
   def execute(self, *query):
-    self.connect()
     try:
-      self._cursor.execute(*query)
+      return self.cursor().execute(*query)
     except pg.InterfaceError:
       self._connection = None
       self._cursor = None
@@ -92,17 +72,14 @@ class DatabaseAdapter(object):
     kwargs['model_metadata'] = self.model_metadata
     query = SelectQueryBuilder(**kwargs).query
     config.logger.debug(query)
-    if kwargs.get('raw', False):
-      return psql.read_sql(sql = query[0], params = query[1], con = self.db)
-    else:
-      self.db.execute(*query)
-      return self.db._cursor.fetchall(), self.columns()
+    self.db.execute(*query)
+    return self.db.cursor().fetchall(), self.columns()
 
   def insert(self, **values):
     query = InsertQueryBuilder(values = values, model_metadata = self.model_metadata).query
     config.logger.debug(query)
     self.db.execute(*query)
-    row_id = self.db._cursor.fetchone()['id']
+    row_id = self.db.cursor().fetchone()['id']
     return self.select(where = {'id': row_id})
 
   def update(self, **kwargs):
@@ -110,7 +87,7 @@ class DatabaseAdapter(object):
     query = UpdateQueryBuilder(**kwargs).query
     config.logger.debug(query)
     self.db.execute(*query)
-    row_id = self.db._cursor.fetchone()['id']
+    row_id = self.db.cursor().fetchone()['id']
     return self.select(where = {'id': row_id})
 
   def delete(self, **kwargs):
@@ -119,5 +96,11 @@ class DatabaseAdapter(object):
     config.logger.debug(query)
     self.db.execute(*query)
 
+  def raw_query(self, **kwargs):
+    query = RawQueryBuilder(**kwargs).query
+    config.logger.debug(query)
+    self.db.execute(*query)
+    return self.db.cursor().fetchall(), self.columns()
+
   def columns(self):
-    return [col_desc[0] for col_desc in self.db._cursor.description]
+    return [col_desc[0] for col_desc in self.db.cursor().description]
