@@ -47,6 +47,7 @@ class PGQueryBuilder(object):
   def watermark(self):
     return "/*%s | %s */ " % (config.WATERMARK, self.stack)
 
+
 class SelectQueryBuilder(PGQueryBuilder):
 
   where_values_prefix = ''
@@ -208,6 +209,7 @@ class SelectQueryBuilder(PGQueryBuilder):
     query += ';'
     return (query, self.where_values)
 
+
 class WriteQueryBuilder(PGQueryBuilder):
 
   @memoized_property
@@ -224,6 +226,7 @@ class WriteQueryBuilder(PGQueryBuilder):
   @memoized_property
   def fields(self):
     return ', '.join(self.field_array)
+
 
 class InsertQueryBuilder(WriteQueryBuilder):
 
@@ -252,9 +255,28 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     values.update(self.values)
     return (query, values)
 
+
 class DeleteQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
   @memoized_property
   def query(self):
     query = self.watermark + 'DELETE FROM ' +self.table_name + ' WHERE ' + self.wheres + ';'
+    return (query, self.where_values)
+
+
+class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
+
+  @memoized_property
+  def sql(self):
+    if 'sql' in self.kwargs and self.kwargs['sql']:
+      raw_sql = self.kwargs['sql']
+    if 'filename' in self.kwargs and self.kwargs['filename']:
+      with open(self.kwargs['filename']) as file:
+        raw_sql = file.read()
+    return re.sub(r'\{(\w+?)\}', r'%(\1)s', raw_sql)
+
+  @memoized_property
+  def query(self):
+    query = self.watermark + self.sql
+    self.wheres
     return (query, self.where_values)

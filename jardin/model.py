@@ -3,6 +3,7 @@ from record import Record
 import pandas as pd
 import numpy as np
 import re, inspect
+import os
 
 class Model(pd.DataFrame):
   table_name = None
@@ -47,11 +48,14 @@ class Model(pd.DataFrame):
   @classmethod
   def select(self, **kwargs):
     kwargs['stack'] = self.stack_mark(inspect.stack())
-    results = self.db_adapter(db_name = kwargs.get('db')).select(**kwargs)
-    if kwargs.get('raw', False):
-      return results
-    else:
-      return self.instance(results)
+    return self.instance(self.db_adapter(db_name = kwargs.get('db')).select(**kwargs))
+
+  @classmethod
+  def query_from(self, sql=None, filename=None, **kwargs):
+    kwargs['stack'] = self.stack_mark(inspect.stack())
+    if filename:
+      filename = os.path.join(os.environ['PWD'], filename)
+    return self.instance(self.db_adapter(rw='read').raw_query(sql=sql, filename=filename, **kwargs))
 
   @classmethod
   def count(self, **kwargs):
@@ -62,18 +66,21 @@ class Model(pd.DataFrame):
 
   @classmethod
   def insert(self, **kwargs):
+    kwargs['stack'] = self.stack_mark(inspect.stack())
     return self.instance(self.db_adapter(rw = 'write').insert(**kwargs))
 
   def _instance_insert(self, *args, **kwargs): return super(Model, self).insert(*args, **kwargs)
 
   @classmethod
   def update(self, **kwargs):
+    kwargs['stack'] = self.stack_mark(inspect.stack())
     return self.instance(self.db_adapter(rw = 'write').update(**kwargs))
 
   def _instance_update(self, *args, **kwargs): return super(Model, self).update(*args, **kwargs)
 
   @classmethod
   def delete(self, **kwargs):
+    kwargs['stack'] = self.stack_mark(inspect.stack())
     return self.db_adapter(rw = 'write').delete(**kwargs)
 
   @classmethod
