@@ -129,7 +129,7 @@ class SelectQueryBuilder(PGQueryBuilder):
           self.add_to_where_values({k: v})
           if isinstance(v, list) or isinstance(v, pd.Series):
             operator = 'IN'
-          else: 
+          else:
             operator = '='
           results += [k + ' ' + operator + ' %(' + self.where_label(k) + ')s']
     elif isinstance(where, list):
@@ -161,7 +161,7 @@ class SelectQueryBuilder(PGQueryBuilder):
   def inner_joins(self):
     joins = self.kwargs.get('inner_join', None)
     if joins is None: return
-    if isinstance(joins, str): 
+    if isinstance(joins, str):
       return "INNER JOIN %s" % joins
     elif isinstance(joins, list):
       js = []
@@ -218,7 +218,7 @@ class WriteQueryBuilder(PGQueryBuilder):
     for k, v in self.kwargs['values'].iteritems():
       values[k] = v
     values['updated_at'] = self.now
-    return values  
+    return values
 
   @memoized_property
   def field_array(self): return self.values.keys()
