@@ -30,7 +30,6 @@ class PGQueryBuilder(object):
   def scopes(self):
     return self.model_metadata['scopes']
 
-  @memoized_property
   def now(self):
     return datetime.utcnow()
 
@@ -217,8 +216,7 @@ class WriteQueryBuilder(PGQueryBuilder):
     values = collections.OrderedDict()
     for k, v in self.kwargs['values'].iteritems():
       values[k] = v
-    values['updated_at'] = self.now
-    if 'stack' in values: del values['stack']
+    values['updated_at'] = self.now()
     return values  
 
   @memoized_property
@@ -234,7 +232,7 @@ class InsertQueryBuilder(WriteQueryBuilder):
   @memoized_property
   def values(self):
     values = super(InsertQueryBuilder, self).values
-    values['created_at'] = self.now
+    values['created_at'] = self.now()
     return values
 
   @memoized_property

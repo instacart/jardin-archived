@@ -88,8 +88,9 @@ class DatabaseAdapter(object):
     self.db.execute(*query)
     return self.db.cursor().fetchall(), self.columns()
 
-  def insert(self, **values):
-    query = InsertQueryBuilder(values = values, model_metadata = self.model_metadata).query
+  def insert(self, **kwargs):
+    kwargs['model_metadata'] = self.model_metadata
+    query = InsertQueryBuilder(**kwargs).query
     config.logger.debug(query)
     self.db.execute(*query)
     row_id = self.db.cursor().fetchone()['id']

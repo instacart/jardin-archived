@@ -141,7 +141,7 @@ False
 ```
 ### INSERT queries
 ```python
->>> user = Users.insert(name='Pete', email='pete@beatl.es')
+>>> user = Users.insert(values={'name': 'Pete', 'email': 'pete@beatl.es'})
 # /* My Great App */ INSERT INTO users (name, email) VALUES ('Pete', 'pete@beatl.es') RETURNING id;
 # /* My Great App */ SELECT u.* FROM users WHERE u.id = 4;
 >>> user
