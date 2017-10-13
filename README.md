@@ -266,3 +266,11 @@ class Users(Db1Model): pass
 
 class Instruments(Db2Model): pass
 ```
+
+### Replica lag measurement
+
+You can measure the current replicalag with
+```python
+MyModel.replica_lag()
+# 0.001
+```
