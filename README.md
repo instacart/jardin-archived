@@ -269,7 +269,7 @@ class Instruments(Db2Model): pass
 
 ### Replica lag measurement
 
-You can measure the current replicalag with
+You can measure the current replica lag with
 ```python
 MyModel.replica_lag()
 # 0.001
