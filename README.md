@@ -110,8 +110,11 @@ If you have configured your models associations, see [here](#associations), you 
 You can also look-up a single record by id:
 ```python
 >>> Users.find(1)
-# /* My Great App */ SELECT * FROM users u WHERE u.id = 1;
-{'id': 1, 'name': 'Paul', 'email': 'paul@beatl.es', ...}
+# /* My Great App */ SELECT * FROM users u WHERE u.id = 1 LIMIT 1;
+Record(id=1, name='Paul', email='paul@beatl.es', ...)
+>>> Users.find_by(values={'name': 'Paul'})
+# /* My Great App */ SELECT * FROM users u WHERE u.name = 'Paul' LIMIT 1;
+Record(id=1, name='Paul', email='paul@beatl.es', ...)
 ```
 Note that the returned object is a `Record` object which allows you to access attributes in those way:
 ```python

@@ -91,8 +91,12 @@ class Model(pd.DataFrame):
     return self.instance(self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(where='created_at IS NOT NULL', order='created_at DESC', limit=limit))
 
   @classmethod
+  def find_by(self, values={}, **kwargs):
+    return self.record_class(**self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(where=values, limit=1)[0][0])
+
+  @classmethod
   def find(self, id, **kwargs):
-    return self.record_class(**self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(where={'id': id}, limit=1)[0][0])
+    return self.find_by(values={'id': id}, **kwargs)
 
   @classmethod
   def db_adapter(self, role='replica', db_name=None):
