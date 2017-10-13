@@ -25,8 +25,8 @@ In your working directory (the root of your app), create a file named `jardin_co
 # jardin_conf.py
 
 DATABASES = {
-  'my_first_database': 'https://username:password@database.url:port',
-  'my_second_database': 'https://username:password@database.url:port'
+  'my_master_database': 'https://username:password@master_database.url:port',
+  'my_replica_database': 'https://username:password@replica_database.url:port'
 }
 
 LOG_LEVEL = logging.DEBUG
@@ -39,7 +39,7 @@ Then, in your app, say you have a table called `users`:
 import jardin
 
 class Users(jardin.Model):
-  db_names = {'read': 'my_first_database', 'write': 'my_second_database'}
+  db_names = {'master': 'my_master_database', 'replica': 'my_replica_database'}
 ```
 In the console:
 ```python
@@ -179,7 +179,7 @@ It is possible to define associations between models. For example, if each user 
 import jardin
 
 class MyModel(jardin.Model):
-  db_names = {'read': 'my_first_database', 'write': 'my_second_database'}
+  db_names = {'master': 'my_master_database', 'replica': 'my_replica_database'}
 
 class Instruments(MyModel):
   belongs_to = {'users': 'user_id'}
@@ -254,10 +254,10 @@ And then define your models
 import jardin
 
 class Db1Model(jardin.Model):
-  db_names = {'write': 'mydb1', 'read': 'mydb1-replica'}
+  db_names = {'master': 'mydb1', 'replica': 'mydb1-replica'}
 
 class Db2Model(jardin.Model):
-  db_names = {'write': 'mydb2', 'read': 'mydb2-replica'}
+  db_names = {'master': 'mydb2', 'replica': 'mydb2-replica'}
 
 class Users(Db1Model): pass
 
