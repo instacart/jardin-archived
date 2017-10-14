@@ -2,7 +2,7 @@ from memoized_property import memoized_property
 from datetime import datetime
 import pandas as pd
 import numpy as np
-import model, config, re, collections
+import model, config, re, collections, json
 
 
 class PGQueryBuilder(object):
@@ -93,6 +93,8 @@ class SelectQueryBuilder(PGQueryBuilder):
     for k, v in values.iteritems():
       if isinstance(v, pd.Series) or isinstance(v, list):
         v = tuple(v)
+      if isinstance(v, dict):
+        v = json.dumps(v)
       self.where_values[self.where_label(k)] = v
 
   def where_label(self, label):
