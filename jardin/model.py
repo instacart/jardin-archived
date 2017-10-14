@@ -5,6 +5,22 @@ import numpy as np
 import re, inspect
 import os
 
+class ModelIterator(object):
+
+  def __init__(self, model):
+    self.model = model
+    self.current = 0
+
+  def __iter__(self): return self
+
+  def next(self):
+    if self.current < len(self.model):
+      record = self.model.record_class(**self.model.iloc[self.current])
+      self.current += 1
+      return record
+    else:
+      raise StopIteration()
+
 class Model(pd.DataFrame):
   ROLES = {"replica": "read", "master": "write"}  # to have backward compatibility
   table_name = None
@@ -175,3 +191,6 @@ class Model(pd.DataFrame):
   def where_not(self, **kwargs):
     kwargs['where_not'] = True
     return self.where(**kwargs)
+
+  def records(self):
+    return ModelIterator(self)
