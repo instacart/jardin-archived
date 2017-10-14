@@ -86,7 +86,7 @@ class Model(pd.DataFrame):
   @classmethod
   def insert(self, **kwargs):
     kwargs['stack'] = self.stack_mark(inspect.stack())
-    return self.instance(self.db_adapter(role='master').insert(**kwargs))
+    return self.record_class(**self.db_adapter(role='master').insert(**kwargs)[0][0])
 
   def _instance_insert(self, *args, **kwargs): return super(Model, self).insert(*args, **kwargs)
 
