@@ -93,8 +93,6 @@ class SelectQueryBuilder(PGQueryBuilder):
     for k, v in values.iteritems():
       if isinstance(v, pd.Series) or isinstance(v, list):
         v = tuple(v)
-      if isinstance(v, dict):
-        v = json.dumps(v)
       self.where_values[self.where_label(k)] = v
 
   def where_label(self, label):
@@ -218,6 +216,8 @@ class WriteQueryBuilder(PGQueryBuilder):
   def values(self):
     values = collections.OrderedDict()
     for k, v in self.kwargs['values'].iteritems():
+      if isinstance(v, dict):
+        v = json.dumps(v)
       values[k] = v
     values['updated_at'] = self.now
     if 'stack' in values: del values['stack']
