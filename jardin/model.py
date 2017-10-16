@@ -108,7 +108,12 @@ class Model(pd.DataFrame):
 
   @classmethod
   def find_by(self, values={}, **kwargs):
-    return self.record_class(**self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(where=values, limit=1)[0][0])
+    try:
+      return self.record_class(**self.db_adapter(
+        db_name=kwargs.get('db'),
+        role=kwargs.get('role', 'replica')).select(where=values, limit=1)[0][0])
+    except IndexError:
+      return None
 
   @classmethod
   def find(self, id, **kwargs):
