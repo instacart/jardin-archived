@@ -275,7 +275,7 @@ MyModel.replica_lag()
 # 0.001
 ```
 
-### Transaction
+### Transactions
 
 You can force a trasaction around a set of statements in the following way:
 ```python
