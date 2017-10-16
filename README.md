@@ -274,3 +274,20 @@ You can measure the current replica lag with
 MyModel.replica_lag()
 # 0.001
 ```
+
+### Transaction
+
+You can force a trasaction around a set of statements in the following way:
+```python
+with Users.transaction():
+  Users.insert(...)
+  Instruments.update(...)
+  raise Exception(...)
+```
+which will result in the following behavior:
+```SQL
+/* My Great App */ BEGIN;
+/* My Great App */ INSERT INTO users VALUES ...;
+/* My Great App */ UPDATE instruments SET ...;
+/* My Great App */ ROLLBACK;
+```
