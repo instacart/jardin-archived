@@ -5,23 +5,11 @@ import numpy as np
 import re, inspect
 import os
 
-class ModelIterator(object):
-
-  def __init__(self, model):
-    self.model = model
-    self.current = 0
-
-  def __iter__(self): return self
-
-  def next(self):
-    if self.current < len(self.model):
-      record = self.model.record_class(**self.model.iloc[self.current])
-      self.current += 1
-      return record
-    else:
-      raise StopIteration()
 
 class Model(pd.DataFrame):
+  """
+    Base class from which your models should inherit.
+  """
   ROLES = {"replica": "read", "master": "write"}  # to have backward compatibility
   table_name = None
   table_alias = None
@@ -64,6 +52,14 @@ class Model(pd.DataFrame):
 
   @classmethod
   def select(self, **kwargs):
+    """
+    Perform a SELECT statement on the model's table.
+    :param select: Columns to return in the SELECT statement.
+    :type select: string, array
+    :param where: WHERE clause of the SELECT statement. This can be a
+      plain string, a dict or an array.
+    :type where: string, dict, array
+    """
     kwargs['stack'] = self.stack_mark(inspect.stack())
     return self.instance(self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(**kwargs))
 
@@ -74,7 +70,12 @@ class Model(pd.DataFrame):
     if filename:
       filename = os.path.join(os.environ['PWD'], filename)
     kwargs['where'] = kwargs.get('where', kwargs.get('params'))
-    return self.instance(self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).raw_query(sql=sql, filename=filename, **kwargs))
+    results = self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).raw_query(sql=sql, filename=filename, **kwargs)
+    if results:
+      return self.instance(results)
+    else:
+      return None
+
 
   @classmethod
   def count(self, **kwargs):
@@ -174,6 +175,10 @@ class Model(pd.DataFrame):
     except:
       return 0
 
+  @classmethod
+  def transaction(self):
+    return Transaction(self)
+
   def where(self, **kwargs):
     conditions = kwargs.get('conditions', kwargs)
     if 'where_not' in conditions:
@@ -199,3 +204,34 @@ class Model(pd.DataFrame):
 
   def records(self):
     return ModelIterator(self)
+
+class ModelIterator(object):
+
+  def __init__(self, model):
+    self.model = model
+    self.current = 0
+
+  def __iter__(self): return self
+
+  def next(self):
+    if self.current < len(self.model):
+      record = self.model.record_class(**self.model.iloc[self.current])
+      self.current += 1
+      return record
+    else:
+      raise StopIteration()
+
+
+class Transaction(object):
+
+  def __init__(self, model):
+    self._model = model
+
+  def __enter__(self):
+    self._model.query(sql='BEGIN;')
+
+  def __exit__(self, type, value, traceback):
+    if value is None:
+      self._model.query(sql='COMMIT;')
+    else:
+      self._model.query(sql='ROLLBACK;')

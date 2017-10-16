@@ -114,7 +114,10 @@ class DatabaseAdapter(object):
     query = RawQueryBuilder(**kwargs).query
     config.logger.debug(query)
     self.db.execute(*query)
-    return self.db.cursor().fetchall(), self.columns()
+    if self.db.cursor().description:
+      return self.db.cursor().fetchall(), self.columns()
+    else:
+      return None
 
   def columns(self):
     return [col_desc[0] for col_desc in self.db.cursor().description]
