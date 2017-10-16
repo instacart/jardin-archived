@@ -52,20 +52,48 @@ class Model(pd.DataFrame):
 
   @classmethod
   def select(self, **kwargs):
+    #select='*', where=None, inner_joins=None, left_joins=None, 
+    #group=None, order=None, limit=None, db=None, role='replica'):
     """
     Perform a SELECT statement on the model's table.
+
     :param select: Columns to return in the SELECT statement.
     :type select: string, array
-    :param where: WHERE clause of the SELECT statement. This can be a
-      plain string, a dict or an array.
+    :param where: WHERE clause of the SELECT statement. This can be a plain string, a dict or an array.
     :type where: string, dict, array
+    :param inner_joins: Specifies an INNER JOIN clause. Can be a plain string (without the INNER JOIN part), an array of strings or an array of classes if the relationship was defined in the model.
+    :type inner_joins: string, array
+    :param left_joins: Specifies an LEFT JOIN clause. Can be a plain string (without the LEFT JOIN part), an array of strings or an array of classes if the relationship was defined in the model.
+    :type left_joins: string, array
+    :param group: Specifies a GROUP BY clause.
+    :type group: string
+    :param order: ORDER BY clause.
+    :type order: string
+    :param limit: LIMIT clause.
+    :type limit: integer
+    :param db: Database name from your ``jardin_conf.py``, overrides the default database set in the model declaration.
+    :type db: string
+    :param role: One of ``('master', 'replica')`` to override the default.
+    :type role: string
+    :returns: ``jardin.Model`` instance, which is a ``pandas.DataFrame``.
     """
     kwargs['stack'] = self.stack_mark(inspect.stack())
     return self.instance(self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(**kwargs))
 
   @classmethod
   def query(self, sql=None, filename=None, **kwargs):
-    """ run raw sql from sql or file """
+    """ run raw sql from sql or file.
+
+    :param sql: Raw SQL query to pass directly to the connection.
+    :type sql: string
+    :param filename: Path to a file containing a SQL query. The path should be relative to CWD.
+    :type filename: string
+    :param db: `optional` Database name from your ``jardin_conf.py``, overrides the default database set in the model declaration.
+    :type db: string
+    :param role: `optional` One of ``('master', 'replica')`` to override the default.
+    :type role: string
+    :returns: ``jardin.Model`` instance, which is a ``pandas.DataFrame``.
+    """
     kwargs['stack'] = self.stack_mark(inspect.stack())
     if filename:
       filename = os.path.join(os.environ['PWD'], filename)
@@ -79,6 +107,17 @@ class Model(pd.DataFrame):
 
   @classmethod
   def count(self, **kwargs):
+    """
+    Performs a COUNT statement on the model's table.
+
+    :param where: WHERE clause of the SELECT statement. This can be a plain string, a dict or an array.
+    :type where: string, dict, array
+    :param db: Database name from your ``jardin_conf.py``, overrides the default database set in the model declaration.
+    :type db: string
+    :param role: One of ``('master', 'replica')`` to override the default.
+    :type role: string
+    :returns: integer
+    """
     kwargs['select'] = 'COUNT(*)'
     return self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(**kwargs)[0][0]['count']
 
