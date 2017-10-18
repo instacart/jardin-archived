@@ -3,14 +3,14 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-jardin API documentation
+jardin documentation
 ==================================
 
 .. toctree::
    :maxdepth: 2
 
-   Getting started
-   API
+   getting_started
+   features
+   api_reference
 
-.. autoclass:: jardin.Model
-   :members:
+Welcome to the jardin documentation.
