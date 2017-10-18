@@ -8,7 +8,9 @@ jardin API documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+
+   Getting started
+   API
 
 .. autoclass:: jardin.Model
    :members:
