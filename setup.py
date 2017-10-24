@@ -19,7 +19,8 @@ setup(name = 'jardin',
       install_requires = [
       'pandas',
       'numpy',
-      'psycopg2'
+      'psycopg2',
+      'memoized_property'
       ],
       python_requires='>=2.7, <3',
       classifiers = [
