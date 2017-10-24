@@ -1,4 +1,7 @@
 class Record(dict):
+  """
+  This is the class from which your individual record classes should inherit.
+  """
 
   def __init__(self, **dic):
     self.update(dic)

@@ -55,7 +55,7 @@ class Model(pd.DataFrame):
     #select='*', where=None, inner_joins=None, left_joins=None, 
     #group=None, order=None, limit=None, db=None, role='replica'):
     """
-    Perform a SELECT statement on the model's table.
+    Perform a SELECT statement on the model's table in the replica database.
 
     :param select: Columns to return in the SELECT statement.
     :type select: string, array
@@ -82,7 +82,7 @@ class Model(pd.DataFrame):
 
   @classmethod
   def query(self, sql=None, filename=None, **kwargs):
-    """ run raw sql from sql or file.
+    """ run raw sql from sql or file against.
 
     :param sql: Raw SQL query to pass directly to the connection.
     :type sql: string
@@ -108,7 +108,7 @@ class Model(pd.DataFrame):
   @classmethod
   def count(self, **kwargs):
     """
-    Performs a COUNT statement on the model's table.
+    Performs a COUNT statement on the model's table in the replica database.
 
     :param where: WHERE clause of the SELECT statement. This can be a plain string, a dict or an array.
     :type where: string, dict, array
@@ -125,6 +125,12 @@ class Model(pd.DataFrame):
 
   @classmethod
   def insert(self, **kwargs):
+    """
+    Performs an INSERT statement on the model's table in the master database.
+
+    :param values: A dictionary containing the values to be inserted. ``datetime``, ``dict`` and ``bool`` objects can be passed as is and will be correctly serialized by psycopg2.
+    :type values: dict
+    """
     kwargs['stack'] = self.stack_mark(inspect.stack())
     return self.record_class(**self.db_adapter(role='master').insert(**kwargs)[0][0])
 
@@ -132,6 +138,14 @@ class Model(pd.DataFrame):
 
   @classmethod
   def update(self, **kwargs):
+    """
+    Performs an UPDATE statement on the model's table in the master database.
+
+    :param values: A dictionary of values to update. ``datetime``, ``dict`` and ``bool`` objects can be passed as is and will be correctly serialized by psycopg2.
+    :type values: dict
+    :param where: The WHERE clause. This can be a plain string, a dict or an array.
+    :type where: string, dict, array
+    """
     kwargs['stack'] = self.stack_mark(inspect.stack())
     return self.instance(self.db_adapter(role='master').update(**kwargs))
 
@@ -139,15 +153,31 @@ class Model(pd.DataFrame):
 
   @classmethod
   def delete(self, **kwargs):
+    """
+    Performs a DELETE statement on the model's table in the master database.
+
+    :param where: The WHERE clause. This can be a plain string, a dict or an array.
+    :type where: string, dict, array
+    """
     kwargs['stack'] = self.stack_mark(inspect.stack())
     return self.db_adapter(role='master').delete(**kwargs)
 
   @classmethod
   def last(self, limit=1, **kwargs):
+    """
+    Returns the last `limit` records inserted in the model's table in the replica database. Rows are sorted by ``created_at``.
+    """
     return self.instance(self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(where='created_at IS NOT NULL', order='created_at DESC', limit=limit))
 
   @classmethod
   def find_by(self, values={}, **kwargs):
+    """
+    Returns a single record matching the criteria in ``values`` found in the model's table in the replica database.
+
+    :param values: Criteria to find the record.
+    :type values: dict
+    :returns: an instance of the model's record class, i.e. :doc:`jardin_record` by default.
+    """
     try:
       return self.record_class(**self.db_adapter(
         db_name=kwargs.get('db'),
@@ -157,6 +187,10 @@ class Model(pd.DataFrame):
 
   @classmethod
   def find(self, id, **kwargs):
+    """
+    Finds a record by its id in the model's table in the replica database.
+    :returns: an instance of the model's record class, i.e. :doc:`jardin_record` by default.
+    """
     return self.find_by(values={'id': id}, **kwargs)
 
   @classmethod
@@ -205,6 +239,11 @@ class Model(pd.DataFrame):
 
   @classmethod
   def replica_lag(self, **kwargs):
+    """
+    Returns the current replication lag in seconds between the master and replica databases.
+
+    :returns: float
+    """
     if not self._use_replica():
       return 0
     try:
@@ -216,6 +255,9 @@ class Model(pd.DataFrame):
 
   @classmethod
   def transaction(self):
+    """
+    Enables multiple statements to be ran within a single transaction, see :doc:`features`.
+    """
     return Transaction(self)
 
   def where(self, **kwargs):
@@ -242,6 +284,9 @@ class Model(pd.DataFrame):
     return self.where(**kwargs)
 
   def records(self):
+    """
+    Returns an iterator to loop over the rows, each being an instance of the model's record class, i.e. :doc:`jardin_record` by default.
+    """
     return ModelIterator(self)
 
 class ModelIterator(object):
