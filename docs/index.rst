@@ -6,11 +6,14 @@
 jardin documentation
 ==================================
 
+**jardin** *(noun, french)* – garden, yard, grove.
+
+Jardin is a ``pandas.DataFrame``-based ORM for Python applications.
+
 .. toctree::
    :maxdepth: 2
 
    getting_started
+   querying
    features
    api_reference
-
-Welcome to the jardin documentation.
