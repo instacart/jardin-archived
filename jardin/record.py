@@ -10,7 +10,7 @@ class Record(dict):
     if i in self:
       return self[i]
     else:
-      return super(self.__class__, self).__getattr__(i)
+      return super(Record, self).__getattr__(i)
 
   def __setattr__(self,i , v):
     self[i] = v
