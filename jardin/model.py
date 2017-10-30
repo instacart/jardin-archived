@@ -44,11 +44,14 @@ class Model(pd.DataFrame):
     return self.from_records(result[0], columns=result[1], coerce_float=True)
 
   @classmethod
-  def stack_mark(self, stack):
+  def stack_mark(self, stack, db_conn=None):
     filename = stack[1][1]
     function_name = stack[1][3]
     line_number = stack[1][2]
-    return ':'.join([filename, function_name, str(line_number)])
+    stack = [filename, function_name, str(line_number)]
+    if db_conn:
+      stack = [db_conn.connection().dsn] + stack
+    return ':'.join(stack)
 
   @classmethod
   def select(self, **kwargs):
@@ -77,8 +80,9 @@ class Model(pd.DataFrame):
     :type role: string
     :returns: ``jardin.Model`` instance, which is a ``pandas.DataFrame``.
     """
-    kwargs['stack'] = self.stack_mark(inspect.stack())
-    return self.instance(self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica')).select(**kwargs))
+    db_adapter = self.db_adapter(db_name=kwargs.get('db'), role=kwargs.get('role', 'replica'))
+    kwargs['stack'] = self.stack_mark(inspect.stack(), db_conn=db_adapter.db)
+    return self.instance(db_adapter.select(**kwargs))
 
   @classmethod
   def query(self, sql=None, filename=None, **kwargs):
