@@ -314,12 +314,15 @@ class Transaction(object):
 
   def __init__(self, model):
     self._model = model
+    self._connection = self._model.db(role='master')
 
   def __enter__(self):
-    self._model.query(sql='BEGIN;')
+    self._connection.autocommit = False
+    self._model.query(sql='BEGIN;', role='master')
 
   def __exit__(self, type, value, traceback):
     if value is None:
-      self._model.query(sql='COMMIT;')
+      self._model.query(sql='COMMIT;', role='master')
     else:
-      self._model.query(sql='ROLLBACK;')
+      self._model.query(sql='ROLLBACK;', role='master')
+    self._connection.autocommit = True
