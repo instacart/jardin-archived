@@ -264,6 +264,23 @@ class Model(pd.DataFrame):
     """
     return Transaction(self)
 
+  @classmethod
+  def column_names(self):
+    """
+    Returns the columns of the database table.
+
+    :returns: list
+    """
+    if self.__dict__.get('_columns') is None:
+      table_name = self.model_metadata()['table_name']
+      columns = self.db_adapter().raw_query(
+        sql="SELECT column_name FROM information_schema.columns WHERE " \
+          "table_schema = 'public' AND table_name = %(table_name)s;",
+        where={'table_name': table_name}
+        )[0]
+      self._columns = [c['column_name'] for c in columns]
+    return self._columns
+
   def where(self, **kwargs):
     conditions = kwargs.get('conditions', kwargs)
     if 'where_not' in conditions:
@@ -292,6 +309,8 @@ class Model(pd.DataFrame):
     Returns an iterator to loop over the rows, each being an instance of the model's record class, i.e. :doc:`jardin_record` by default.
     """
     return ModelIterator(self)
+
+
 
 class ModelIterator(object):
 

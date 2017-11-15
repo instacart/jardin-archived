@@ -2,15 +2,17 @@ class Record(dict):
     """
     This is the class from which your individual record classes should inherit.
     """
+    primary_key = 'id'
 
-    def __init__(self, **dic):
-        self.update(dic)
+    def __init__(self, **kwargs):
+        kwargs[self.primary_key] = kwargs.get(self.primary_key, None)
+        self.update(kwargs)
 
     def __getattr__(self, i):
         if i in self:
             return self[i]
-        else:
-            return super(Record, self).__getattr__(i)
+        raise AttributeError(
+            "'%s' object has not attribute '%s'" % (self.__class__.__name__, i))
 
     def __setattr__(self,i , v):
         self[i] = v
