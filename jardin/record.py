@@ -24,5 +24,5 @@ class Record(dict):
             attrs += ['id=%s' % self.id]
         for att_name, attr_value in self.iteritems():
             if att_name == 'id': continue
-        attrs += ['%s=%s' % (att_name, attr_value.__repr__())]
+            attrs += ['%s=%s' % (att_name, attr_value.__repr__())]
         return '%s(%s)' % (self.__class__.__name__, ', '.join(attrs))
