@@ -136,6 +136,7 @@ class Model(pd.DataFrame):
     :type values: dict
     """
     kwargs['stack'] = self.stack_mark(inspect.stack())
+    kwargs['primary_key'] = self.record_class.primary_key
     return self.record_class(**self.db_adapter(role='master').insert(**kwargs)[0][0])
 
   def _instance_insert(self, *args, **kwargs): return super(Model, self).insert(*args, **kwargs)
@@ -151,6 +152,7 @@ class Model(pd.DataFrame):
     :type where: string, dict, array
     """
     kwargs['stack'] = self.stack_mark(inspect.stack())
+    kwargs['primary_key'] = self.record_class.primary_key
     return self.instance(self.db_adapter(role='master').update(**kwargs))
 
   def _instance_update(self, *args, **kwargs): return super(Model, self).update(*args, **kwargs)

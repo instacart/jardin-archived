@@ -4,6 +4,8 @@ import pandas as pd
 import numpy as np
 import model, config, re, collections, json
 
+from record import Record
+
 
 class PGQueryBuilder(object):
 
@@ -216,6 +218,8 @@ class WriteQueryBuilder(PGQueryBuilder):
   def values(self):
     values = collections.OrderedDict()
     for k, v in self.kwargs['values'].iteritems():
+      if k == self.kwargs.get('primary_key', Record.primary_key) and v is None:
+        continue
       if isinstance(v, dict):
         v = json.dumps(v)
       values[k] = v
