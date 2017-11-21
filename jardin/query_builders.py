@@ -95,10 +95,7 @@ class SelectQueryBuilder(PGQueryBuilder):
     for k, v in values.iteritems():
       if isinstance(v, pd.Series) or isinstance(v, list):
         v = tuple(v)
-      self.where_values[self.where_label(k)] = v
-
-  def where_label(self, label):
-    return self.where_values_prefix + label
+      self.where_values[k] = v
 
   def where_items(self, where):
     results = []
@@ -110,8 +107,8 @@ class SelectQueryBuilder(PGQueryBuilder):
     elif isinstance(where, dict):
       for k, v in where.iteritems():
         if isinstance(v, tuple):
-          from_label = self.where_label(k + '_from')
-          to_label = self.where_label(k + '_to')
+          from_label = '%s_from' % k
+          to_label = '%s_to' % k
           results += [k + ' BETWEEN %(' + from_label + ')s AND %(' + to_label + ')s']
           self.add_to_where_values({from_label: v[0], to_label: v[1]})
         elif isinstance(v, dict):
@@ -122,7 +119,7 @@ class SelectQueryBuilder(PGQueryBuilder):
             elif isinstance(vv, float):
               res += '::FLOAT'
             label = k + '_' + kk
-            res += " = %(" + self.where_label(label) + ")s"
+            res += " = %(" + label + ")s"
             results += [res]
             self.add_to_where_values({label: vv})
         elif not isinstance(v, list) and not isinstance(v, pd.Series) and not isinstance(v, np.ndarray) and pd.isnull(v):
@@ -133,12 +130,12 @@ class SelectQueryBuilder(PGQueryBuilder):
             operator = 'IN'
           else:
             operator = '='
-          results += [k + ' ' + operator + ' %(' + self.where_label(k) + ')s']
+          results += [k + ' ' + operator + ' %(' + k + ')s']
     elif isinstance(where, list):
       self.add_to_where_values(where[1])
       result = where[0]
       for l in re.findall('%\((\S+)\)s', result):
-        result = re.sub('%\(' + l + '\)s', '%(' + self.where_label(l) + ')s', result)
+        result = re.sub('%\(' + l + '\)s', '%(' + l + ')s', result)
       results += [result]
     return results
 
@@ -215,37 +212,77 @@ class SelectQueryBuilder(PGQueryBuilder):
 class WriteQueryBuilder(PGQueryBuilder):
 
   @memoized_property
+  def additional_values(self):
+    return {'updated_at': self.now}
+
+  @memoized_property
+  def write_values(self):
+    kw_values = self.kwargs['values']
+
+    if isinstance(kw_values, dict):
+      kw_values = [kw_values]
+    
+    kw_values = pd.DataFrame(kw_values).copy()
+
+    for k, v in self.additional_values.iteritems():
+      if k not in kw_values:
+        kw_values.loc[:, k] = v
+
+    return kw_values    
+
+  @memoized_property
+  def values_list(self):
+    all_values = []
+
+    for idx, val in self.write_values.iterrows():
+      values = collections.OrderedDict()
+
+      for k, v in val.iteritems():
+
+        if k == self.kwargs.get('primary_key', Record.primary_key) and v is None:
+          continue
+
+        if k == 'stack': continue
+
+        if isinstance(v, dict):
+          v = json.dumps(v)
+
+        values['%s_%s' % (k, idx)] = v
+
+      all_values += [values]
+    return all_values
+
+  @memoized_property
+  def value_extrapolators(self): 
+    return ', '.join([
+      "(" + self.extrapolators(fa, sep = ', ') + ")"
+      for fa in [v.keys() for v in self.values_list]
+      ])
+
+  @memoized_property
   def values(self):
-    values = collections.OrderedDict()
-    for k, v in self.kwargs['values'].iteritems():
-      if k == self.kwargs.get('primary_key', Record.primary_key) and v is None:
-        continue
-      if isinstance(v, dict):
-        v = json.dumps(v)
-      values[k] = v
-    values['updated_at'] = self.now
-    if 'stack' in values: del values['stack']
+    values = {}
+    [values.update(**v) for v in self.values_list]
     return values
 
   @memoized_property
-  def field_array(self): return self.values.keys()
-
-  @memoized_property
   def fields(self):
-    return ', '.join(self.field_array)
+    return ', '.join(self.write_values.columns)
 
 
 class InsertQueryBuilder(WriteQueryBuilder):
 
   @memoized_property
-  def values(self):
-    values = super(InsertQueryBuilder, self).values
-    values['created_at'] = self.now
-    return values
+  def additional_values(self):
+    additional_values = super(InsertQueryBuilder, self).additional_values
+    additional_values.update(
+      created_at=self.now
+      )
+    return additional_values
 
   @memoized_property
   def query(self):
-    query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES (" + self.extrapolators(self.field_array, sep = ', ') + ") RETURNING id;"
+    query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES " + self.value_extrapolators + " RETURNING id;"
     return (query, self.values)
 
 
@@ -255,7 +292,7 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
   @memoized_property
   def query(self):
-    query = self.watermark + 'UPDATE ' + self.table_name + ' SET (' + self.fields + ') = (' + self.extrapolators(self.field_array, sep = ', ') + ')'
+    query = self.watermark + 'UPDATE ' + self.table_name + ' SET (' + self.fields + ') = ' + self.value_extrapolators
     if self.wheres: query += " WHERE " + self.wheres
     query += ' RETURNING id;'
     values = self.where_values

@@ -58,7 +58,6 @@ class DatabaseConnection(object):
             port=self.db_config.port,
             connect_timeout=5)
         connection.initialize(config.logger)
-        #connection.autocommit = True
         return connection
 
     def connection(self):
@@ -81,7 +80,7 @@ class DatabaseConnection(object):
             if self.autocommit:
                 self.connection().commit()
             return results
-        except pg.ProgrammingError:
+        except (pg.ProgrammingError, pg.IntegrityError):
             self.connection().rollback()
             raise
         except pg.InterfaceError:
@@ -103,21 +102,20 @@ class DatabaseAdapter(object):
         self.db.execute(*query)
         return self.db.cursor().fetchall(), self.columns()
 
-    def insert(self, **kwargs):
+    def write(self, query_builder, **kwargs):
         kwargs['model_metadata'] = self.model_metadata
-        query = InsertQueryBuilder(**kwargs).query
+        query = query_builder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
-        row_id = self.db.cursor().fetchone()['id']
-        return self.select(where = {'id': row_id})
+        row_ids = self.db.cursor().fetchall()
+        row_ids = [r['id'] for r in row_ids]
+        return self.select(where = {'id': row_ids})
+
+    def insert(self, **kwargs):
+        return self.write(InsertQueryBuilder, **kwargs)
 
     def update(self, **kwargs):
-        kwargs['model_metadata'] = self.model_metadata
-        query = UpdateQueryBuilder(**kwargs).query
-        config.logger.debug(query)
-        self.db.execute(*query)
-        row_id = self.db.cursor().fetchone()['id']
-        return self.select(where = {'id': row_id})
+        return self.write(UpdateQueryBuilder, **kwargs)
 
     def delete(self, **kwargs):
         kwargs['model_metadata'] = self.model_metadata

@@ -137,7 +137,15 @@ class Model(pd.DataFrame):
     """
     kwargs['stack'] = self.stack_mark(inspect.stack())
     kwargs['primary_key'] = self.record_class.primary_key
-    return self.record_class(**self.db_adapter(role='master').insert(**kwargs)[0][0])
+    results = self.db_adapter(role='master').insert(**kwargs)
+    return self.record_or_model(results)
+
+  @classmethod
+  def record_or_model(self, results):
+    if len(results[0]) == 1:
+      return self.record_class(**results[0][0])
+    else:
+      return self.instance(results)
 
   def _instance_insert(self, *args, **kwargs): return super(Model, self).insert(*args, **kwargs)
 
@@ -153,7 +161,8 @@ class Model(pd.DataFrame):
     """
     kwargs['stack'] = self.stack_mark(inspect.stack())
     kwargs['primary_key'] = self.record_class.primary_key
-    return self.instance(self.db_adapter(role='master').update(**kwargs))
+    results = self.db_adapter(role='master').update(**kwargs)
+    return self.record_or_model(results)
 
   def _instance_update(self, *args, **kwargs): return super(Model, self).update(*args, **kwargs)
 
@@ -282,6 +291,9 @@ class Model(pd.DataFrame):
         )[0]
       self._columns = [c['column_name'] for c in columns]
     return self._columns
+
+  def save(self):
+    return self.__class__.insert(values=self)
 
   def where(self, **kwargs):
     conditions = kwargs.get('conditions', kwargs)
