@@ -227,6 +227,11 @@ class WriteQueryBuilder(PGQueryBuilder):
             if k not in kw_values:
                 kw_values.loc[:, k] = v
 
+        pk = self.kwargs.get('primary_key', Record.primary_key)
+        for col in [pk, 'stack']:
+            if col in kw_values:
+                del kw_values[col]
+
         return kw_values
 
     @memoized_property
@@ -237,11 +242,6 @@ class WriteQueryBuilder(PGQueryBuilder):
             values = collections.OrderedDict()
 
             for k, v in val.iteritems():
-
-                if k == self.kwargs.get('primary_key', Record.primary_key) and v is None:
-                    continue
-
-                if k == 'stack': continue
 
                 if isinstance(v, dict):
                     v = json.dumps(v)
