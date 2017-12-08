@@ -99,7 +99,7 @@ class SelectQueryBuilder(PGQueryBuilder):
         return ' AND '.join(results)
 
     def add_to_where_values(self, values):
-        for k, v in values.iteritems():
+        for k, v in values.items():
             if isinstance(v, pd.Series) or isinstance(v, list):
                 v = tuple(v)
             self.where_values[k] = v
@@ -112,7 +112,7 @@ class SelectQueryBuilder(PGQueryBuilder):
             self.add_to_where_values(where[1])
             results += [where[0]]
         elif isinstance(where, dict):
-            for k, v in where.iteritems():
+            for k, v in where.items():
                 if isinstance(v, tuple):
                     from_label = '%s_from' % k
                     to_label = '%s_to' % k
@@ -121,7 +121,7 @@ class SelectQueryBuilder(PGQueryBuilder):
                     self.add_to_where_values(
                         {from_label: v[0], to_label: v[1]})
                 elif isinstance(v, dict):
-                    for kk, vv in v.iteritems():
+                    for kk, vv in v.items():
                         res = "(" + k + "->>'" + kk + "')"
                         if isinstance(vv, int):
                             res += '::INTEGER'
@@ -230,7 +230,8 @@ class WriteQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def additional_values(self):
-        return {'updated_at': self.now}
+        # return {'updated_at': self.now}
+        return {}
 
     @memoized_property
     def write_values(self):
@@ -241,14 +242,14 @@ class WriteQueryBuilder(PGQueryBuilder):
 
         kw_values = pd.DataFrame(kw_values).copy()
 
-        for k, v in self.additional_values.iteritems():
+        for k, v in self.additional_values.items():
             if k not in kw_values:
                 kw_values.loc[:, k] = v
 
-        pk = self.kwargs.get('primary_key', Record.primary_key)
-        for col in [pk, 'stack']:
-            if col in kw_values:
-                del kw_values[col]
+        # pk = self.kwargs.get('primary_key', Record.primary_key)
+        # for col in [pk, 'stack']:
+        #     if col in kw_values:
+        #         del kw_values[col]
 
         return kw_values
 
@@ -259,7 +260,7 @@ class WriteQueryBuilder(PGQueryBuilder):
         for idx, val in self.write_values.iterrows():
             values = collections.OrderedDict()
 
-            for k, v in val.iteritems():
+            for k, v in val.items():
 
                 if isinstance(v, dict):
                     v = json.dumps(v)
@@ -284,6 +285,7 @@ class WriteQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def fields(self):
+        print("Fields"+__name__, self.kwargs)
         return ', '.join(self.write_values.columns)
 
 
@@ -291,10 +293,7 @@ class InsertQueryBuilder(WriteQueryBuilder):
 
     @memoized_property
     def additional_values(self):
-        additional_values = super(InsertQueryBuilder, self).additional_values
-        additional_values.update(
-            created_at=self.now
-        )
+        additional_values = super(InsertQueryBuilder, self).additional_values        
         return additional_values
 
     @memoized_property

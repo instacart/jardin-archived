@@ -105,7 +105,7 @@ class DatabaseAdapter(object):
         return self.db.cursor().fetchall(), self.columns()
 
     def write(self, query_builder, **kwargs):
-        kwargs['model_metadata'] = self.model_metadata
+        kwargs['model_metadata'] = self.model_metadata       
         query = query_builder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
@@ -116,7 +116,7 @@ class DatabaseAdapter(object):
         else:
             return ((), self.columns())
 
-    def insert(self, **kwargs):
+    def insert(self, **kwargs):        
         return self.write(InsertQueryBuilder, **kwargs)
 
     def update(self, **kwargs):

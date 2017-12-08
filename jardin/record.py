@@ -22,7 +22,7 @@ class Record(dict):
         attrs = []
         if 'id' in self:
             attrs += ['id=%s' % self.id]
-        for att_name, attr_value in self.iteritems():
+        for att_name, attr_value in self.items():
             if att_name == 'id':
                 continue
             attrs += ['%s=%s' % (att_name, attr_value.__repr__())]

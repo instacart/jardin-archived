@@ -211,13 +211,15 @@ class Model(pd.DataFrame):
         """
         Returns the last `limit` records inserted in the model's table in the replica database. Rows are sorted by ``created_at``.
         """
+        where = kwargs.get('where', 'created_at')
+        
         return self.instance(
             self.db_adapter(
                 db_name=kwargs.get('db'),
                 role=kwargs.get('role', 'replica')
             ).select(
-                where='created_at IS NOT NULL',
-                order='created_at DESC',
+                where=' '.join([where,'IS NOT NULL']),
+                order=' '.join([where, 'DESC']),
                 limit=limit
             )
         )
@@ -373,7 +375,7 @@ class Model(pd.DataFrame):
         else:
             wnot = False
         filt = True
-        for field, value in conditions.iteritems():
+        for field, value in conditions.items():
             if value is None:
                 nf = pd.isnull(self[field])
             elif isinstance(value, (np.ndarray, list, pd.Series)):
