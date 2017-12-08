@@ -1,6 +1,6 @@
-from model import Model
-from record import Record
-import config
+from jardin import config
+from jardin.model import Model
+from jardin.record import Record
 
 __author__ = 'Emmanuel Turlay'
 __copyright__ = 'Copyright 2017, Instacart'

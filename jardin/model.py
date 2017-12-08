@@ -1,19 +1,23 @@
-from database import DatabaseAdapter, DatabaseConnections
-from record import Record
-import pandas as pd
-import numpy as np
-import re, inspect
+import inspect
 import os
+import re
+
+import numpy as np
+import pandas as pd
+
+from jardin.database import DatabaseAdapter, DatabaseConnections
+from jardin.record import Record
 
 
 class Model(pd.DataFrame):
     """
       Base class from which your models should inherit.
     """
-    ROLES = {"replica": "read", "master": "write"}  # to have backward compatibility
+    ROLES = {"replica": "read",
+             "master": "write"}  # to have backward compatibility
     table_name = None
     table_alias = None
-    db_names = {} # {'master': database_master_url, 'replica': database_replica_url}
+    db_names = {}  # {'master': database_master_url, 'replica': database_replica_url}
     has_many = []
     belongs_to = {}
     scopes = {}
@@ -35,8 +39,9 @@ class Model(pd.DataFrame):
         this_table_name = self.model_metadata()['table_name']
         for h in self.has_many:
             other_table_name = h.model_metadata()['table_name']
+
             def func(self):
-              return h.select(where={h.belongs_to[this_table_name]: self.id})
+                return h.select(where={h.belongs_to[this_table_name]: self.id})
             setattr(self, other_table_name, func)
 
     @classmethod
@@ -50,13 +55,13 @@ class Model(pd.DataFrame):
         line_number = stack[1][2]
         stack = [filename, function_name, str(line_number)]
         if db_conn:
-          stack = [db_conn.connection().dsn] + stack
+            stack = [db_conn.connection().dsn] + stack
         return ':'.join(stack)
 
     @classmethod
     def select(self, **kwargs):
-        #select='*', where=None, inner_joins=None, left_joins=None, 
-        #group=None, order=None, limit=None, db=None, role='replica'):
+        # select='*', where=None, inner_joins=None, left_joins=None,
+        # group=None, order=None, limit=None, db=None, role='replica'):
         """
         Perform a SELECT statement on the model's table in the replica database.
 
@@ -83,12 +88,12 @@ class Model(pd.DataFrame):
         db_adapter = self.db_adapter(
             db_name=kwargs.get('db'),
             role=kwargs.get('role', 'replica')
-            )
+        )
 
         kwargs['stack'] = self.stack_mark(
             inspect.stack(),
             db_conn=db_adapter.db
-            )
+        )
 
         return self.instance(db_adapter.select(**kwargs))
 
@@ -107,26 +112,25 @@ class Model(pd.DataFrame):
         :returns: ``jardin.Model`` instance, which is a ``pandas.DataFrame``.
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
-        
+
         if filename:
             filename = os.path.join(os.environ['PWD'], filename)
-        
+
         kwargs['where'] = kwargs.get('where', kwargs.get('params'))
-        
+
         results = self.db_adapter(
             db_name=kwargs.get('db'),
             role=kwargs.get('role', 'replica')
-            ).raw_query(
-                sql=sql,
-                filename=filename,
-                **kwargs
-                )
+        ).raw_query(
+            sql=sql,
+            filename=filename,
+            **kwargs
+        )
 
         if results:
             return self.instance(results)
         else:
             return None
-
 
     @classmethod
     def count(self, **kwargs):
@@ -145,7 +149,7 @@ class Model(pd.DataFrame):
         return self.db_adapter(
             db_name=kwargs.get('db'),
             role=kwargs.get('role', 'replica')
-            ).select(**kwargs)[0][0]['count']
+        ).select(**kwargs)[0][0]['count']
 
     def _instance_count(self, **kwargs):
         return super(Model, self).count(**kwargs)
@@ -211,12 +215,12 @@ class Model(pd.DataFrame):
             self.db_adapter(
                 db_name=kwargs.get('db'),
                 role=kwargs.get('role', 'replica')
-                ).select(
-                    where='created_at IS NOT NULL',
-                    order='created_at DESC',
-                    limit=limit
-                    )
-                )
+            ).select(
+                where='created_on IS NOT NULL',
+                order='created_on DESC',
+                limit=limit
+            )
+        )
 
     @classmethod
     def find_by(self, values={}, **kwargs):
@@ -231,11 +235,11 @@ class Model(pd.DataFrame):
             return self.record_class(**self.db_adapter(
                 db_name=kwargs.get('db'),
                 role=kwargs.get('role', 'replica')
-                ).select(
-                    where=values,
-                    limit=1
-                    )[0][0]
-                )
+            ).select(
+                where=values,
+                limit=1
+            )[0][0]
+            )
         except IndexError:
             return None
 
@@ -251,23 +255,25 @@ class Model(pd.DataFrame):
     def db_adapter(self, role='replica', db_name=None):
         if not hasattr(self, '_db_adapter'):
             self._db_adapter = {}
-        
+
         if role not in self._db_adapter:
-          self._db_adapter[role] = DatabaseAdapter(
-              self.db(
-                  role=role,
-                  db_name=db_name
-                  ), 
-              self.model_metadata()
-              )
+            self._db_adapter[role] = DatabaseAdapter(
+                self.db(
+                    role=role,
+                    db_name=db_name
+                ),
+                self.model_metadata()
+            )
 
         return self._db_adapter[role]
 
     @classmethod
     def model_metadata(self):
-        tn = self.table_name if isinstance(self.table_name, str) else self.default_table_name()
+        tn = self.table_name if isinstance(
+            self.table_name, str) else self.default_table_name()
         table_alias = self.table_alias
-        if table_alias is None: table_alias = ''.join([w[0] for w in tn.split('_')])
+        if table_alias is None:
+            table_alias = ''.join([w[0] for w in tn.split('_')])
         return {
             'table_name': tn,
             'table_alias': table_alias,
@@ -283,17 +289,18 @@ class Model(pd.DataFrame):
             self._default_table_name = re.sub(
                 '([a-z0-9])([A-Z])',
                 r'\1_\2', s1
-                ).lower()
+            ).lower()
 
         return self._default_table_name
 
     @classmethod
-    def db(self, role='replica', db_name = None):
-        if not hasattr(self, '_db'): self._db = {}
+    def db(self, role='replica', db_name=None):
+        if not hasattr(self, '_db'):
+            self._db = {}
         name = self.db_names.get(
             role,
             self.db_names.get(self.ROLES.get(role))) if db_name is None else db_name
-        
+
         if name not in self._db:
             self._db[name] = DatabaseConnections.connection(name)
 
@@ -306,7 +313,7 @@ class Model(pd.DataFrame):
             sql = "select setting FROM pg_settings WHERE name = 'hot_standby'"
             r = self.instance(
                 self.db_adapter().raw_query(sql=sql, **kwargs)
-                ).squeeze()
+            ).squeeze()
             return r == "on"
         except:
             return False
@@ -326,8 +333,8 @@ class Model(pd.DataFrame):
             return self.instance(
                 self.db_adapter().raw_query(
                     sql=sql, **kwargs
-                    )
-                ).squeeze()
+                )
+            ).squeeze()
         except:
             return 0
 
@@ -348,10 +355,10 @@ class Model(pd.DataFrame):
         if self.__dict__.get('_columns') is None:
             table_name = self.model_metadata()['table_name']
             columns = self.db_adapter().raw_query(
-                sql="SELECT column_name FROM information_schema.columns WHERE " \
+                sql="SELECT column_name FROM information_schema.columns WHERE "
                 "table_schema = 'public' AND table_name = %(table_name)s;",
                 where={'table_name': table_name}
-                )[0]
+            )[0]
             self._columns = [c['column_name'] for c in columns]
         return self._columns
 
@@ -373,7 +380,8 @@ class Model(pd.DataFrame):
                 nf = self[field].isin(value)
             else:
                 nf = self[field] == value
-            if wnot: nf = ~nf
+            if wnot:
+                nf = ~nf
             filt = filt & nf
         return self[filt]
 

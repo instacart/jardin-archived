@@ -1,14 +1,13 @@
+from urllib.parse import urlparse
+
 import psycopg2 as pg
 from psycopg2 import extras
-import urlparse
-from query_builders import \
-    SelectQueryBuilder, \
-    InsertQueryBuilder, \
-    UpdateQueryBuilder, \
-    DeleteQueryBuilder, \
-    RawQueryBuilder
-import config
-from tools import retry
+
+from jardin import config
+from jardin.query_builders import (DeleteQueryBuilder, InsertQueryBuilder,
+                                   RawQueryBuilder, SelectQueryBuilder,
+                                   UpdateQueryBuilder)
+from jardin.tools import retry
 
 
 class DatabaseConnections(object):
@@ -31,10 +30,10 @@ class DatabaseConnections(object):
     def urls(self, name):
         if len(self._urls) == 0:
             config.init()
-        for nme, url in config.DATABASES.iteritems():
+        for db, url in config.DATABASES.items():
             if url:
-                self._urls[nme] = urlparse.urlparse(url)
-        return self._urls[name]
+                self._urls[db] = urlparse(url)
+        return self._urls[db]
 
 
 class DatabaseConnection(object):
@@ -110,7 +109,7 @@ class DatabaseAdapter(object):
         row_ids = self.db.cursor().fetchall()
         row_ids = [r['id'] for r in row_ids]
         if len(row_ids) > 0:
-            return self.select(where = {'id': row_ids})
+            return self.select(where={'id': row_ids})
         else:
             return ((), self.columns())
 

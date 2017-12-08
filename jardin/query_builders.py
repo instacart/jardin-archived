@@ -1,10 +1,14 @@
-from memoized_property import memoized_property
+import collections
+import json
+import re
 from datetime import datetime
-import pandas as pd
-import numpy as np
-import model, config, re, collections, json
 
-from record import Record
+import numpy as np
+import pandas as pd
+from memoized_property import memoized_property
+
+from jardin import config, model
+from jardin.record import Record
 
 
 class PGQueryBuilder(object):
@@ -36,9 +40,10 @@ class PGQueryBuilder(object):
     def now(self):
         return datetime.utcnow()
 
-    def extrapolators(self, fields, sep = ', '):
+    def extrapolators(self, fields, sep=', '):
         extrapolators = []
-        for field in fields: extrapolators.append('%(' + '%s' % field + ')s')
+        for field in fields:
+            extrapolators.append('%(' + '%s' % field + ')s')
         return sep.join(extrapolators)
 
     @memoized_property
@@ -72,11 +77,13 @@ class SelectQueryBuilder(PGQueryBuilder):
     @memoized_property
     def scope_wheres(self):
         scopes = self.kwargs.get('scopes', [])
-        if not isinstance(scopes, list): scopes = [scopes]
+        if not isinstance(scopes, list):
+            scopes = [scopes]
         results = []
         for scope in scopes:
             scp = self.scopes[scope]
-            if not isinstance(scp, list): scp = [scp]
+            if not isinstance(scp, list):
+                scp = [scp]
             results += scp
         return results
 
@@ -84,7 +91,8 @@ class SelectQueryBuilder(PGQueryBuilder):
     def wheres(self):
         self.where_values = {}
         wheres = self.kwargs.get('where', None)
-        if not isinstance(wheres, list): wheres = [wheres]
+        if not isinstance(wheres, list):
+            wheres = [wheres]
         wheres += self.scope_wheres
         res = [self.where_items(where) for where in wheres]
         results = [item for sublist in res for item in sublist]
@@ -108,8 +116,10 @@ class SelectQueryBuilder(PGQueryBuilder):
                 if isinstance(v, tuple):
                     from_label = '%s_from' % k
                     to_label = '%s_to' % k
-                    results += [k + ' BETWEEN %(' + from_label + ')s AND %(' + to_label + ')s']
-                    self.add_to_where_values({from_label: v[0], to_label: v[1]})
+                    results += [k + ' BETWEEN %(' + from_label +
+                                ')s AND %(' + to_label + ')s']
+                    self.add_to_where_values(
+                        {from_label: v[0], to_label: v[1]})
                 elif isinstance(v, dict):
                     for kk, vv in v.iteritems():
                         res = "(" + k + "->>'" + kk + "')"
@@ -158,7 +168,8 @@ class SelectQueryBuilder(PGQueryBuilder):
     @memoized_property
     def inner_joins(self):
         joins = self.kwargs.get('inner_join', None)
-        if joins is None: return
+        if joins is None:
+            return
         if isinstance(joins, str):
             return "INNER JOIN %s" % joins
         elif isinstance(joins, list):
@@ -167,11 +178,12 @@ class SelectQueryBuilder(PGQueryBuilder):
                 if isinstance(j, str):
                     js += ["INNER JOIN %s" % j]
                 elif issubclass(j, model.Model):
-                    js += [self.build_join(j, how = 'INNER')]
+                    js += [self.build_join(j, how='INNER')]
         return ' '.join(js)
 
     def joins(self, joins, how):
-        if joins is None: return
+        if joins is None:
+            return
         if isinstance(joins, str):
             return "%s JOIN %s" % (how, joins)
         elif isinstance(joins, list):
@@ -180,10 +192,10 @@ class SelectQueryBuilder(PGQueryBuilder):
                 if isinstance(j, str):
                     js += ["%s JOIN %s" % (how, j)]
                 elif issubclass(j, model.Model):
-                    js += [self.build_join(j, how = how)]
+                    js += [self.build_join(j, how=how)]
             return ' '.join(js)
 
-    def build_join(self, join_model, how = 'INNER'):
+    def build_join(self, join_model, how='INNER'):
         join_model = join_model.model_metadata()
         table_name, join_table_name = self.table_name, join_model['table_name']
         table_alias, join_table_alias = self.table_alias, join_model['table_alias']
@@ -198,12 +210,18 @@ class SelectQueryBuilder(PGQueryBuilder):
     @memoized_property
     def query(self):
         query = self.watermark + "SELECT " + self.selects + ' FROM ' + self.froms
-        if self.left_joins: query += ' ' + self.left_joins
-        if self.inner_joins: query += ' ' + self.inner_joins
-        if self.wheres: query += ' WHERE ' + self.wheres
-        if self.group_bys: query += ' GROUP BY ' + self.group_bys
-        if self.order_bys: query += ' ORDER BY ' + self.order_bys
-        if self.limit: query += ' LIMIT ' + str(self.limit)
+        if self.left_joins:
+            query += ' ' + self.left_joins
+        if self.inner_joins:
+            query += ' ' + self.inner_joins
+        if self.wheres:
+            query += ' WHERE ' + self.wheres
+        if self.group_bys:
+            query += ' GROUP BY ' + self.group_bys
+        if self.order_bys:
+            query += ' ORDER BY ' + self.order_bys
+        if self.limit:
+            query += ' LIMIT ' + str(self.limit)
         query += ';'
         return (query, self.where_values)
 
@@ -220,7 +238,7 @@ class WriteQueryBuilder(PGQueryBuilder):
 
         if isinstance(kw_values, dict):
             kw_values = [kw_values]
-        
+
         kw_values = pd.DataFrame(kw_values).copy()
 
         for k, v in self.additional_values.iteritems():
@@ -252,11 +270,11 @@ class WriteQueryBuilder(PGQueryBuilder):
         return all_values
 
     @memoized_property
-    def value_extrapolators(self): 
+    def value_extrapolators(self):
         return ', '.join([
-            "(" + self.extrapolators(fa, sep = ', ') + ")"
+            "(" + self.extrapolators(fa, sep=', ') + ")"
             for fa in [v.keys() for v in self.values_list]
-            ])
+        ])
 
     @memoized_property
     def values(self):
@@ -276,12 +294,14 @@ class InsertQueryBuilder(WriteQueryBuilder):
         additional_values = super(InsertQueryBuilder, self).additional_values
         additional_values.update(
             created_at=self.now
-            )
+        )
         return additional_values
 
     @memoized_property
     def query(self):
-        query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES " + self.value_extrapolators + " RETURNING id;"
+        query = self.watermark + "INSERT INTO " + self.table_name + \
+            " (" + self.fields + ") VALUES " + \
+            self.value_extrapolators + " RETURNING id;"
         return (query, self.values)
 
 
@@ -289,8 +309,10 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + 'UPDATE ' + self.table_name + ' SET (' + self.fields + ') = ' + self.value_extrapolators
-        if self.wheres: query += " WHERE " + self.wheres
+        query = self.watermark + 'UPDATE ' + self.table_name + \
+            ' SET (' + self.fields + ') = ' + self.value_extrapolators
+        if self.wheres:
+            query += " WHERE " + self.wheres
         query += ' RETURNING id;'
         values = self.where_values
         values.update(self.values)
@@ -301,7 +323,8 @@ class DeleteQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + 'DELETE FROM ' +self.table_name + ' WHERE ' + self.wheres + ';'
+        query = self.watermark + 'DELETE FROM ' + \
+            self.table_name + ' WHERE ' + self.wheres + ';'
         return (query, self.where_values)
 
 

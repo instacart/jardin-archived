@@ -90,3 +90,5 @@ ENV/
 
 *.sql
 test.py
+
+internal_test/
