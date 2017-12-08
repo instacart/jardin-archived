@@ -7,9 +7,11 @@ DEFAULTS = {'WATERMARK': '', 'LOG_LEVEL': logging.INFO}
 
 INITIALIZED = False
 
+
 def load_config_file():
-    settings_file = os.environ.get('JARDIN_CONF', 'jardin_conf.py')    
+    settings_file = os.environ.get('JARDIN_CONF', 'jardin_conf.py')
     return imp.load_source('jardin_conf', settings_file)
+
 
 def init():
     if INITIALIZED:
@@ -18,7 +20,7 @@ def init():
     global DATABASES, WATERMARK, LOG_LEVEL, logger
 
     config_file = load_config_file()
-    
+
     DATABASES = config_file.DATABASES
     this = sys.modules[__name__]
 
