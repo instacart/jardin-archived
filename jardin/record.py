@@ -14,7 +14,7 @@ class Record(dict):
         raise AttributeError(
             "'%s' object has not attribute '%s'" % (self.__class__.__name__, i))
 
-    def __setattr__(self,i , v):
+    def __setattr__(self, i, v):
         self[i] = v
         return v
 
@@ -22,7 +22,8 @@ class Record(dict):
         attrs = []
         if 'id' in self:
             attrs += ['id=%s' % self.id]
-        for att_name, attr_value in self.iteritems():
-            if att_name == 'id': continue
+        for att_name, attr_value in self.items():
+            if att_name == 'id':
+                continue
             attrs += ['%s=%s' % (att_name, attr_value.__repr__())]
         return '%s(%s)' % (self.__class__.__name__, ', '.join(attrs))
