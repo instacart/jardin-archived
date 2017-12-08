@@ -216,8 +216,8 @@ class Model(pd.DataFrame):
                 db_name=kwargs.get('db'),
                 role=kwargs.get('role', 'replica')
             ).select(
-                where='created_on IS NOT NULL',
-                order='created_on DESC',
+                where='created_at IS NOT NULL',
+                order='created_at DESC',
                 limit=limit
             )
         )
