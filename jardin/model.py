@@ -416,8 +416,8 @@ class Transaction(object):
         self._connection.autocommit = False
         self._model.query(sql='BEGIN;', role='master')
 
-    def __exit__(self, type, value, traceback):
-        if value is None:
+    def __exit__(self, exc_type, exc_value, traceback):
+        if exc_type is None:
             self._model.query(sql='COMMIT;', role='master')
         else:
             self._model.query(sql='ROLLBACK;', role='master')
