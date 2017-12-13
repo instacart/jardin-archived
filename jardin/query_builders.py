@@ -32,10 +32,6 @@ class PGQueryBuilder(object):
     def scopes(self):
         return self.model_metadata['scopes']
 
-    @memoized_property
-    def now(self):
-        return datetime.utcnow()
-
     def extrapolators(self, fields, sep = ', '):
         extrapolators = []
         for field in fields: extrapolators.append('%(' + '%s' % field + ')s')
@@ -211,10 +207,6 @@ class SelectQueryBuilder(PGQueryBuilder):
 class WriteQueryBuilder(PGQueryBuilder):
 
     @memoized_property
-    def additional_values(self):
-        return {'updated_at': self.now}
-
-    @memoized_property
     def write_values(self):
         kw_values = self.kwargs['values']
 
@@ -222,10 +214,6 @@ class WriteQueryBuilder(PGQueryBuilder):
             kw_values = [kw_values]
         
         kw_values = pd.DataFrame(kw_values).copy()
-
-        for k, v in self.additional_values.iteritems():
-            if k not in kw_values:
-                kw_values.loc[:, k] = v
 
         pk = self.kwargs.get('primary_key', Record.primary_key)
         for col in [pk, 'stack']:
@@ -270,14 +258,6 @@ class WriteQueryBuilder(PGQueryBuilder):
 
 
 class InsertQueryBuilder(WriteQueryBuilder):
-
-    @memoized_property
-    def additional_values(self):
-        additional_values = super(InsertQueryBuilder, self).additional_values
-        additional_values.update(
-            created_at=self.now
-            )
-        return additional_values
 
     @memoized_property
     def query(self):
