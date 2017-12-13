@@ -1,10 +1,12 @@
-from database import DatabaseAdapter, DatabaseConnections
 from datetime import datetime
-from record import Record
 import pandas as pd
 import numpy as np
 import re, inspect
 import os
+
+import config
+from record import Record
+from database import DatabaseAdapter, DatabaseConnections
 
 
 class Model(pd.DataFrame):
@@ -159,6 +161,9 @@ class Model(pd.DataFrame):
         :param values: A dictionary containing the values to be inserted. ``datetime``, ``dict`` and ``bool`` objects can be passed as is and will be correctly serialized by psycopg2.
         :type values: dict
         """
+        if len(kwargs['values']) == 0:
+            config.logger.warning('No values to insert.')
+            return
         kwargs['stack'] = self.stack_mark(inspect.stack())
         kwargs['primary_key'] = self.record_class.primary_key
         column_names = self.column_names()
