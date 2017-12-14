@@ -72,7 +72,11 @@ class DatabaseConnection(object):
         return self._cursor
 
     @retry(
-        (pg.InterfaceError, pg.extensions.TransactionRollbackError),
+        (
+            pg.InterfaceError,
+            pg.extensions.TransactionRollbackError,
+            pg.extensions.QueryCanceledError
+            ),
         tries=3)
     def execute(self, *query):
         try:
@@ -80,7 +84,11 @@ class DatabaseConnection(object):
             if self.autocommit:
                 self.connection().commit()
             return results
-        except (pg.ProgrammingError, pg.IntegrityError):
+        except (
+                pg.ProgrammingError,
+                pg.IntegrityError,
+                pg.extensions.QueryCanceledError
+                ):
             self.connection().rollback()
             raise
         except pg.InterfaceError:
