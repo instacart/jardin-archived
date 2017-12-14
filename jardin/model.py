@@ -136,6 +136,8 @@ class Model(pd.DataFrame):
         """
         Performs a COUNT statement on the model's table in the replica database.
 
+        :param select: Column to be counted.
+        :type select: string
         :param where: WHERE clause of the SELECT statement. This can be a plain string, a dict or an array.
         :type where: string, dict, array
         :param db: Database name from your ``jardin_conf.py``, overrides the default database set in the model declaration.
