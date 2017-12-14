@@ -144,7 +144,10 @@ class Model(pd.DataFrame):
         :type role: string
         :returns: integer
         """
-        kwargs['select'] = 'COUNT(*)'
+        if 'select' in kwargs:
+            kwargs['select'] = 'COUNT(%s)' % kwargs['select']
+        else:
+            kwargs['select'] = 'COUNT(*)'
         return self.db_adapter(
             db_name=kwargs.get('db'),
             role=kwargs.get('role', 'replica')
