@@ -23,7 +23,7 @@ class TestTransaction(object):
         self._model.query(sql='BEGIN;', role='master')
         if self.create_table:
             self._model.query(
-                sql='CREATE TABLE users (id serial PRIMARY KEY, name varchar(256), created_at timestamp, updated_at timestamp);'
+                sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp, updated_at timestamp);' % self._model.model_metadata()['table_name']
                 )
 
 
@@ -62,6 +62,18 @@ class TestModel(unittest.TestCase):
             self.assertEqual(Users.count(), 0)
             Users.insert(values=pd.DataFrame())
             self.assertEqual(Users.count(), 0)
+
+    def test_count(self):
+        with TestTransaction(Users):
+            self.assertEqual(Users.count(), 0)
+            Users.insert(values={'name': 'Holberton'})
+            self.assertEqual(Users.count(), 1)
+
+    def test_custom_count(self):
+        with TestTransaction(Users):
+            Users.insert(values={'name': 'Holberton'})
+            Users.insert(values={'name': 'Holberton'})
+            self.assertEqual(Users.count(select='DISTINCT(name)'), 1) 
 
 
 if __name__ == "__main__":
