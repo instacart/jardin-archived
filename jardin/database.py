@@ -84,17 +84,13 @@ class DatabaseConnection(object):
             if self.autocommit:
                 self.connection().commit()
             return results
-        except (
-                pg.ProgrammingError,
-                pg.IntegrityError,
-                pg.extensions.QueryCanceledError
-                ):
-            self.connection().rollback()
-            raise
         except pg.InterfaceError:
             self._connection = None
             self._cursor = None
             raise
+        except Exception as e:
+            self.connection().rollback()
+            raise e
 
 
 class DatabaseAdapter(object):
