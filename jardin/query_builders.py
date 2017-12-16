@@ -52,11 +52,16 @@ class SelectQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def selects(self):
-        selects = self.kwargs.get('select', '*')
+        selects = self.kwargs.get('select') or '*'
         if isinstance(selects, str):
             return selects
         elif isinstance(selects, list):
             return ', '.join(selects)
+        elif isinstance(selects, dict):
+            result = []
+            for k, v in selects.iteritems():
+                result += ['%s AS %s' % (k, v)]
+            return ', '.join(result)
 
     @memoized_property
     def froms(self):

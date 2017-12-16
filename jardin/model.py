@@ -64,7 +64,7 @@ class Model(pd.DataFrame):
         Perform a SELECT statement on the model's table in the replica database.
 
         :param select: Columns to return in the SELECT statement.
-        :type select: string, array
+        :type select: string, array, dict
         :param where: WHERE clause of the SELECT statement. This can be a plain string, a dict or an array.
         :type where: string, dict, array
         :param inner_joins: Specifies an INNER JOIN clause. Can be a plain string (without the INNER JOIN part), an array of strings or an array of classes if the relationship was defined in the model.
@@ -406,6 +406,18 @@ class Model(pd.DataFrame):
         Returns an iterator to loop over the rows, each being an instance of the model's record class, i.e. :doc:`jardin_record` by default.
         """
         return ModelIterator(self)
+
+    def index_by(self, field):
+        """
+        Returns a dict with a key for each value of `field` and the first record with that value as value.
+        :param field: Name of the field to index by.
+        :type field: string.
+        """
+        values = self[field].unique()
+        results = {}
+        for value in values:
+            results[value] = self.record_class(**self[self[field] == value].iloc[0])
+        return results
 
 
 class ModelIterator(object):
