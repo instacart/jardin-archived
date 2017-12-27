@@ -144,7 +144,7 @@ class Model(object):
         """
         db_adapter = self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role', 'replica')
+            role=kwargs.get('role') or 'replica'
             )
 
         kwargs['stack'] = self.stack_mark(
@@ -177,7 +177,7 @@ class Model(object):
         
         results = self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role', 'replica')
+            role=kwargs.get('role') or 'replica'
             ).raw_query(
                 sql=sql,
                 filename=filename,
@@ -211,7 +211,7 @@ class Model(object):
             kwargs['select'] = 'COUNT(*)'
         return self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role', 'replica')
+            role=kwargs.get('role') or 'replica'
             ).select(**kwargs)[0][0]['count']
 
     @classmethod
@@ -280,7 +280,7 @@ class Model(object):
         return self.instance(
             self.db_adapter(
                 db_name=kwargs.get('db'),
-                role=kwargs.get('role', 'replica')
+                role=kwargs.get('role') or 'replica'
                 ).select(
                     where='created_at IS NOT NULL',
                     order='created_at DESC',
@@ -300,7 +300,7 @@ class Model(object):
         try:
             return self(**self.db_adapter(
                 db_name=kwargs.get('db'),
-                role=kwargs.get('role', 'replica')
+                role=kwargs.get('role') or 'replica'
                 ).select(
                     where=values,
                     limit=1
