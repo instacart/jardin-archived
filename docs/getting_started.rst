@@ -40,13 +40,13 @@ Then, in your app, say you have a table called ``users``::
   # app.py
   import jardin
 
-  class Users(jardin.Model):
+  class User(jardin.Model):
     db_names = {'master': 'my_master_database', 'replica': 'my_replica_database'}
 
 In the console::
 
-  >>> from app import Users
-  >>> users = Users.last(4)
+  >>> from app import User
+  >>> users = User.last(4)
   # /* My Great App */ SELECT * FROM users ORDER BY u.created_at DESC LIMIT 4;
   >>> users
   id   name    email              ...
@@ -60,5 +60,5 @@ The resulting object is a pandas dataframe::
   >>> import pandas
   >>> isinstance(users, pandas.DataFrame)
   True
-  >>> isinstance(users, jardin.Model)
+  >>> isinstance(users, jardin.Collection)
   True

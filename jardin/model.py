@@ -8,6 +8,9 @@ from database import DatabaseAdapter, DatabaseConnections
 
 
 class Collection(pandas.DataFrame):
+    """
+        Base class for collection of records. Inherits from `pandas.DataFrame`.
+    """
 
     @classmethod
     def from_records(self, *args, **kwargs):
@@ -140,7 +143,7 @@ class Model(object):
         :type db: string
         :param role: One of ``('master', 'replica')`` to override the default.
         :type role: string
-        :returns: ``jardin.Model`` instance, which is a ``pandas.DataFrame``.
+        :returns: ``jardin.Collection`` instance, which is a ``pandas.DataFrame``.
         """
         db_adapter = self.db_adapter(
             db_name=kwargs.get('db'),
@@ -166,7 +169,7 @@ class Model(object):
         :type db: string
         :param role: `optional` One of ``('master', 'replica')`` to override the default.
         :type role: string
-        :returns: ``jardin.Model`` instance, which is a ``pandas.DataFrame``.
+        :returns: ``jardin.Collection`` instance, which is a ``pandas.DataFrame``.
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
         
@@ -295,7 +298,7 @@ class Model(object):
 
         :param values: Criteria to find the record.
         :type values: dict
-        :returns: an instance of the model's record class, i.e. :doc:`jardin_record` by default.
+        :returns: an instance of the model.
         """
         try:
             return self(**self.db_adapter(
@@ -313,7 +316,7 @@ class Model(object):
     def find(self, id, **kwargs):
         """
         Finds a record by its id in the model's table in the replica database.
-        :returns: an instance of the model's record class, i.e. :doc:`jardin_record` by default.
+        :returns: an instance of the model.
         """
         return self.find_by(values={'id': id}, **kwargs)
 

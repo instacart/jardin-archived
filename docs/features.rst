@@ -1,29 +1,29 @@
 Features
 ========
 
-Associations
-------------
+..Associations
+..------------
 
-Belongs-to and has-many relationships can be declared as such::
+..Belongs-to and has-many relationships can be declared as such:
 
-  class Posts(jardin.Model):
-    belongs_to = {
-      'users': 'user_id'
-    }
+..  class Posts(jardin.Model):
+..    belongs_to = {
+..      'users': 'user_id'
+..    }
 
-  class Users(jardin.Model):
-    has_many = [Posts]
+..  class Users(jardin.Model):
+..    has_many = [Posts]
 
-And then used as such::
+..And then used as such:
 
-  users = Users.select()
-  posts = users.posts()
+..  users = Users.select()
+..  posts = users.posts()
 
-Or::
+..Or:
 
-  Posts.select(
-    inner_join=[Users],
-    where={'u.id': 123})
+..  Posts.select(
+..    inner_join=[Users],
+..    where={'u.id': 123})
 
 Query watermarking
 ------------------
@@ -41,7 +41,7 @@ Scopes
 
 Query scopes can be defined inside your model as such::
 
-  class Users(jardin.Model):
+  class User(jardin.Model):
 
     scopes = {
       'active': {'active': True},
@@ -50,7 +50,7 @@ Query scopes can be defined inside your model as such::
 
 Then used as such::
 
-  Users.select(scopes = ['active', 'recent'])
+  User.select(scopes = ['active', 'recent'])
 
 Which will issue this statement
 
@@ -65,9 +65,9 @@ Multiple statements can be issued within a single transaction
 
 .. code-block:: python
 
-  with Users.transaction():
-    Users.insert(...)
-    Projects.update(...)
+  with User.transaction():
+    User.insert(...)
+    Project.update(...)
 
 which will generate the following statements::
 
@@ -98,9 +98,9 @@ And then in your model declarations::
   class Db2Model(jardin.Model):
     db_name = {'master': 'my_second_db', 'replica': 'my_second_db_replica'}
 
-  class Users(Db1Model): pass
+  class User(Db1Model): pass
 
-  class Projects(Db2Model): pass
+  class Project(Db2Model): pass
 
 
 Replica lag measurement
