@@ -21,7 +21,8 @@ setup(
       'pandas',
       'numpy',
       'psycopg2',
-      'memoized_property'
+      'memoized_property',
+      'inflect'
       ],
       python_requires='>=2.7, <3',
       test_suite='tests',

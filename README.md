@@ -8,6 +8,8 @@ Jardin is a `pandas.DataFrame`-based ORM for Python applications.
 
 [![documentation](https://readthedocs.org/projects/jardin/badge/?version=latest)](http://jardin.readthedocs.io/en/latest/)
 
+[![Build Status](https://travis-ci.org/instacart/jardin.svg?branch=flip)](https://travis-ci.org/instacart/jardin)
+
 ### Installation
 ```shell
 $ pip install jardin

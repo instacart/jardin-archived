@@ -6,7 +6,7 @@ SELECT queries
 
 Here is the basic syntax to select records from the database
 
-  >>> users = Users.select(
+  >>> users = User.select(
                 select=['id', 'name'],
                 where={'email': 'paul@beatl.es'},
                 order='id ASC',
@@ -36,23 +36,23 @@ Here are the different ways to feed a condition clause to a query.
 
 The simplest way to join another table is as follows
 
-  >>> Users.select(inner_join=["instruments i ON i.id = u.instrument_id"])
+  >>> User.select(inner_join=["instruments i ON i.id = u.instrument_id"])
 
 If you have configured your models associations, see :doc:`features`, you can simply pass the class as argument::
 
-  >>> Users.select(inner_join=[Instruments])
+  >>> User.select(inner_join=[Instrument])
 
 Individual record selection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can also look-up a single record by id:
 
-  >>> Users.find(1)
+  >>> User.find(1)
   # /* My Great App */ SELECT * FROM users u WHERE u.id = 1 LIMIT 1;
-  Record(id=1, name='Paul', email='paul@beatl.es', ...)
-  >>> Users.find_by(values={'name': 'Paul'})
+  User(id=1, name='Paul', email='paul@beatl.es', ...)
+  >>> User.find_by(values={'name': 'Paul'})
   # /* My Great App */ SELECT * FROM users u WHERE u.name = 'Paul' LIMIT 1;
-  Record(id=1, name='Paul', email='paul@beatl.es', ...)
+  User(id=1, name='Paul', email='paul@beatl.es', ...)
 
 Note that the returned object is a ``Record`` object which allows you to access attributes in those way:
 
@@ -61,29 +61,11 @@ Note that the returned object is a ``Record`` object which allows you to access 
   >>> user.name
   Paul
 
-It is possible to define your own record classes.
-
-  # app.py
-  import jardin
-
-  class User(jardin.Record):
-
-    def is_drummer(self):
-      return self.name == 'Ringo'
-
-  class Users(jardin.Model):
-    record_class = User
-
-And then
-
-  >>> user = Users.find(1)
-  >>> user.is_drummer()
-  False
 
 INSERT queries
 --------------
 
-  >>> user = Users.insert(values={'name': 'Pete', 'email': 'pete@beatl.es'})
+  >>> user = User.insert(values={'name': 'Pete', 'email': 'pete@beatl.es'})
   # /* My Great App */ INSERT INTO users (name, email) VALUES ('Pete', 'pete@beatl.es') RETURNING id;
   # /* My Great App */ SELECT u.* FROM users WHERE u.id = 4;
   >>> user
@@ -94,25 +76,25 @@ INSERT queries
 UPDATE queries
 --------------
 
-  >>> users = Users.update(values={'hair': 'long'}, where={'name': 'John'})
+  >>> users = User.update(values={'hair': 'long'}, where={'name': 'John'})
   # /* My Great App */ UPDATE users u SET (u.hair) = ('long') WHERE u.name = 'John' RETURNING id;
   # /* My Great App */ SELECT * FROM users u WHERE u.name = 'John';
 
 DELETE queries
 --------------
 
-  >>> Users.delete(where={'id': 1})
+  >>> User.delete(where={'id': 1})
   # /* My Great App */ DELETE FROM users u WHERE u.id = 1;
 
 Raw queries
 -----------
 
-  >>> Users.query(sql='SELECT * FROM users LIMIT 10;')
+  >>> User.query(sql='SELECT * FROM users LIMIT 10;')
   # /* My Great App */ SELECT * FROM users LIMIT 10;
 
 Query from SQL file
 -------------------
 
->>> Users.query(filename='path/to/file.sql')
+>>> User.query(filename='path/to/file.sql')
 
 The path is relative to the working directory (i.e. where your app was launched).

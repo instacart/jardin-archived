@@ -1,15 +1,43 @@
 from datetime import datetime
-import pandas as pd
-import numpy as np
+import pandas
 import re, inspect
 import os
 
 import config
-from record import Record
 from database import DatabaseAdapter, DatabaseConnections
 
 
-class Model(pd.DataFrame):
+class Collection(pandas.DataFrame):
+    """
+        Base class for collection of records. Inherits from `pandas.DataFrame`.
+    """
+
+    @classmethod
+    def from_records(self, *args, **kwargs):
+        self.model_class = kwargs['model_class']
+        del kwargs['model_class']
+        return super(Collection, self).from_records(*args, **kwargs)
+
+    def records(self):
+        """
+        Returns an iterator to loop over the rows, each being an instance of the model's record class, i.e. :doc:`jardin_record` by default.
+        """
+        return ModelIterator(self)
+
+    def index_by(self, field):
+        """
+        Returns a dict with a key for each value of `field` and the first record with that value as value.
+        :param field: Name of the field to index by.
+        :type field: string.
+        """
+        values = self[field].unique()
+        results = {}
+        for value in values:
+            results[value] = self.model_class(**self[self[field] == value].iloc[0])
+        return results
+
+
+class Model(object):
     """
       Base class from which your models should inherit.
     """
@@ -20,31 +48,65 @@ class Model(pd.DataFrame):
     has_many = []
     belongs_to = {}
     scopes = {}
-    record_class = Record
+    collection_class = Collection
+    primary_key = 'id'
 
-    def __init__(self, *args, **kwargs):
-        self.create_relationships()
-        self.count = self._instance_count
-        self.insert = self._instance_insert
-        self.update = self._instance_update
-        super(Model, self).__init__(*args, **kwargs)
+    def __init__(self, **kwargs):
+        self.attributes = dict()
+        kwargs[self.primary_key] = kwargs.get(self.primary_key, None)
+        self.attributes.update(kwargs)
 
-    @property
-    def _constructor(self):
-        return self.__class__
+    def __getattribute__(self, i):
+        try:
+            return super(Model, self).__getattribute__(i)
+        except AttributeError as e:
+            if i in self.attributes:
+                return self.attributes[i]
+            raise e
 
-    @classmethod
-    def create_relationships(self):
-        this_table_name = self.model_metadata()['table_name']
-        for h in self.has_many:
-            other_table_name = h.model_metadata()['table_name']
-            def func(self):
-              return h.select(where={h.belongs_to[this_table_name]: self.id})
-            setattr(self, other_table_name, func)
+    def __setattr__(self, i , v):
+        if i == 'attributes':
+            super(Model, self).__setattr__(i, v)
+        else:
+            self.attributes[i] = v
+            return v
+
+    def __repr__(self):
+        attrs = []
+        if 'id' in self.attributes:
+            attrs += ['id=%s' % self.id]
+        for att_name, attr_value in self.attributes.iteritems():
+            if att_name == 'id': continue
+            attrs += ['%s=%s' % (att_name, attr_value.__repr__())]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(attrs))
+
+    def save(self):
+        if self.attributes.get('id'):
+            return self.__class__.update(values=self, where={'id': self.id})
+        else:
+            return self.__class__.insert(values=self)
+
+    #def init_relationships(self):
+    #    for h in self.has_many:
+    #        def func(self, select=None, where=None, limit=None, db=None, role=None):
+
+    #@classmethod
+    #def create_relationships(self):
+    #    this_table_name = self.model_metadata()['table_name']
+    #    for h in self.has_many:
+    #        other_table_name = h.model_metadata()['table_name']
+    #        def func(self):
+    #          return h.select(where={h.belongs_to[this_table_name]: self.id})
+    #        setattr(self, other_table_name, func)
 
     @classmethod
     def instance(self, result):
-        return self.from_records(result[0], columns=result[1], coerce_float=True)
+        return self.collection_class.from_records(
+            result[0],
+            model_class=self,
+            columns=result[1],
+            coerce_float=True
+            )
 
     @classmethod
     def stack_mark(self, stack, db_conn=None):
@@ -81,11 +143,11 @@ class Model(pd.DataFrame):
         :type db: string
         :param role: One of ``('master', 'replica')`` to override the default.
         :type role: string
-        :returns: ``jardin.Model`` instance, which is a ``pandas.DataFrame``.
+        :returns: ``jardin.Collection`` instance, which is a ``pandas.DataFrame``.
         """
         db_adapter = self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role', 'replica')
+            role=kwargs.get('role') or 'replica'
             )
 
         kwargs['stack'] = self.stack_mark(
@@ -107,7 +169,7 @@ class Model(pd.DataFrame):
         :type db: string
         :param role: `optional` One of ``('master', 'replica')`` to override the default.
         :type role: string
-        :returns: ``jardin.Model`` instance, which is a ``pandas.DataFrame``.
+        :returns: ``jardin.Collection`` instance, which is a ``pandas.DataFrame``.
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
         
@@ -118,7 +180,7 @@ class Model(pd.DataFrame):
         
         results = self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role', 'replica')
+            role=kwargs.get('role') or 'replica'
             ).raw_query(
                 sql=sql,
                 filename=filename,
@@ -152,11 +214,8 @@ class Model(pd.DataFrame):
             kwargs['select'] = 'COUNT(*)'
         return self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role', 'replica')
+            role=kwargs.get('role') or 'replica'
             ).select(**kwargs)[0][0]['count']
-
-    def _instance_count(self, **kwargs):
-        return super(Model, self).count(**kwargs)
 
     @classmethod
     def insert(self, **kwargs):
@@ -170,7 +229,7 @@ class Model(pd.DataFrame):
             config.logger.warning('No values to insert.')
             return
         kwargs['stack'] = self.stack_mark(inspect.stack())
-        kwargs['primary_key'] = self.record_class.primary_key
+        kwargs['primary_key'] = self.primary_key
         column_names = self.column_names()
         now = datetime.utcnow()
         for field in ('created_at', 'updated_at'):
@@ -182,12 +241,9 @@ class Model(pd.DataFrame):
     @classmethod
     def record_or_model(self, results):
         if len(results[0]) == 1:
-            return self.record_class(**results[0][0])
+            return self(**results[0][0])
         else:
             return self.instance(results)
-
-    def _instance_insert(self, *args, **kwargs):
-        return super(Model, self).insert(*args, **kwargs)
 
     @classmethod
     def update(self, **kwargs):
@@ -200,16 +256,13 @@ class Model(pd.DataFrame):
         :type where: string, dict, array
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
-        kwargs['primary_key'] = self.record_class.primary_key
+        kwargs['primary_key'] = self.primary_key
         column_names = self.column_names()
         now = datetime.utcnow()
         if 'updated_at' in column_names:
             kwargs['values']['updated_at'] = now
         results = self.db_adapter(role='master').update(**kwargs)
         return self.record_or_model(results)
-
-    def _instance_update(self, *args, **kwargs):
-        return super(Model, self).update(*args, **kwargs)
 
     @classmethod
     def delete(self, **kwargs):
@@ -230,7 +283,7 @@ class Model(pd.DataFrame):
         return self.instance(
             self.db_adapter(
                 db_name=kwargs.get('db'),
-                role=kwargs.get('role', 'replica')
+                role=kwargs.get('role') or 'replica'
                 ).select(
                     where='created_at IS NOT NULL',
                     order='created_at DESC',
@@ -245,12 +298,12 @@ class Model(pd.DataFrame):
 
         :param values: Criteria to find the record.
         :type values: dict
-        :returns: an instance of the model's record class, i.e. :doc:`jardin_record` by default.
+        :returns: an instance of the model.
         """
         try:
-            return self.record_class(**self.db_adapter(
+            return self(**self.db_adapter(
                 db_name=kwargs.get('db'),
-                role=kwargs.get('role', 'replica')
+                role=kwargs.get('role') or 'replica'
                 ).select(
                     where=values,
                     limit=1
@@ -263,7 +316,7 @@ class Model(pd.DataFrame):
     def find(self, id, **kwargs):
         """
         Finds a record by its id in the model's table in the replica database.
-        :returns: an instance of the model's record class, i.e. :doc:`jardin_record` by default.
+        :returns: an instance of the model.
         """
         return self.find_by(values={'id': id}, **kwargs)
 
@@ -285,27 +338,27 @@ class Model(pd.DataFrame):
 
     @classmethod
     def model_metadata(self):
-        tn = self.table_name if isinstance(self.table_name, str) else self.default_table_name()
-        table_alias = self.table_alias
-        if table_alias is None: table_alias = ''.join([w[0] for w in tn.split('_')])
+        table_name = self.table_name or self._default_table_name()
+        table_alias = self.table_alias or self._default_table_alias(table_name)
         return {
-            'table_name': tn,
+            'table_name': table_name,
             'table_alias': table_alias,
             'belongs_to': self.belongs_to,
             'scopes': self.scopes
         }
 
-    @classmethod
-    def default_table_name(self):
-        if '_default_table_name' not in self.__dict__:
-            name = self.__name__
-            s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-            self._default_table_name = re.sub(
-                '([a-z0-9])([A-Z])',
-                r'\1_\2', s1
-                ).lower()
+    @staticmethod
+    def _default_table_alias(table_name):
+        return ''.join([w[0] for w in table_name.split('_')])
 
-        return self._default_table_name
+    @classmethod
+    def _default_table_name(self):
+        import inflect
+        name = self.__name__
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        s1 = s1.split('_')
+        s1[-1] = inflect.engine().plural_noun(s1[-1])
+        return '_'.join(map(lambda x: x.lower(), s1))
 
     @classmethod
     def db(self, role='replica', db_name = None):
@@ -375,63 +428,21 @@ class Model(pd.DataFrame):
             self._columns = [c['column_name'] for c in columns]
         return self._columns
 
-    def save(self):
-        return self.__class__.insert(values=self)
-
-    def where(self, **kwargs):
-        conditions = kwargs.get('conditions', kwargs)
-        if 'where_not' in conditions:
-            wnot = conditions['where_not']
-            del conditions['where_not']
-        else:
-            wnot = False
-        filt = True
-        for field, value in conditions.iteritems():
-            if value is None:
-                nf = pd.isnull(self[field])
-            elif isinstance(value, (np.ndarray, list, pd.Series)):
-                nf = self[field].isin(value)
-            else:
-                nf = self[field] == value
-            if wnot: nf = ~nf
-            filt = filt & nf
-        return self[filt]
-
-    def where_not(self, **kwargs):
-        kwargs['where_not'] = True
-        return self.where(**kwargs)
-
-    def records(self):
-        """
-        Returns an iterator to loop over the rows, each being an instance of the model's record class, i.e. :doc:`jardin_record` by default.
-        """
-        return ModelIterator(self)
-
-    def index_by(self, field):
-        """
-        Returns a dict with a key for each value of `field` and the first record with that value as value.
-        :param field: Name of the field to index by.
-        :type field: string.
-        """
-        values = self[field].unique()
-        results = {}
-        for value in values:
-            results[value] = self.record_class(**self[self[field] == value].iloc[0])
-        return results
-
 
 class ModelIterator(object):
 
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, collection):
+        self.collection = collection
         self.current = 0
 
     def __iter__(self):
         return self
 
     def next(self):
-        if self.current < len(self.model):
-            record = self.model.record_class(**self.model.iloc[self.current])
+        if self.current < len(self.collection):
+            record = self.collection.model_class(
+                **self.collection.iloc[self.current]
+                )
             self.current += 1
             return record
         else:

@@ -1,5 +1,4 @@
-from model import Model
-from record import Record
+from model import Model, Collection
 import config
 
 __author__ = 'Emmanuel Turlay'

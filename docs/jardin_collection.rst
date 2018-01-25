@@ -1,5 +1,5 @@
 jardin.Record
 =============
 
-.. autoclass:: jardin.Record
+.. autoclass:: jardin.Collection
    :members:
