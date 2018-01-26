@@ -3,8 +3,6 @@ import pandas as pd
 import numpy as np
 import model, config, re, collections, json
 
-from model import Model
-
 
 class PGQueryBuilder(object):
 
@@ -219,7 +217,7 @@ class WriteQueryBuilder(PGQueryBuilder):
         
         kw_values = pd.DataFrame(kw_values).copy()
 
-        pk = self.kwargs.get('primary_key', Model.primary_key)
+        pk = self.kwargs.get('primary_key', model.Model.primary_key)
         for col in [pk, 'stack']:
             if col in kw_values:
                 del kw_values[col]
