@@ -355,7 +355,8 @@ class Model(object):
     def _default_table_name(self):
         import inflect
         name = self.__name__
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        #s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        s1 = re.sub('([A-Z])', r'_\1', name)[1:]
         s1 = s1.split('_')
         s1[-1] = inflect.engine().plural_noun(s1[-1])
         return '_'.join(map(lambda x: x.lower(), s1))
