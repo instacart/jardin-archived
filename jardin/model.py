@@ -14,9 +14,11 @@ class Collection(pandas.DataFrame):
 
     @classmethod
     def from_records(self, *args, **kwargs):
-        self.model_class = kwargs['model_class']
+        model_class = kwargs['model_class']
         del kwargs['model_class']
-        return super(Collection, self).from_records(*args, **kwargs)
+        collection = super(Collection, self).from_records(*args, **kwargs)
+        collection.model_class = model_class
+        return collection
 
     def records(self):
         """
