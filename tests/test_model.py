@@ -76,6 +76,7 @@ class TestModel(unittest.TestCase):
         self.assertIsInstance(user, User)
         self.assertEqual(user.name, 'Jardin')
 
+    @transaction(model=User)
     def test_attributes(self):
         self.assertIsNone(User().id)
         self.assertEqual(User(name='Jardin').name, 'Jardin')
