@@ -12,13 +12,9 @@ class Collection(pandas.DataFrame):
         Base class for collection of records. Inherits from `pandas.DataFrame`.
     """
 
-    @classmethod
-    def from_records(self, *args, **kwargs):
-        model_class = kwargs['model_class']
-        del kwargs['model_class']
-        collection = super(Collection, self).from_records(*args, **kwargs)
-        collection.model_class = model_class
-        return collection
+    @property
+    def _constructor(self):
+        return self.__class__
 
     def records(self):
         """
@@ -55,8 +51,13 @@ class Model(object):
 
     def __init__(self, **kwargs):
         self.attributes = dict()
-        kwargs[self.primary_key] = kwargs.get(self.primary_key, None)
-        self.attributes.update(kwargs)
+        columns = self.__class__.column_names()
+        self.attributes[self.primary_key] = kwargs.get(self.primary_key, None)
+        for column in set(columns + kwargs.keys()):
+            self.attributes[column] = kwargs.get(column)
+            if column in columns and column in kwargs:
+                del kwargs[column]
+        super(Model, self).__init__(**kwargs)
 
     def __getattribute__(self, i):
         try:
@@ -82,6 +83,16 @@ class Model(object):
             attrs += ['%s=%s' % (att_name, attr_value.__repr__())]
         return '%s(%s)' % (self.__class__.__name__, ', '.join(attrs))
 
+    @classmethod
+    def _collection_class(self):
+        class _Collection(self.collection_class): pass
+        _Collection.model_class = self
+        return _Collection
+
+    @classmethod
+    def collection(self, **kwargs):
+        return self._collection_class()(**kwargs)
+
     def save(self):
         if self.attributes.get('id'):
             return self.__class__.update(values=self, where={'id': self.id})
@@ -103,9 +114,8 @@ class Model(object):
 
     @classmethod
     def instance(self, result):
-        return self.collection_class.from_records(
+        return self._collection_class().from_records(
             result[0],
-            model_class=self,
             columns=result[1],
             coerce_float=True
             )
