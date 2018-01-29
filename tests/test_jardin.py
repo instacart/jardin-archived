@@ -37,9 +37,9 @@ class TestModel(unittest.TestCase):
     @transaction(model=User)
     def test_empty_insert(self):
         User.insert(values={})
-        self.assertEqual(User.count(), 0)
+        self.assertEqual(User.count(), 1)
         User.insert(values=pd.DataFrame())
-        self.assertEqual(User.count(), 0)
+        self.assertEqual(User.count(), 1)
 
     @transaction(model=User)
     def test_count(self):
