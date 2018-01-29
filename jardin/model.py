@@ -244,7 +244,7 @@ class Model(object):
         :param values: A dictionary containing the values to be inserted. ``datetime``, ``dict`` and ``bool`` objects can be passed as is and will be correctly serialized by psycopg2.
         :type values: dict
         """
-        if len(kwargs['values']):
+        if len(kwargs['values']) == 0:
             config.logger.warning('No values to insert.')
             return
         kwargs['stack'] = self.stack_mark(inspect.stack())
