@@ -95,6 +95,9 @@ class Model(object):
     def __setitem__(self, key, value):
         self.attributes[key] = value
 
+    def __delitem__(self, key):
+        del self.attributes[key]
+
     @classmethod
     def _collection_class(self):
         class _Collection(self.collection_class): pass
@@ -252,6 +255,13 @@ class Model(object):
         if len(kwargs['values']) == 0:
             config.logger.warning('No values to insert.')
             return
+        values = kwargs['values']
+        if isinstance(values, self):
+            values = values.attributes.copy()
+        if isinstance(values, dict):
+            for k, v in values.iteritems():
+                if v is None:
+                    del kwargs['values'][k]
         kwargs['stack'] = self.stack_mark(inspect.stack())
         kwargs['primary_key'] = self.primary_key
         column_names = self.column_names()
