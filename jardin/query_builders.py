@@ -212,6 +212,8 @@ class WriteQueryBuilder(PGQueryBuilder):
     def write_values(self):
         kw_values = self.kwargs['values']
 
+        if isinstance(kw_values, model.Model):
+            kw_values = kw_values.attributes
         if isinstance(kw_values, dict):
             kw_values = [kw_values]
         
