@@ -89,6 +89,11 @@ class Model(object):
             if v is not None: non_null += 1
         return non_null
 
+    def __getitem__(self, key):
+        return self.attributes[key]
+
+    def __setitem__(self, key, value):
+        self.attributes[key] = value
 
     @classmethod
     def _collection_class(self):
