@@ -83,6 +83,13 @@ class Model(object):
             attrs += ['%s=%s' % (att_name, attr_value.__repr__())]
         return '%s(%s)' % (self.__class__.__name__, ', '.join(attrs))
 
+    def __len__(self):
+        non_null = 0
+        for v in self.attributes.values():
+            if v is not None: non_null += 1
+        return non_null
+
+
     @classmethod
     def _collection_class(self):
         class _Collection(self.collection_class): pass
@@ -237,6 +244,9 @@ class Model(object):
         :param values: A dictionary containing the values to be inserted. ``datetime``, ``dict`` and ``bool`` objects can be passed as is and will be correctly serialized by psycopg2.
         :type values: dict
         """
+        if len(kwargs['values']):
+            config.logger.warning('No values to insert.')
+            return
         kwargs['stack'] = self.stack_mark(inspect.stack())
         kwargs['primary_key'] = self.primary_key
         column_names = self.column_names()
