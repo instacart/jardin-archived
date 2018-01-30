@@ -34,6 +34,7 @@ class Collection(pandas.DataFrame):
             results[value] = self.model_class(**self[self[field] == value].iloc[0])
         return results
 
+_Collection = Collection
 
 class Model(object):
     """
