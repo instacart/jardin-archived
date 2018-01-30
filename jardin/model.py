@@ -47,6 +47,22 @@ class Collection(pandas.DataFrame):
         return results
 
 
+import pandas.core.reshape.concat
+base_concat = pandas.core.reshape.concat.concat
+
+def concat(*args, **kwargs):
+    result = base_concat(*args, **kwargs)
+    if len(args) > 0:
+        for arg in args[0]:
+            if isinstance(arg, Collection) and hasattr(arg, 'model_class'):
+                result.model_class = arg.model_class
+                break
+    return result
+
+pandas.core.reshape.concat.concat = concat
+pandas.concat = concat
+
+
 class Model(object):
     """
       Base class from which your models should inherit.
