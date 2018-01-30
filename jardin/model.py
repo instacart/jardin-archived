@@ -2,6 +2,7 @@ from datetime import datetime
 import pandas
 import re, inspect
 import os
+import json
 
 import config
 from database import DatabaseAdapter, DatabaseConnections
@@ -52,11 +53,11 @@ class Model(object):
 
     def __init__(self, **kwargs):
         self.attributes = dict()
-        columns = self.__class__.column_names()
+        table_schema = self.__class__.table_schema()
         self.attributes[self.primary_key] = kwargs.get(self.primary_key, None)
-        for column in set(columns + kwargs.keys()):
-            self.attributes[column] = kwargs.get(column)
-            if column in columns and column in kwargs:
+        for column, schema in table_schema.iteritems():
+            self.attributes[column] = kwargs.get(column, schema['default'])
+            if column in kwargs:
                 del kwargs[column]
         super(Model, self).__init__(**kwargs)
 
@@ -448,21 +449,36 @@ class Model(object):
         return Transaction(self)
 
     @classmethod
-    def column_names(self):
+    def table_schema(self):
         """
-        Returns the columns of the database table.
+        Returns the table schema.
 
-        :returns: list
+        :returns: dict
         """
-        if self.__dict__.get('_columns') is None:
-            table_name = self.model_metadata()['table_name']
-            columns = self.db_adapter().raw_query(
-                sql="SELECT column_name FROM information_schema.columns WHERE " \
-                "table_schema = 'public' AND table_name = %(table_name)s;",
-                where={'table_name': table_name}
-                )[0]
-            self._columns = [c['column_name'] for c in columns]
-        return self._columns
+        if self.__dict__.get('_table_schema') is None:
+            self._table_schema = {}
+            for row in self.query_schema():
+                default = row['column_default']
+                name = row['column_name']
+                if isinstance(default, str):
+                    json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
+                    if len(json_matches) > 0:
+                        default = json.loads(json_matches[0])
+                if name == self.primary_key:
+                    default = None
+                self._table_schema[name] = {'default': default}
+
+        return self._table_schema
+
+    @classmethod
+    def query_schema(self):
+        table_name = self.model_metadata()['table_name']
+        return self.db_adapter().raw_query(
+            sql="SELECT column_name, column_default FROM " \
+            "information_schema.columns WHERE " \
+            "table_name=%(table_name)s AND table_schema='public';",
+            where={'table_name': table_name}
+            )[0]
 
 
 class ModelIterator(object):
