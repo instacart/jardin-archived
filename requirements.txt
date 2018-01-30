@@ -1,4 +1,4 @@
 memoized-property==1.0.2
 numpy==1.10.4
-pandas==0.19.2
+pandas>=0.20
 psycopg2==2.7
