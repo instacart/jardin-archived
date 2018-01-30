@@ -15,7 +15,8 @@ class Collection(pandas.DataFrame):
 
     def _constructor(self, *args, **kwargs):
         instance = self.__class__(*args, **kwargs)
-        instance.model_class = self.model_class
+        if hasattr(self, 'model_class'):
+            instance.model_class = self.model_class
         return instance
 
     @classmethod
@@ -44,7 +45,6 @@ class Collection(pandas.DataFrame):
         for value in values:
             results[value] = self.model_class(**self[self[field] == value].iloc[0])
         return results
-
 
 
 class Model(object):
