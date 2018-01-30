@@ -13,9 +13,19 @@ class Collection(pandas.DataFrame):
         Base class for collection of records. Inherits from `pandas.DataFrame`.
     """
 
-    @property
-    def _constructor(self):
-        return self.__class__
+    def _constructor(self, *args, **kwargs):
+        instance = self.__class__(*args, **kwargs)
+        instance.model_class = self.model_class
+        return instance
+
+    @classmethod
+    def from_records(self, *args, **kwargs):
+        model_class = kwargs['model_class']
+        del kwargs['model_class']
+        collection = super(Collection, self).from_records(*args, **kwargs)
+        collection.model_class = model_class
+        return collection
+
 
     def records(self):
         """
@@ -35,7 +45,7 @@ class Collection(pandas.DataFrame):
             results[value] = self.model_class(**self[self[field] == value].iloc[0])
         return results
 
-_Collection = Collection
+
 
 class Model(object):
     """
@@ -100,15 +110,18 @@ class Model(object):
     def __delitem__(self, key):
         del self.attributes[key]
 
-    @classmethod
-    def _collection_class(self):
-        class _Collection(self.collection_class): pass
-        _Collection.model_class = self
-        return _Collection
+    #@classmethod
+    #def _collection_class(self):
+    #    class _Collection(self.collection_class): pass
+    #    _Collection.model_class = self
+    #    return _Collection
 
-    @classmethod
-    def collection(self, **kwargs):
-        return self._collection_class()(**kwargs)
+    #@classmethod
+    #def collection(self, **kwargs):
+    #    collection = self.collection_class(**kwargs)
+    #    collection.model_class = self
+    #    return collection
+
 
     def save(self):
         if self.attributes.get('id'):
@@ -130,11 +143,12 @@ class Model(object):
     #        setattr(self, other_table_name, func)
 
     @classmethod
-    def instance(self, result):
-        return self._collection_class().from_records(
+    def collection(self, result):
+        return self.collection_class.from_records(
             result[0],
             columns=result[1],
-            coerce_float=True
+            coerce_float=True,
+            model_class=self
             )
 
     @classmethod
@@ -184,7 +198,7 @@ class Model(object):
             db_conn=db_adapter.db
             )
 
-        return self.instance(db_adapter.select(**kwargs))
+        return self.collection(db_adapter.select(**kwargs))
 
     @classmethod
     def query(self, sql=None, filename=None, **kwargs):
@@ -198,7 +212,7 @@ class Model(object):
         :type db: string
         :param role: `optional` One of ``('master', 'replica')`` to override the default.
         :type role: string
-        :returns: ``jardin.Collection`` instance, which is a ``pandas.DataFrame``.
+        :returns: ``jardin.Collection`` collection, which is a ``pandas.DataFrame``.
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
         
@@ -217,7 +231,7 @@ class Model(object):
                 )
 
         if results:
-            return self.instance(results)
+            return self.collection(results)
         else:
             return None
 
@@ -279,7 +293,7 @@ class Model(object):
         if len(results[0]) == 1:
             return self(**results[0][0])
         else:
-            return self.instance(results)
+            return self.collection(results)
 
     @classmethod
     def update(self, **kwargs):
@@ -316,7 +330,7 @@ class Model(object):
         """
         Returns the last `limit` records inserted in the model's table in the replica database. Rows are sorted by ``created_at``.
         """
-        return self.instance(
+        return self.collection(
             self.db_adapter(
                 db_name=kwargs.get('db'),
                 role=kwargs.get('role') or 'replica'
@@ -414,7 +428,7 @@ class Model(object):
         try:
             kwargs['stack'] = self.stack_mark(inspect.stack())
             sql = "select setting FROM pg_settings WHERE name = 'hot_standby'"
-            r = self.instance(
+            r = self.collection(
                 self.db_adapter().raw_query(sql=sql, **kwargs)
                 ).squeeze()
             return r == "on"
@@ -433,7 +447,7 @@ class Model(object):
         try:
             kwargs['stack'] = self.stack_mark(inspect.stack())
             sql = "select EXTRACT(EPOCH FROM NOW() - pg_last_xact_replay_timestamp()) AS replication_lag"
-            return self.instance(
+            return self.collection(
                 self.db_adapter().raw_query(
                     sql=sql, **kwargs
                     )
