@@ -480,6 +480,9 @@ class Model(object):
             where={'table_name': table_name}
             )[0]
 
+    @classmethod
+    def clear_caches(self):
+        self._table_schema = None
 
 class ModelIterator(object):
 

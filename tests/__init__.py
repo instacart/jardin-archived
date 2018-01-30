@@ -5,6 +5,7 @@ class TestTransaction(object):
 
     def __init__(self, model, create_table=True):
         self._model = model
+        self._model.clear_caches()
         self._connection = self._model.db(role='master')
         self.create_table = create_table
 
