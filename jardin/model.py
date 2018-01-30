@@ -266,7 +266,7 @@ class Model(object):
                     del kwargs['values'][k]
         kwargs['stack'] = self.stack_mark(inspect.stack())
         kwargs['primary_key'] = self.primary_key
-        column_names = self.column_names()
+        column_names = self.table_schema().keys()
         now = datetime.utcnow()
         for field in ('created_at', 'updated_at'):
             if field in column_names:
@@ -293,7 +293,7 @@ class Model(object):
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
         kwargs['primary_key'] = self.primary_key
-        column_names = self.column_names()
+        column_names = self.table_schema().keys()
         now = datetime.utcnow()
         if 'updated_at' in column_names:
             kwargs['values']['updated_at'] = now
