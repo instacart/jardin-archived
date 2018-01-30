@@ -65,8 +65,10 @@ class Model(object):
         self.attributes = dict()
         table_schema = self.__class__.table_schema()
         self.attributes[self.primary_key] = kwargs.get(self.primary_key, None)
-        for column, schema in table_schema.iteritems():
-            self.attributes[column] = kwargs.get(column, schema['default'])
+        for column in set(table_schema.keys() + kwargs.keys()):
+            self.attributes[column] = kwargs.get(
+                column,
+                table_schema.get(column, {}).get('default'))
             if column in kwargs:
                 del kwargs[column]
         super(Model, self).__init__(**kwargs)
