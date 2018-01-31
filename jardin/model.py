@@ -93,6 +93,8 @@ class Model(object):
         try:
             return super(Model, self).__getattribute__(i)
         except AttributeError as e:
+            if i == 'attributes':
+                return dict()
             if i in self.attributes:
                 return self.attributes[i]
             raise e
