@@ -2,6 +2,8 @@ import unittest
 import pandas
 
 from jardin import Collection
+from jardin.model import RecordNotPersisted
+
 from tests import transaction
 
 from models import JardinTestModel
@@ -83,6 +85,16 @@ class TestModel(unittest.TestCase):
         user = User()
         user.name = 'Jardin'
         self.assertEqual(user.name, 'Jardin')
+
+    @transaction(model=User)
+    def test_destroy(self):
+        with self.assertRaises(RecordNotPersisted):
+            User().destroy()
+        user = User(name='jardin')
+        user.save()
+        self.assertEqual(User.count(), 1)
+        user.destroy()
+        self.assertEqual(User.count(), 0)
 
 if __name__ == "__main__":
     unittest.main()

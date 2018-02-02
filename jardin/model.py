@@ -63,6 +63,9 @@ pandas.core.reshape.concat.concat = concat
 pandas.concat = concat
 
 
+class RecordNotPersisted(Exception): pass
+
+
 class Model(object):
     """
       Base class from which your models should inherit.
@@ -131,10 +134,24 @@ class Model(object):
         del self.attributes[key]
 
     def save(self):
-        if self.attributes.get('id'):
-            return self.__class__.update(values=self, where={'id': self.id})
+        if self.persisted:
+            return self.__class__.update(
+                values=self,
+                where={self.primary_key: getattr(self, self.primary_key)})
         else:
-            return self.__class__.insert(values=self)
+            self.attributes = self.__class__.insert(values=self).attributes
+
+    def destroy(self):
+        if self.persisted:
+            self.__class__.delete(
+                where={self.primary_key: getattr(self, self.primary_key)}
+                )
+        else:
+            raise RecordNotPersisted("Record's primary key is None")
+
+    @property
+    def persisted(self):
+        return self.attributes.get(self.primary_key) is not None
 
     #def init_relationships(self):
     #    for h in self.has_many:
