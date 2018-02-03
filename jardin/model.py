@@ -90,6 +90,7 @@ class Model(object):
                 table_schema.get(column, {}).get('default'))
             if column in kwargs:
                 del kwargs[column]
+        self.init_relationships()
         super(Model, self).__init__(**kwargs)
 
     def __getattribute__(self, i):
@@ -153,18 +154,18 @@ class Model(object):
     def persisted(self):
         return self.attributes.get(self.primary_key) is not None
 
-    #def init_relationships(self):
-    #    for h in self.has_many:
-    #        def func(self, select=None, where=None, limit=None, db=None, role=None):
-
-    #@classmethod
-    #def create_relationships(self):
-    #    this_table_name = self.model_metadata()['table_name']
-    #    for h in self.has_many:
-    #        other_table_name = h.model_metadata()['table_name']
-    #        def func(self):
-    #          return h.select(where={h.belongs_to[this_table_name]: self.id})
-    #        setattr(self, other_table_name, func)
+    def init_relationships(self):
+        this_table_name = self.model_metadata()['table_name']
+        for h in self.has_many:
+            other_table_name = h.model_metadata()['table_name']
+            def func(slf, **kwargs):
+                where = kwargs.get('where', {})
+                where.update(**{
+                    h.belongs_to[this_table_name]: getattr(slf, slf.primary_key)
+                    })
+                kwargs['where'] = where
+                return h.select(**kwargs)
+            setattr(self.__class__, other_table_name, func)
 
     @classmethod
     def collection(self, *args, **kwargs):

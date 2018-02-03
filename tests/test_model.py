@@ -9,7 +9,10 @@ from tests import transaction
 from models import JardinTestModel
 
 
-class User(JardinTestModel): pass
+class Project(JardinTestModel):
+    belongs_to = {'users': 'user_id'}
+class User(JardinTestModel):
+    has_many = [Project]
 class JardinUser(JardinTestModel): pass
 
 
@@ -95,6 +98,18 @@ class TestModel(unittest.TestCase):
         self.assertEqual(User.count(), 1)
         user.destroy()
         self.assertEqual(User.count(), 0)
+
+    @transaction(model=User)
+    def test_relationships(self):
+        Project.query(
+            sql="CREATE TABLE projects (id serial PRIMARY KEY, user_id integer);"
+            )
+        user = User.insert(values={'name': 'Jardin'})
+        project = Project.insert(values={'user_id': user.id})
+        user_projects = user.projects()
+        self.assertEqual(len(user_projects), 1)
+        self.assertIsInstance(user_projects, Project.collection_class)
+        self.assertEqual(user_projects.id.tolist(), [project.id])
 
 if __name__ == "__main__":
     unittest.main()
