@@ -58,6 +58,29 @@ Which will issue this statement
 
   SELECT * FROM users u WHERE u.active IS TRUE AND u.last_sign_up_at > ...;
 
+Soft deletes
+------------
+If you don't want to actually remove rows from the database when deleting a record, you can activate soft-deletes::
+
+  class User(jardin.Model):
+
+    soft_delete = True
+
+When the ``destroy`` method is called on a model instance, the ``deleted_at`` database field on the corresponding table will be set to the current UTC time.
+
+Then, when calling ``select``, ``count``, ``delete`` or ``update``, rows with a non-NULL `deleted_at` value will be ignored. This can be overridden by passing the ``skip_soft_delete=True`` argument.
+
+The ``find`` method is not affected.
+
+To force delete a single record, call ``destroy(force=True)``.
+
+To customize the database column used to store the deletion timestamp, do::
+
+  class User(jardin.Model):
+
+    soft_delete = 'my_custom_db_column'
+
+
 Transactions
 ------------
 

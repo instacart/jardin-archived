@@ -6,7 +6,7 @@ import json
 
 import config
 from database import DatabaseAdapter, DatabaseConnections
-
+from tools import soft_del
 
 class Collection(pandas.DataFrame):
     """
@@ -79,6 +79,7 @@ class Model(object):
     scopes = {}
     collection_class = Collection
     primary_key = 'id'
+    soft_delete = False
 
     def __init__(self, **kwargs):
         self.attributes = dict()
@@ -134,19 +135,48 @@ class Model(object):
     def __delitem__(self, key):
         del self.attributes[key]
 
+
+    # Individual DB methods
+
+    @property
+    def where_self(self):
+        return {self.primary_key: getattr(self, self.primary_key)}
+
+    @classmethod
+    def deleted_at_column(self):
+        if self.soft_delete is True:
+            return 'deleted_at'
+        if isinstance(self.soft_delete, str):
+            return self.soft_delete
+
     def save(self):
         if self.persisted:
             return self.__class__.update(
                 values=self,
-                where={self.primary_key: getattr(self, self.primary_key)})
+                where=self.where_self)
         else:
             self.attributes = self.__class__.insert(values=self).attributes
 
-    def destroy(self):
+    def destroy(self, force=False):
+        """
+        Deletes the record. If the model has ``soft_delete`` activated, the record will not actually be deleted.
+
+        :param force: forces the record to be actually deleted if ``soft_delete`` is activated.
+        :type force: boolean
+        """
         if self.persisted:
-            self.__class__.delete(
-                where={self.primary_key: getattr(self, self.primary_key)}
-                )
+            if self.soft_delete and not force:
+                self.__class__.update(
+                    values={
+                        self.__class__.deleted_at_column(): datetime.utcnow()
+                        },
+                    where=self.where_self
+                    )
+            else:
+                self.__class__.delete(
+                    where=self.where_self,
+                    skip_soft_delete=True
+                    )
         else:
             raise RecordNotPersisted("Record's primary key is None")
 
@@ -193,6 +223,7 @@ class Model(object):
         return ':'.join(stack)
 
     @classmethod
+    @soft_del
     def select(self, **kwargs):
         #select='*', where=None, inner_joins=None, left_joins=None, 
         #group=None, order=None, limit=None, db=None, role='replica'):
@@ -268,6 +299,7 @@ class Model(object):
 
 
     @classmethod
+    @soft_del
     def count(self, **kwargs):
         """
         Performs a COUNT statement on the model's table in the replica database.
@@ -286,6 +318,7 @@ class Model(object):
             kwargs['select'] = 'COUNT(%s)' % kwargs['select']
         else:
             kwargs['select'] = 'COUNT(*)'
+
         return self.db_adapter(
             db_name=kwargs.get('db'),
             role=kwargs.get('role') or 'replica'
@@ -327,6 +360,7 @@ class Model(object):
             return self.collection_instance(results)
 
     @classmethod
+    @soft_del
     def update(self, **kwargs):
         """
         Performs an UPDATE statement on the model's table in the master database.
@@ -342,10 +376,12 @@ class Model(object):
         now = datetime.utcnow()
         if 'updated_at' in column_names:
             kwargs['values']['updated_at'] = now
+
         results = self.db_adapter(role='master').update(**kwargs)
         return self.record_or_model(results)
 
     @classmethod
+    @soft_del
     def delete(self, **kwargs):
         """
         Performs a DELETE statement on the model's table in the master database.
@@ -354,6 +390,7 @@ class Model(object):
         :type where: string, dict, array
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
+        
         return self.db_adapter(role='master').delete(**kwargs)
 
     @classmethod

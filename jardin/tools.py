@@ -3,6 +3,51 @@ from operator import is_not
 from functools import partial, wraps
 import time
 
+
+def add_to_where(where, item):
+    if isinstance(where, dict):
+        if isinstance(item, dict):
+            where.update(**item)
+        elif isinstance(item, list):
+            where = [where] + item
+        elif isinstance(item, str):
+            where = [where, item]
+    elif isinstance(where, list):
+        if isinstance(item, list):
+            where += item
+        else:
+            where += [item]
+    elif isinstance(where, str):
+        if isinstance(item, list):
+            where = [where] + item
+        else:
+            where = [where, item]
+    return where
+
+def is_in_where(where, field):
+    if isinstance(where, dict) or isinstance(where, str):
+        return field in where
+    elif isinstance(where, list):
+        for w in where:
+            if is_in_where(w, field):
+                return True
+    return False
+
+def soft_del(func):
+    def wrapper(self, **kwargs):
+        if self.soft_delete and not kwargs.get('skip_soft_delete', False):
+            add_soft_delete(kwargs, self.deleted_at_column())
+        return func(self, **kwargs)
+    return wrapper
+
+def add_soft_delete(kwargs, deleted_at_column):
+    if not is_in_where(kwargs.get('where', {}), deleted_at_column):
+        kwargs['where'] = kwargs.get('where', {})
+        kwargs['where'] = add_to_where(
+            kwargs['where'],
+            {deleted_at_column: None}
+            )
+
 def grouper(iterable, n, fillvalue=None):
   "Collect data into fixed-length chunks or blocks"
   # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx

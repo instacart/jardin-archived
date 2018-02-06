@@ -38,7 +38,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(len(users), 2)
         self.assertTrue('Jardin' in users.name.tolist())
         self.assertTrue('Holberton' in users.name.tolist())
-        self.assertEqual(len(users.columns), 4)
+        self.assertEqual(len(users.columns), 6)
         self.assertTrue('name' in users.columns)
 
     @transaction(model=User)
@@ -98,6 +98,31 @@ class TestModel(unittest.TestCase):
         self.assertEqual(User.count(), 1)
         user.destroy()
         self.assertEqual(User.count(), 0)
+
+    @transaction(model=User)
+    def test_soft_delete(self):
+        User.soft_delete = True
+        user = User.insert(values={'name': 'Jardin'})
+        self.assertIsNone(user.deleted_at)
+        user.destroy()
+        self.assertEqual(User.count(), 0)
+        self.assertEqual(User.count(where="deleted_at IS NOT NULL"), 1)
+        self.assertEqual(len(User.select()), 0)
+        User.soft_delete = False
+
+    @transaction(model=User)
+    def test_soft_delete_column(self):
+        User.soft_delete = 'destroyed_at'
+        user = User.insert(values={'name': 'Jardin'})
+        self.assertIsNone(user.destroyed_at)
+        user.destroy()
+        self.assertEqual(User.count(), 0)
+        self.assertEqual(User.count(where="destroyed_at IS NOT NULL"), 1)
+        self.assertEqual(len(User.select()), 0)
+        user.destroy(force=True)
+        self.assertEqual(User.count(), 0)
+        self.assertEqual(User.count(where="destroyed_at IS NOT NULL"), 0)
+        User.soft_delete = False
 
     @transaction(model=User)
     def test_relationships(self):
