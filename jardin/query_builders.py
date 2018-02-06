@@ -141,6 +141,10 @@ class SelectQueryBuilder(PGQueryBuilder):
         return self.kwargs.get('limit', None)
 
     @memoized_property
+    def having(self):
+        return self.kwargs.get('having', None)
+
+    @memoized_property
     def order_bys(self):
         return self.kwargs.get('order', None)
 
@@ -200,6 +204,7 @@ class SelectQueryBuilder(PGQueryBuilder):
         if self.inner_joins: query += ' ' + self.inner_joins
         if self.wheres: query += ' WHERE ' + self.wheres
         if self.group_bys: query += ' GROUP BY ' + self.group_bys
+        if self.having: query += ' HAVING ' + self.having
         if self.order_bys: query += ' ORDER BY ' + self.order_bys
         if self.limit: query += ' LIMIT ' + str(self.limit)
         query += ';'

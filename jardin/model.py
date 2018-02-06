@@ -240,6 +240,8 @@ class Model(object):
         :type left_joins: string, array
         :param group: Specifies a GROUP BY clause.
         :type group: string
+        :param having: Specifies a HAVING clause.
+        :type having: string
         :param order: ORDER BY clause.
         :type order: string
         :param limit: LIMIT clause.

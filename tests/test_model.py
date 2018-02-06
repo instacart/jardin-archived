@@ -136,5 +136,15 @@ class TestModel(unittest.TestCase):
         self.assertIsInstance(user_projects, Project.collection_class)
         self.assertEqual(user_projects.id.tolist(), [project.id])
 
+    @transaction(model=User)
+    def test_having(self):
+        User.insert(values={'name': 'Jardin'})
+        User.insert(values={'name': 'Jardin'})
+        User.insert(values={'name': 'Potager'})
+        self.assertEqual(User.count(), 3)
+        users = User.select(select='name', group='name', having='COUNT(*) > 1')
+        self.assertEqual(len(users), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
