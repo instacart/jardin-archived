@@ -121,6 +121,8 @@ class SelectQueryBuilder(PGQueryBuilder):
                         self.add_to_where_values({label: vv})
                 elif not isinstance(v, list) and not isinstance(v, pd.Series) and not isinstance(v, np.ndarray) and pd.isnull(v):
                     results += [k + ' IS NULL']
+                elif callable(v):
+                    results += ["%s %s" % (k, v())]
                 else:
                     self.add_to_where_values({k: v})
                     if isinstance(v, list) or isinstance(v, pd.Series):
