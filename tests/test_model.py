@@ -38,7 +38,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(len(users), 2)
         self.assertTrue('Jardin' in users.name.tolist())
         self.assertTrue('Holberton' in users.name.tolist())
-        self.assertEqual(len(users.columns), 6)
+        self.assertEqual(len(users.columns), 7)
         self.assertTrue('name' in users.columns)
 
     @transaction(model=User)
