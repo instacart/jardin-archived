@@ -29,7 +29,7 @@ Then, in your app, say you have a table called ``users``:
     # app.py
     import jardin
 
-    class Users(jardin.Model):
+    class User(jardin.Model):
       db_names = {'read': 'my_first_database', 'write': 'my_second_database'}
 
 In the console:
@@ -37,7 +37,7 @@ In the console:
 .. code:: python
 
     >>> from app import Users
-    >>> users = Users.last(4)
+    >>> users = User.last(4)
     # /* My Great App */ SELECT * FROM users ORDER BY u.created_at DESC LIMIT 4;
     >>> users
     id   name    email              ...
@@ -53,7 +53,7 @@ The resulting object is a pandas dataframe:
     >>> import pandas
     >>> isinstance(users, pandas.DataFrame)
     True
-    >>> isinstance(users, jardin.Model)
+    >>> isinstance(users, jardin.Collection)
     True
 
 Queries
@@ -66,7 +66,7 @@ Here is the basic syntax to select records from the database
 
 .. code:: python
 
-    >>> users = Users.select(select = ['id', 'name'], where = {'email': 'paul@beatl.es'},
+    >>> users = User.select(select = ['id', 'name'], where = {'email': 'paul@beatl.es'},
                              order = 'id ASC', limit = 1)
     # /* My Great App */ SELECT u.id, u.name FROM users u WHERE u.email = 'paul@beatl.es' ORDER BY u.id ASC LIMIT 1;
     >>> users
@@ -105,14 +105,14 @@ The simplest way to join another table is as follows
 
 .. code:: python
 
-    >>> Users.select(inner_join = ["instruments i ON i.id = u.instrument_id"])
+    >>> User.select(inner_join = ["instruments i ON i.id = u.instrument_id"])
 
 If you have configured your models associations, see
 `here <#associations>`__, you can simply pass the class as argument:
 
 .. code:: python
 
-    >>> Users.select(inner_join = [Instruments])
+    >>> User.select(inner_join = [Instruments])
 
 Individual record selection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -121,7 +121,7 @@ You can also look-up a single record by id:
 
 .. code:: python
 
-    >>> Users.find(1)
+    >>> User.find(1)
     # /* My Great App */ SELECT * FROM users u WHERE u.id = 1;
     {'id': 1, 'name': 'Paul', 'email': 'paul@beatl.es', ...}
 
@@ -140,7 +140,7 @@ INSERT queries
 
 .. code:: python
 
-    >>> user = Users.insert(name = 'Pete', email = 'pete@beatl.es')
+    >>> user = User.insert(name = 'Pete', email = 'pete@beatl.es')
     # /* My Great App */ INSERT INTO users (name, email) VALUES ('Pete', 'pete@beatl.es') RETURNING id;
     # /* My Great App */ SELECT u.* FROM users WHERE u.id = 4;
     >>> user
@@ -152,7 +152,7 @@ UPDATE queries
 
 .. code:: python
 
-    >>> users = Users.update(values = {'hair': 'long'}, where = {'name': 'John'})
+    >>> users = User.update(values = {'hair': 'long'}, where = {'name': 'John'})
     # /* My Great App */ UPDATE users u SET (u.hair) = ('long') WHERE u.name = 'John' RETURNING id;
     # /* My Great App */ SELECT * FROM users u WHERE u.name = 'John';
 
@@ -161,7 +161,7 @@ DELETE queries
 
 .. code:: python
 
-    >>> Users.delete(where = {'id': 1})
+    >>> User.delete(where = {'id': 1})
     # /* My Great App */ DELETE FROM users u WHERE u.id = 1;
 
 Associations
@@ -179,17 +179,17 @@ each user has multiple instruments:
     class MyModel(jardin.Model):
       db_names = {'read': 'my_first_database', 'write': 'my_second_database'}
 
-    class Instruments(MyModel):
+    class Instrument(MyModel):
       belongs_to = {'users': 'user_id'}
 
-    class Users(MyModel):
+    class User(MyModel):
       has_many = [Instruments]
 
 and then you can query the associated records:
 
 .. code:: python
 
-    >>> users = Users.select()
+    >>> users = User.select()
     # /* My Great App */ SELECT * FROM users u;
     >>> instruments = users.instruments()
     # /* My Great App */ SELECT * FROM instruments i WHERE i.id IN (0, 1, ...);
@@ -198,7 +198,7 @@ Or you can declare joins more easily
 
 .. code:: python
 
-    >>> users = Users.select(inner_join = [Instruments])
+    >>> users = User.select(inner_join = [Instruments])
 
 Scopes
 ------
@@ -209,7 +209,7 @@ Queries conditions can be generalized across your app:
 
     # app.py
 
-    class Users(jardin.Model):
+    class User(jardin.Model):
       scopes = {
         'alive': {'name': ['Paul', 'Ringo']},
         'guitarists': {'name': ['John', 'George']}
@@ -223,7 +223,7 @@ Use them as such:
 
 .. code:: python
 
-    >>> users = Users.select(scopes = ['alive'], ...)
+    >>> users = User.select(scopes = ['alive'], ...)
     # /* My Great App */ SELECT * FROM users u WHERE u.name IN ('Paul', 'Ringo') AND ...;
 
 Misc

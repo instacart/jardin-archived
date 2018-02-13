@@ -245,12 +245,13 @@ class WriteQueryBuilder(PGQueryBuilder):
             values = collections.OrderedDict()
 
             for k, v in val.iteritems():
-
                 if isinstance(v, dict):
                     v = json.dumps(v)
                 if isinstance(v, np.bool_):
                     v = bool(v)
                 if isinstance(v, np.datetime64) and np.isnat(v):
+                    v = None
+                if isinstance(v, pd._libs.tslib.NaTType):
                     v = None
                 if isinstance(v, float) and np.isnan(v):
                     v = None
