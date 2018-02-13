@@ -225,6 +225,7 @@ class WriteQueryBuilder(PGQueryBuilder):
             kw_values = [kw_values]
         
         kw_values = pd.DataFrame(kw_values).copy()
+        kw_values.reset_index(drop=True, inplace=True)
 
         for col in [self.primary_key, 'stack']:
             if col in kw_values:
@@ -249,6 +250,10 @@ class WriteQueryBuilder(PGQueryBuilder):
                     v = json.dumps(v)
                 if isinstance(v, np.bool_):
                     v = bool(v)
+                if isinstance(v, np.datetime64) and np.isnat(v):
+                    v = None
+                if isinstance(v, float) and np.isnan(v):
+                    v = None
 
                 values['%s_%s' % (k, idx)] = v
 
