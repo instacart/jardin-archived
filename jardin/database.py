@@ -112,9 +112,9 @@ class DatabaseAdapter(object):
         config.logger.debug(query)
         self.db.execute(*query)
         row_ids = self.db.cursor().fetchall()
-        row_ids = [r['id'] for r in row_ids]
+        row_ids = [r[kwargs['primary_key']] for r in row_ids]
         if len(row_ids) > 0:
-            return self.select(where = {'id': row_ids})
+            return self.select(where = {kwargs['primary_key']: row_ids})
         else:
             return ((), self.columns())
 

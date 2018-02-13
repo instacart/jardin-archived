@@ -226,12 +226,15 @@ class WriteQueryBuilder(PGQueryBuilder):
         
         kw_values = pd.DataFrame(kw_values).copy()
 
-        pk = self.kwargs.get('primary_key', model.Model.primary_key)
-        for col in [pk, 'stack']:
+        for col in [self.primary_key, 'stack']:
             if col in kw_values:
                 del kw_values[col]
 
         return kw_values
+
+    @memoized_property
+    def primary_key(self):
+        return self.kwargs.get('primary_key', model.Model.primary_key)
 
     @memoized_property
     def values_list(self):
@@ -244,6 +247,8 @@ class WriteQueryBuilder(PGQueryBuilder):
 
                 if isinstance(v, dict):
                     v = json.dumps(v)
+                if isinstance(v, np.bool_):
+                    v = bool(v)
 
                 values['%s_%s' % (k, idx)] = v
 
@@ -260,7 +265,8 @@ class WriteQueryBuilder(PGQueryBuilder):
     @memoized_property
     def values(self):
         values = {}
-        [values.update(**v) for v in self.values_list]
+        for v in self.values_list:
+            values.update(**v)
         return values
 
     @memoized_property
@@ -272,7 +278,7 @@ class InsertQueryBuilder(WriteQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES " + self.value_extrapolators + " RETURNING id;"
+        query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES " + self.value_extrapolators + " RETURNING " + self.primary_key + ";"
         return (query, self.values)
 
 
@@ -282,7 +288,7 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     def query(self):
         query = self.watermark + 'UPDATE ' + self.table_name + ' SET (' + self.fields + ') = ' + self.value_extrapolators
         if self.wheres: query += " WHERE " + self.wheres
-        query += ' RETURNING id;'
+        query += ' RETURNING ' + self.primary_key + ';'
         values = self.where_values
         values.update(self.values)
         return (query, values)
