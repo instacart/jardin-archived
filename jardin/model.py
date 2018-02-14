@@ -486,7 +486,8 @@ class Model(object):
         if not hasattr(self, '_db'): self._db = {}
         name = self.db_names.get(
             role,
-            self.db_names.get(self.ROLES.get(role))) if db_name is None else db_name
+            db_name or self.db_names.get(self.ROLES.get(role))
+            )
         
         if name not in self._db:
             self._db[name] = DatabaseConnections.connection(name)
