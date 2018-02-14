@@ -4,7 +4,7 @@ import numpy
 
 from tests import transaction
 
-from models import JardinTestModel
+from tests.models import JardinTestModel
 
 
 class User(JardinTestModel): pass

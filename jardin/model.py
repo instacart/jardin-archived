@@ -4,9 +4,9 @@ import re, inspect
 import os
 import json
 
-import config
-from database import DatabaseAdapter, DatabaseConnections
-from tools import soft_del
+import jardin.config as config
+from jardin.database import DatabaseAdapter, DatabaseConnections
+from jardin.tools import soft_del
 
 class Collection(pandas.DataFrame):
     """
@@ -85,7 +85,7 @@ class Model(object):
         self.attributes = dict()
         table_schema = self.__class__.table_schema()
         self.attributes[self.primary_key] = kwargs.get(self.primary_key, None)
-        for column in set(table_schema.keys() + kwargs.keys()):
+        for column in set(list(table_schema.keys()) + list(kwargs.keys())):
             self.attributes[column] = kwargs.get(
                 column,
                 table_schema.get(column, {}).get('default'))
@@ -115,7 +115,7 @@ class Model(object):
         attrs = []
         if 'id' in self.attributes:
             attrs += ['id=%s' % self.id]
-        for att_name, attr_value in self.attributes.iteritems():
+        for (att_name, attr_value) in self.attributes.items():
             if att_name == 'id': continue
             attrs += ['%s=%s' % (att_name, attr_value.__repr__())]
         return '%s(%s)' % (self.__class__.__name__, ', '.join(attrs))
@@ -341,7 +341,7 @@ class Model(object):
         if isinstance(values, self):
             values = values.attributes.copy()
         if isinstance(values, dict):
-            for k, v in values.iteritems():
+            for (k, v) in values.items():
                 if v is None:
                     del kwargs['values'][k]
         kwargs['stack'] = self.stack_mark(inspect.stack())

@@ -6,7 +6,7 @@ from jardin.model import RecordNotPersisted
 
 from tests import transaction
 
-from models import JardinTestModel
+from tests.models import JardinTestModel
 
 
 class Project(JardinTestModel):

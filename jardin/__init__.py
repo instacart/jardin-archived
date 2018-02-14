@@ -1,5 +1,5 @@
-from model import Model, Collection
-import config
+from jardin.model import Model, Collection
+import jardin.config
 
 __author__ = 'Emmanuel Turlay'
 __copyright__ = 'Copyright 2017, Instacart'

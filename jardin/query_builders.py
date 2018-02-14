@@ -1,7 +1,10 @@
+import re, collections, json
 from memoized_property import memoized_property
 import pandas as pd
 import numpy as np
-import model, config, re, collections, json
+
+import jardin.model
+import jardin.config as config
 
 
 class PGQueryBuilder(object):
@@ -56,7 +59,7 @@ class SelectQueryBuilder(PGQueryBuilder):
             return ', '.join(selects)
         elif isinstance(selects, dict):
             result = []
-            for k, v in selects.iteritems():
+            for (k, v) in selects.items():
                 result += ['%s AS %s' % (k, v)]
             return ', '.join(result)
 
@@ -89,7 +92,7 @@ class SelectQueryBuilder(PGQueryBuilder):
         return ' AND '.join(results)
 
     def add_to_where_values(self, values):
-        for k, v in values.iteritems():
+        for (k, v) in values.items():
             if isinstance(v, pd.Series) or isinstance(v, list):
                 v = tuple(v)
             self.where_values[k] = v
@@ -102,14 +105,14 @@ class SelectQueryBuilder(PGQueryBuilder):
             self.add_to_where_values(where[1])
             results += [where[0]]
         elif isinstance(where, dict):
-            for k, v in where.iteritems():
+            for (k, v) in where.items():
                 if isinstance(v, tuple):
                     from_label = '%s_from' % k
                     to_label = '%s_to' % k
                     results += [k + ' BETWEEN %(' + from_label + ')s AND %(' + to_label + ')s']
                     self.add_to_where_values({from_label: v[0], to_label: v[1]})
                 elif isinstance(v, dict):
-                    for kk, vv in v.iteritems():
+                    for (kk, vv) in v.items():
                         res = "(" + k + "->>'" + kk + "')"
                         if isinstance(vv, int):
                             res += '::INTEGER'
@@ -170,7 +173,7 @@ class SelectQueryBuilder(PGQueryBuilder):
             for j in joins:
                 if isinstance(j, str):
                     js += ["INNER JOIN %s" % j]
-                elif issubclass(j, model.Model):
+                elif issubclass(j, jardin.model.Model):
                     js += [self.build_join(j, how = 'INNER')]
         return ' '.join(js)
 
@@ -183,7 +186,7 @@ class SelectQueryBuilder(PGQueryBuilder):
             for j in joins:
                 if isinstance(j, str):
                     js += ["%s JOIN %s" % (how, j)]
-                elif issubclass(j, model.Model):
+                elif issubclass(j, jardin.model.Model):
                     js += [self.build_join(j, how = how)]
             return ' '.join(js)
 
@@ -219,7 +222,7 @@ class WriteQueryBuilder(PGQueryBuilder):
     def write_values(self):
         kw_values = self.kwargs['values']
 
-        if isinstance(kw_values, model.Model):
+        if isinstance(kw_values, jardin.model.Model):
             kw_values = kw_values.attributes
         if isinstance(kw_values, dict):
             kw_values = [kw_values]
@@ -235,7 +238,7 @@ class WriteQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def primary_key(self):
-        return self.kwargs.get('primary_key', model.Model.primary_key)
+        return self.kwargs.get('primary_key', jardin.model.Model.primary_key)
 
     @memoized_property
     def values_list(self):
@@ -244,7 +247,7 @@ class WriteQueryBuilder(PGQueryBuilder):
         for idx, val in self.write_values.iterrows():
             values = collections.OrderedDict()
 
-            for k, v in val.iteritems():
+            for (k, v) in val.items():
                 if isinstance(v, dict):
                     v = json.dumps(v)
                 if isinstance(v, np.bool_):

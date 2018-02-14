@@ -1,4 +1,4 @@
-from models import JardinTestModel
+from tests.models import JardinTestModel
 
 
 class TestTransaction(object):

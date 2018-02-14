@@ -3,7 +3,7 @@ import pandas
 
 from jardin import Collection
 
-from models import JardinTestModel
+from tests.models import JardinTestModel
 
 
 class UserCollection(Collection): pass
