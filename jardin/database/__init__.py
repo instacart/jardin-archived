@@ -1,12 +1,6 @@
-import psycopg2 as pg
-from psycopg2 import extras
 from future.standard_library import install_aliases
 install_aliases()
 from urllib.parse import urlparse
-#try:
-#    from urlparse import urlparse
-#except ImportError:
-#    from urllib import parse as urlparse
 
 from jardin.query_builders import \
     SelectQueryBuilder, \
@@ -15,13 +9,17 @@ from jardin.query_builders import \
     DeleteQueryBuilder, \
     RawQueryBuilder
 import jardin.config as config
-from jardin.tools import retry
+
+
+class UnsupportedDriver(Exception): pass
 
 
 class DatabaseConnections(object):
 
     _connections = {}
     _urls = {}
+
+    ALLOWED_DRIVERS = ('postgres', 'mysql')
 
     @classmethod
     def connection(self, db_name):
@@ -32,7 +30,15 @@ class DatabaseConnections(object):
     @classmethod
     def build_connection(self, name):
         db = self.urls(name)
-        return DatabaseConnection(db)
+        if db.scheme not in self.ALLOWED_DRIVERS:
+            raise UnsupportedDriver('%s is not a supported driver' % db.scheme)
+        elif db.scheme == 'postgres':
+            import jardin.database.pg as driver
+        elif db.scheme == 'mysql':
+            import jardin.database.mysql as driver
+
+        return driver.DatabaseConnection(db)
+
 
     @classmethod
     def urls(self, name):
@@ -42,62 +48,6 @@ class DatabaseConnections(object):
             if url:
                 self._urls[nme] = urlparse(url)
         return self._urls[name]
-
-
-class DatabaseConnection(object):
-
-    _connection = None
-    _cursor = None
-
-    def __init__(self, db_config):
-        self.db_config = db_config
-        self.autocommit = True
-
-    @retry(pg.OperationalError, tries=3)
-    def connect(self):
-        self._cursor = None
-        connection = pg.connect(
-            connection_factory=extras.MinTimeLoggingConnection,
-            database=self.db_config.path[1:],
-            user=self.db_config.username,
-            password=self.db_config.password,
-            host=self.db_config.hostname,
-            port=self.db_config.port,
-            connect_timeout=5)
-        connection.initialize(config.logger)
-        return connection
-
-    def connection(self):
-        if self._connection is None:
-            self._connection = self.connect()
-        return self._connection
-
-    def cursor(self):
-        if self._cursor is None:
-            self._cursor = self.connection().cursor(
-                cursor_factory=pg.extras.RealDictCursor)
-        return self._cursor
-
-    @retry(
-        (
-            pg.InterfaceError,
-            pg.extensions.TransactionRollbackError,
-            pg.extensions.QueryCanceledError
-            ),
-        tries=3)
-    def execute(self, *query):
-        try:
-            results = self.cursor().execute(*query)
-            if self.autocommit:
-                self.connection().commit()
-            return results
-        except pg.InterfaceError:
-            self._connection = None
-            self._cursor = None
-            raise
-        except Exception as e:
-            self.connection().rollback()
-            raise e
 
 
 class DatabaseAdapter(object):
