@@ -1,6 +1,12 @@
 from setuptools import setup
 from os import path
 
+import sys
+if len(sys.argv) > 1 and sys.argv[1] == 'test':
+      sys.jardin_setup = False
+else:
+      sys.jardin_setup = True
+
 import jardin
 
 here = path.abspath(path.dirname(__file__))
