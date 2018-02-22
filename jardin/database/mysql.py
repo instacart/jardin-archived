@@ -1,6 +1,7 @@
 import MySQLdb
 
 from jardin.tools import retry
+from jardin.database.base import BaseConnection
 
 
 class DatabaseConnection(BaseConnection):

@@ -1,7 +1,5 @@
 from memoized_property import memoized_property
 
-import jardin.config as config
-
 
 class BaseConnection(object):
 
@@ -32,9 +30,7 @@ class BaseConnection(object):
 
     def connect(self):
         self._cursor = None
-        connection = self.DRIVER.connect(**self.connect_kwargs)
-        connection.initialize(config.logger)
-        return connection
+        return self.DRIVER.connect(**self.connect_kwargs)
 
     @memoized_property
     def cursor_kwargs(self):

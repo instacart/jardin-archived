@@ -287,7 +287,7 @@ class InsertQueryBuilder(WriteQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES " + self.value_extrapolators + " RETURNING " + self.primary_key + ";"
+        query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES " + self.value_extrapolators + ";"#" RETURNING " + self.primary_key + ";"
         return (query, self.values)
 
 
@@ -297,7 +297,7 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     def query(self):
         query = self.watermark + 'UPDATE ' + self.table_name + ' SET (' + self.fields + ') = ' + self.value_extrapolators
         if self.wheres: query += " WHERE " + self.wheres
-        query += ' RETURNING ' + self.primary_key + ';'
+        query += ';'#' RETURNING ' + self.primary_key + ';'
         values = self.where_values
         values.update(self.values)
         return (query, values)

@@ -68,12 +68,12 @@ class DatabaseAdapter(object):
         query = query_builder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
-        row_ids = self.db.cursor().fetchall()
-        row_ids = [r[kwargs['primary_key']] for r in row_ids]
-        if len(row_ids) > 0:
-            return self.select(where = {kwargs['primary_key']: row_ids})
-        else:
-            return ((), self.columns())
+        #row_ids = self.db.cursor().fetchall()
+        #row_ids = [r[kwargs['primary_key']] for r in row_ids]
+        #if len(row_ids) > 0:
+        #    return self.select(where = {kwargs['primary_key']: row_ids})
+        #else:
+        #    return ((), self.columns())
 
     def insert(self, **kwargs):
         return self.write(InsertQueryBuilder, **kwargs)

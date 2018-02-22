@@ -351,7 +351,7 @@ class Model(object):
             if field in column_names:
                 kwargs['values'][field] = now
         results = self.db_adapter(role='master').insert(**kwargs)
-        return self.record_or_model(results)
+        #return self.record_or_model(results)
 
     @classmethod
     def record_or_model(self, results):
@@ -379,7 +379,7 @@ class Model(object):
             kwargs['values']['updated_at'] = now
 
         results = self.db_adapter(role='master').update(**kwargs)
-        return self.record_or_model(results)
+        #return self.record_or_model(results)
 
     @classorinstancemethod
     def touch(self, **kwargs):

@@ -4,6 +4,7 @@ from memoized_property import memoized_property
 
 from jardin.tools import retry
 from jardin.database.base import BaseConnection
+import jardin.config as config
 
 
 class DatabaseConnection(BaseConnection):
@@ -12,7 +13,9 @@ class DatabaseConnection(BaseConnection):
 
     @retry(pg.OperationalError, tries=3)
     def connect(self):
-        return super(DatabaseConnection, self).connect()
+        connection = super(DatabaseConnection, self).connect()
+        connection.initialize(config.logger)
+        return connection
 
     @memoized_property
     def connect_kwargs(self):
