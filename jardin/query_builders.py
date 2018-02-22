@@ -247,7 +247,7 @@ class WriteQueryBuilder(PGQueryBuilder):
         for idx, val in self.write_values.iterrows():
             values = collections.OrderedDict()
 
-            for (k, v) in val.items():
+            for k, v in val.iteritems():
                 if isinstance(v, dict):
                     v = json.dumps(v)
                 if isinstance(v, np.bool_):
