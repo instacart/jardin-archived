@@ -248,7 +248,7 @@ class WriteQueryBuilder(PGQueryBuilder):
             values = collections.OrderedDict()
 
             for k, v in val.iteritems():
-                if isinstance(v, dict):
+                if isinstance(v, dict) or isinstance(v, list):
                     v = json.dumps(v)
                 if isinstance(v, np.bool_):
                     v = bool(v)
