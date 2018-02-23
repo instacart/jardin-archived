@@ -6,7 +6,7 @@ import json
 
 import jardin.config as config
 from jardin.database import DatabaseAdapter, DatabaseConnections
-from jardin.tools import soft_del
+from jardin.tools import soft_del, classorinstancemethod
 
 class Collection(pandas.DataFrame):
     """
@@ -381,6 +381,15 @@ class Model(object):
 
         results = self.db_adapter(role='master').update(**kwargs)
         return self.record_or_model(results)
+
+    @classorinstancemethod
+    def touch(self, **kwargs):
+        if type(self) == type:
+            kwargs['values'] = {'updated_at': datetime.utcnow()}
+            return self.update(**kwargs)
+        else:
+            self.attributes = self.__class__.touch(where=self.where_self).attributes
+
 
     @classmethod
     @soft_del

@@ -3,6 +3,11 @@ from operator import is_not
 from functools import partial, wraps
 import time
 
+class classorinstancemethod(object):
+    def __init__(self, method):
+        self.method = method
+    def __get__(self, instance, cls):
+        return lambda *args, **kw: self.method(instance or cls, *args, **kw)
 
 def add_to_where(where, item):
     if isinstance(where, dict):

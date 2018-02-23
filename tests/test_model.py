@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 import pandas
 
 from jardin import Collection
@@ -145,6 +146,15 @@ class TestModel(unittest.TestCase):
         users = User.select(select='name', group='name', having='COUNT(*) > 1')
         self.assertEqual(len(users), 1)
 
+    @transaction(model=User)
+    def test_touch(self):
+        user = User.insert(values={'name': 'Jardin'})
+        self.assertEqual(user.created_at, user.updated_at)
+        user.touch()
+        self.assertTrue(user.updated_at > user.created_at)
+        updated_at = user.updated_at
+        user = User.touch(where={'id': user.id})
+        self.assertTrue(user.updated_at > updated_at)
 
 if __name__ == "__main__":
     unittest.main()
