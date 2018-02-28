@@ -60,7 +60,7 @@ class SelectQueryBuilder(PGQueryBuilder):
         elif isinstance(selects, dict):
             result = []
             for (k, v) in selects.items():
-                result += ['%s AS %s' % (k, v)]
+                result += ['%s AS %s' % (v, k)]
             return ', '.join(result)
 
     @memoized_property
