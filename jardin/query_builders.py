@@ -88,7 +88,7 @@ class SelectQueryBuilder(PGQueryBuilder):
         if not isinstance(wheres, list): wheres = [wheres]
         wheres += self.scope_wheres
         res = [self.where_items(where) for where in wheres]
-        results = [item for sublist in res for item in sublist]
+        results = ['(%s)' % item for sublist in res for item in sublist]
         return ' AND '.join(results)
 
     def add_to_where_values(self, values):
