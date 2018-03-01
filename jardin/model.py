@@ -70,7 +70,6 @@ class Model(object):
     """
       Base class from which your models should inherit.
     """
-    ROLES = {"replica": "read", "master": "write"}  # to have backward compatibility
     table_name = None
     table_alias = None
     db_names = {} # {'master': database_master_url, 'replica': database_replica_url}
@@ -254,7 +253,7 @@ class Model(object):
         """
         db_adapter = self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role') or 'replica'
+            role=kwargs.get('role', 'replica')
             )
 
         kwargs['stack'] = self.stack_mark(
@@ -453,17 +452,15 @@ class Model(object):
     def db_adapter(self, role='replica', db_name=None):
         if not hasattr(self, '_db_adapter'):
             self._db_adapter = {}
-        
-        if role not in self._db_adapter:
-          self._db_adapter[role] = DatabaseAdapter(
-              self.db(
-                  role=role,
-                  db_name=db_name
-                  ), 
+        db_name = db_name or self.db_names.get(role)
+        key = '%s_%s' % (db_name, role)
+        if key not in self._db_adapter:
+          self._db_adapter[key] = DatabaseAdapter(
+              self.db(role=role, db_name=db_name), 
               self.model_metadata()
               )
 
-        return self._db_adapter[role]
+        return self._db_adapter[key]
 
     @classmethod
     def model_metadata(self):
@@ -491,12 +488,9 @@ class Model(object):
         return '_'.join(map(lambda x: x.lower(), s1))
 
     @classmethod
-    def db(self, role='replica', db_name = None):
+    def db(self, role='replica', db_name=None):
         if not hasattr(self, '_db'): self._db = {}
-        name = self.db_names.get(
-            role,
-            db_name or self.db_names.get(self.ROLES.get(role))
-            )
+        name = db_name or self.db_names.get(role)
         
         if name not in self._db:
             self._db[name] = DatabaseConnections.connection(name)
