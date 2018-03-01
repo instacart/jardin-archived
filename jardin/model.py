@@ -484,7 +484,7 @@ class Model(object):
         #s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         s1 = re.sub('([A-Z])', r'_\1', name)[1:]
         s1 = s1.split('_')
-        s1 = map(lambda x: x.lower(), s1)
+        s1 = list(map(lambda x: x.lower(), s1))
         s1[-1] = inflect.engine().plural_noun(s1[-1])
         return '_'.join(s1)
 
