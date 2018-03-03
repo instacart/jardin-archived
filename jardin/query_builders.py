@@ -83,34 +83,36 @@ class SelectQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def wheres(self):
-        self.where_values = {}
+        self.where_values = collections.OrderedDict()
         wheres = self.kwargs.get('where', None)
         if not isinstance(wheres, list): wheres = [wheres]
         wheres += self.scope_wheres
         res = [self.where_items(where) for where in wheres]
-        results = ['(%s)' % item for sublist in res for item in sublist]
+        results = ['(%s)' % ' '.join(item) for sublist in res for item in sublist]
         return ' AND '.join(results)
 
-    def add_to_where_values(self, values):
-        for (k, v) in values.items():
-            if isinstance(v, pd.Series) or isinstance(v, list):
-                v = tuple(v)
-            self.where_values[k] = v
+    def where_key(self, key):
+        return 'val_%s' % len(self.where_values)
+
+    def add_to_where_values(self, key, value):
+        if isinstance(value, pd.Series) or isinstance(value, list):
+            value = tuple(value)
+        key = self.where_key(key)
+        self.where_values[key] = value
+        return '%(' + key + ')s'
 
     def where_items(self, where):
         results = []
         if isinstance(where, str):
-            results += [where]
+            results += [[where]]
         elif isinstance(where, tuple):
-            self.add_to_where_values(where[1])
-            results += [where[0]]
+            results += [[self.add_to_where_values(*where)]]
         elif isinstance(where, dict):
             for (k, v) in where.items():
                 if isinstance(v, tuple):
-                    from_label = '%s_from' % k
-                    to_label = '%s_to' % k
-                    results += [k + ' BETWEEN %(' + from_label + ')s AND %(' + to_label + ')s']
-                    self.add_to_where_values({from_label: v[0], to_label: v[1]})
+                    from_label = self.add_to_where_values(k, v[0])
+                    to_label = self.add_to_where_values(k, v[1])
+                    results += [[k, 'BETWEEN', from_label, 'AND', to_label]]
                 elif isinstance(v, dict):
                     for (kk, vv) in v.items():
                         res = "(" + k + "->>'" + kk + "')"
@@ -118,27 +120,25 @@ class SelectQueryBuilder(PGQueryBuilder):
                             res += '::INTEGER'
                         elif isinstance(vv, float):
                             res += '::FLOAT'
-                        label = k + '_' + kk
-                        res += " = %(" + label + ")s"
-                        results += [res]
-                        self.add_to_where_values({label: vv})
+                        results += [[res, '=', self.add_to_where_values(kk, vv)]]
                 elif not isinstance(v, list) and not isinstance(v, pd.Series) and not isinstance(v, np.ndarray) and pd.isnull(v):
-                    results += [k + ' IS NULL']
+                    results += [[k, 'IS NULL']]
                 elif callable(v):
-                    results += ["%s %s" % (k, v())]
+                    results += [[k, v()]]
                 else:
-                    self.add_to_where_values({k: v})
                     if isinstance(v, list) or isinstance(v, pd.Series):
                         operator = 'IN'
                     else:
                         operator = '='
-                    results += [k + ' ' + operator + ' %(' + k + ')s']
+                    results += [[k, operator, self.add_to_where_values(k, v)]]
         elif isinstance(where, list):
-            self.add_to_where_values(where[1])
             result = where[0]
             for l in re.findall('%\((\S+)\)s', result):
                 result = re.sub('%\(' + l + '\)s', '%(' + l + ')s', result)
-            results += [result]
+            for (k, v) in where[1].items():
+                key = self.add_to_where_values(k, v)
+                result = re.sub('%\(' + k + '\)s', key, result)
+            results += [[result]]
         return results
 
     @memoized_property
@@ -312,6 +312,9 @@ class DeleteQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
 
 class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
+
+    def where_key(self, key):
+        return key
 
     @memoized_property
     def sql(self):

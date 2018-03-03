@@ -60,6 +60,11 @@ class TestModel(unittest.TestCase):
         users = User.select(where={'name': 'Jardin'})
         self.assertEqual(len(users), 1)
         self.assertTrue('Jardin' in users.name.tolist())
+        users = User.select(where=[
+            ['name = %(name)s', {'name': 'Jardin'}]
+            ])
+        self.assertEqual(len(users), 1)
+        self.assertTrue('Jardin' in users.name.tolist())
 
     @transaction(model=User)
     def test_count(self):
