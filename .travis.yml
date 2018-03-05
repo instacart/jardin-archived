@@ -3,7 +3,8 @@ python:
   - 2.7.14
   - 3.5.2
 script:
-  - python setup.py test
+  - JARDIN_CONF=/home/ubuntu/jardin/tests/jardin_conf_pg.py python setup.py test
+  - JARDIN_CONF=/home/ubuntu/jardin/tests/jardin_conf_mysql.py python setup.py test
 services:
   - postgresql
 before_script:
