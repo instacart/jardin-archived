@@ -21,6 +21,10 @@ class PGQueryBuilder(object):
         return self.model_metadata['table_name']
 
     @memoized_property
+    def scheme(self):
+        return self.kwargs.get('scheme')
+
+    @memoized_property
     def table_alias(self):
         return self.model_metadata['table_alias']
 
@@ -32,10 +36,11 @@ class PGQueryBuilder(object):
     def scopes(self):
         return self.model_metadata['scopes']
 
-    def extrapolators(self, fields, sep = ', '):
-        extrapolators = []
-        for field in fields: extrapolators.append('%(' + '%s' % field + ')s')
-        return sep.join(extrapolators)
+    def extrapolators(self, fields):
+        return ['%(' + '%s' % field + ')s' for field in fields]
+
+    def extrapolator(self, field):
+        return '%(' + '%s' % field + ')s'
 
     @memoized_property
     def stack(self):
@@ -265,11 +270,12 @@ class WriteQueryBuilder(PGQueryBuilder):
         return all_values
 
     @memoized_property
-    def value_extrapolators(self): 
-        return ', '.join([
-            "(" + self.extrapolators(fa, sep = ', ') + ")"
-            for fa in [v.keys() for v in self.values_list]
-            ])
+    def value_extrapolators(self):
+        ext = []
+        for v in self.values_list:
+            for fa in v.keys():
+                ext += [self.extrapolator(fa)]
+        return ext
 
     @memoized_property
     def values(self):
@@ -280,14 +286,17 @@ class WriteQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def fields(self):
-        return ', '.join(self.write_values.columns)
+        return self.write_values.columns
 
 
 class InsertQueryBuilder(WriteQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES " + self.value_extrapolators + ";"#" RETURNING " + self.primary_key + ";"
+        query = self.watermark + "INSERT INTO " + self.table_name + " (" +  ', '.join(self.fields) + ") VALUES (" + ', '.join(self.value_extrapolators) + ')'
+        if self.scheme == 'postgres':
+            query += " RETURNING " + self.primary_key
+        query += ";"
         return (query, self.values)
 
 
@@ -295,9 +304,18 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + 'UPDATE ' + self.table_name + ' SET (' + self.fields + ') = ' + self.value_extrapolators
+        query = self.watermark + 'UPDATE ' + self.table_name + ' SET '
+        if self.scheme == 'postgres':
+            query += '(' + ', '.join(self.fields) + ') = (' + ', '.join(self.value_extrapolators) + ')'
+        if self.scheme == 'mysql':
+            values = []
+            for field_ext in zip(self.fields, self.value_extrapolators):
+                values += ['%s = %s' % field_ext]
+            query += ', '.join(values)
         if self.wheres: query += " WHERE " + self.wheres
-        query += ';'#' RETURNING ' + self.primary_key + ';'
+        if self.scheme == 'postgres':
+            query += ' RETURNING ' + self.primary_key
+        query += ';'
         values = self.where_values
         values.update(self.values)
         return (query, values)

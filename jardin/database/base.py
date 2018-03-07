@@ -8,9 +8,10 @@ class BaseConnection(object):
     _connection = None
     _cursor = None
 
-    def __init__(self, db_config):
+    def __init__(self, db_config, name):
         self.db_config = db_config
         self.autocommit = True
+        self.name = name
 
     def connection(self):
         if self._connection is None:

@@ -2,6 +2,8 @@ from future.standard_library import install_aliases
 install_aliases()
 from urllib.parse import urlparse
 
+import pandas
+
 from jardin.query_builders import \
     SelectQueryBuilder, \
     InsertQueryBuilder, \
@@ -19,7 +21,7 @@ class DatabaseConnections(object):
     _connections = {}
     _urls = {}
 
-    ALLOWED_DRIVERS = ('postgres', 'mysql')
+    SUPPORTED_SCHEMES = ('postgres', 'mysql')
 
     @classmethod
     def connection(self, db_name):
@@ -30,14 +32,14 @@ class DatabaseConnections(object):
     @classmethod
     def build_connection(self, name):
         db = self.urls(name)
-        if db.scheme not in self.ALLOWED_DRIVERS:
+        if db.scheme not in self.SUPPORTED_SCHEMES:
             raise UnsupportedDriver('%s is not a supported driver' % db.scheme)
         elif db.scheme == 'postgres':
             import jardin.database.pg as driver
         elif db.scheme == 'mysql':
             import jardin.database.mysql as driver
 
-        return driver.DatabaseConnection(db)
+        return driver.DatabaseConnection(db, name)
 
 
     @classmethod
@@ -61,19 +63,26 @@ class DatabaseAdapter(object):
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
-        return self.db.cursor().fetchall(), self.columns()
+        results = self.db.cursor().fetchall()
+        return pandas.DataFrame(list(results), columns=self.columns())
 
     def write(self, query_builder, **kwargs):
         kwargs['model_metadata'] = self.model_metadata
+        kwargs['scheme'] = self.db.db_config.scheme
         query = query_builder(**kwargs).query
-        config.logger.debug(query)
+        config.logger.info(query)
         self.db.execute(*query)
-        #row_ids = self.db.cursor().fetchall()
-        #row_ids = [r[kwargs['primary_key']] for r in row_ids]
-        #if len(row_ids) > 0:
-        #    return self.select(where = {kwargs['primary_key']: row_ids})
-        #else:
-        #    return ((), self.columns())
+        row_ids = []
+        if self.db.db_config.scheme == 'postgres':
+            row_ids = self.db.cursor().fetchall()
+            row_ids = [r[kwargs['primary_key']] for r in row_ids]
+        if self.db.db_config.scheme == 'mysql' and query_builder == InsertQueryBuilder:
+            self.db.execute('SELECT LAST_INSERT_ID();')
+            row_ids = [self.db.cursor().fetchall()[0][0]]
+        if len(row_ids) > 0:
+            return self.select(where={kwargs['primary_key']: row_ids})
+
+        return pandas.DataFrame(columns=self.columns())
 
     def insert(self, **kwargs):
         return self.write(InsertQueryBuilder, **kwargs)
@@ -97,4 +106,7 @@ class DatabaseAdapter(object):
             return None
 
     def columns(self):
-        return [col_desc[0] for col_desc in self.db.cursor().description]
+        cursor_desc = self.db.cursor().description
+        if cursor_desc:
+            return [col_desc[0] for col_desc in cursor_desc]
+        return []

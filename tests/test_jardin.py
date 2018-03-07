@@ -1,4 +1,7 @@
 import unittest
+from time import sleep
+#from freezegun import freeze_time
+from datetime import datetime, timedelta
 import pandas as pd
 
 from tests import transaction
@@ -13,14 +16,17 @@ class TestModel(unittest.TestCase):
     @transaction(model=User)
     def test_created_at_updated_at(self):
         user = User.insert(values={'name': 'Jardinier'})
+        user = User.find(user.id)
         user2 = User.insert(values={'name': 'Jardinier 2'})
         self.assertNotEqual(user.name, user2.name)
         self.assertIsNotNone(user.created_at)
         self.assertIsNotNone(user.updated_at)
-        updated_user = User.update(
-            values={'name': 'Jardinier 2'},
-            where={'id': user.id}
-            )
+        with freeze_time(datetime.utcnow() + timedelta(hours=1)):
+            User.update(
+                values={'name': 'Jardinier 3'},
+                where={'id': user.id}
+                )
+        updated_user = User.find(user.id)
         self.assertTrue(updated_user.updated_at > user.updated_at)
         self.assertEqual(updated_user.created_at, user.created_at)
 

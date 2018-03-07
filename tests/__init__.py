@@ -3,16 +3,20 @@ from tests.models import JardinTestModel
 
 class TestTransaction(object):
 
-    def __init__(self, model, create_table=True):
+    def __init__(self, model, create_table=True, extra_tables=[]):
         self._model = model
+        self.tables = extra_tables
         self._model.clear_caches()
         self._connection = self._model.db(role='master')
         self.create_table = create_table
 
     def __enter__(self):
-        self._model.query(
-            sql='drop table if exists %s cascade;' % self._model.model_metadata()['table_name']
-            )
+        if self._model.db().db_config.scheme == 'mysql':
+            self._model.query(sql="SET sql_mode = '';")
+        for table in self.tables + [self._model.model_metadata()['table_name']]:
+            self._model.query(
+                sql='drop table if exists %s cascade;' % table
+                )
         self._model._columns = None
         self._connection.autocommit = False
         self._model.query(sql='BEGIN;', role='master')
@@ -22,16 +26,20 @@ class TestTransaction(object):
                 )
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._model.query(sql='ROLLBACK;', role='master')
+        self._model.query(sql='COMMIT;', role='master')
         self._connection.autocommit = True
 
 
-def transaction(model=JardinTestModel, create_table=True):
+def transaction(model=JardinTestModel, create_table=True, extra_tables=[]):
 
     def decorator(func):
 
         def wrapper(*args, **kwargs):
-            with TestTransaction(model, create_table=create_table):
+            with TestTransaction(
+                model,
+                create_table=create_table,
+                extra_tables=extra_tables
+                ):
                 return func(*args, **kwargs)
 
         return wrapper
