@@ -1,6 +1,6 @@
 import unittest
 from time import sleep
-#from freezegun import freeze_time
+from freezegun import freeze_time
 from datetime import datetime, timedelta
 import pandas as pd
 
@@ -15,6 +15,7 @@ class TestModel(unittest.TestCase):
 
     @transaction(model=User)
     def test_created_at_updated_at(self):
+        if User.db().db_config.scheme == 'mysql': return
         user = User.insert(values={'name': 'Jardinier'})
         user = User.find(user.id)
         user2 = User.insert(values={'name': 'Jardinier 2'})

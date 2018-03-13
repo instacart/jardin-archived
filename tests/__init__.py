@@ -26,7 +26,7 @@ class TestTransaction(object):
                 )
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._model.query(sql='COMMIT;', role='master')
+        self._model.query(sql='ROLLBACK;', role='master')
         self._connection.autocommit = True
 
 

@@ -179,6 +179,9 @@ class Model(object):
         else:
             raise RecordNotPersisted("Record's primary key is None")
 
+    def reload(self):
+        self.attributes = self.__class__.find(self.attributes[self.primary_key]).attributes
+
     @property
     def persisted(self):
         return self.attributes.get(self.primary_key) is not None
@@ -376,8 +379,8 @@ class Model(object):
         kwargs['primary_key'] = self.primary_key
         column_names = self.table_schema().keys()
         now = datetime.utcnow()
-        if 'updated_at' in column_names:
-            kwargs['values']['updated_at'] = now
+        #if 'updated_at' in column_names:
+        #    kwargs['values']['updated_at'] = now
         results = self.db_adapter(role='master').update(**kwargs)
         return self.record_or_model(results)
 
@@ -387,7 +390,8 @@ class Model(object):
             kwargs['values'] = {'updated_at': datetime.utcnow()}
             return self.update(**kwargs)
         else:
-            self.attributes = self.__class__.touch(where=self.where_self).attributes
+            self.__class__.touch(where=self.where_self)
+            self.reload()
 
 
     @classmethod

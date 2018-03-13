@@ -1,4 +1,8 @@
-import MySQLdb
+import sys
+if sys.version_info[0] < 3:
+    import MySQLdb
+else:
+    import pymysql as MySQLdb
 
 from jardin.tools import retry
 from jardin.database.base import BaseConnection
