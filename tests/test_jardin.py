@@ -15,7 +15,6 @@ class TestModel(unittest.TestCase):
 
     @transaction(model=User)
     def test_created_at_updated_at(self):
-        if User.db().db_config.scheme == 'mysql': return
         user = User.insert(values={'name': 'Jardinier'})
         user = User.find(user.id)
         user2 = User.insert(values={'name': 'Jardinier 2'})
@@ -29,7 +28,8 @@ class TestModel(unittest.TestCase):
                 )
         updated_user = User.find(user.id)
         self.assertTrue(updated_user.updated_at > user.updated_at)
-        self.assertEqual(updated_user.created_at, user.created_at)
+        if User.db().db_config.scheme != 'mysql':
+            self.assertEqual(updated_user.created_at, user.created_at)
 
     @transaction(model=User, create_table=False)
     def test_no_created_at_updated_at(self):

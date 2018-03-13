@@ -379,8 +379,8 @@ class Model(object):
         kwargs['primary_key'] = self.primary_key
         column_names = self.table_schema().keys()
         now = datetime.utcnow()
-        #if 'updated_at' in column_names:
-        #    kwargs['values']['updated_at'] = now
+        if 'updated_at' in column_names:
+            kwargs['values']['updated_at'] = now
         results = self.db_adapter(role='master').update(**kwargs)
         return self.record_or_model(results)
 
