@@ -7,5 +7,7 @@ script:
   - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_mysql.py python setup.py test
 services:
   - postgresql
+  - mysql
 before_script:
   - psql -c 'create database jardin_test;' -U postgres
+  - mysql -e 'CREATE DATABASE myapp_test;'
