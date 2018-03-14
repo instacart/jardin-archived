@@ -22,7 +22,7 @@ class TestTransaction(object):
         self._model.query(sql='BEGIN;', role='master')
         if self.create_table:
             self._model.query(
-                sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp, updated_at timestamp, deleted_at timestamp, destroyed_at timestamp, num decimal);' % self._model.model_metadata()['table_name']
+                sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model.model_metadata()['table_name']
                 )
 
     def __exit__(self, exc_type, exc_value, traceback):

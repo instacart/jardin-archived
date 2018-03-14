@@ -72,7 +72,7 @@ class Model(object):
     """
     table_name = None
     table_alias = None
-    db_names = {} # {'master': database_master_url, 'replica': database_replica_url}
+    db_names = {}
     has_many = []
     belongs_to = {}
     scopes = {}
@@ -88,6 +88,7 @@ class Model(object):
             self.attributes[column] = kwargs.get(
                 column,
                 table_schema.get(column, {}).get('default'))
+            # MySQL filth
             if self.attributes[column] == '0000-00-00 00:00:00':
                 self.attributes[column] = None
             if column in kwargs:

@@ -70,14 +70,14 @@ class DatabaseAdapter(object):
         kwargs['model_metadata'] = self.model_metadata
         kwargs['scheme'] = self.db.db_config.scheme
         query = query_builder(**kwargs).query
-        config.logger.info(query)
+        config.logger.debug(query)
         self.db.execute(*query)
         row_ids = []
         if self.db.db_config.scheme == 'postgres':
             row_ids = self.db.cursor().fetchall()
             row_ids = [r[kwargs['primary_key']] for r in row_ids]
         if self.db.db_config.scheme == 'mysql' and query_builder == InsertQueryBuilder:
-            config.logger.info('SELECT LAST_INSERT_ID();')
+            config.logger.debug('SELECT LAST_INSERT_ID();')
             self.db.execute('SELECT LAST_INSERT_ID();')
             row_ids = [self.db.cursor().fetchall()[0][0]]
         if len(row_ids) > 0:
