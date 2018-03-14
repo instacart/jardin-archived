@@ -1,5 +1,7 @@
 import unittest
-from datetime import datetime
+from freezegun import freeze_time
+from datetime import datetime, timedelta
+from time import sleep
 import pandas
 
 from jardin import Collection
@@ -130,7 +132,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(User.count(where="destroyed_at IS NOT NULL"), 0)
         User.soft_delete = False
 
-    @transaction(model=User)
+    @transaction(model=User, extra_tables=['projects'])
     def test_relationships(self):
         Project.query(
             sql="CREATE TABLE projects (id serial PRIMARY KEY, user_id integer);"
@@ -155,11 +157,14 @@ class TestModel(unittest.TestCase):
     def test_touch(self):
         user = User.insert(values={'name': 'Jardin'})
         self.assertEqual(user.created_at, user.updated_at)
-        user.touch()
-        self.assertTrue(user.updated_at > user.created_at)
-        updated_at = user.updated_at
-        user = User.touch(where={'id': user.id})
-        self.assertTrue(user.updated_at > updated_at)
+        with freeze_time(datetime.utcnow() + timedelta(hours=1)):
+            user.touch()
+            self.assertTrue(user.updated_at > user.created_at)
+            updated_at = user.updated_at
+            with freeze_time(datetime.utcnow() + timedelta(hours=1)):
+                User.touch(where={'id': user.id})
+                user.reload()
+                self.assertTrue(user.updated_at > updated_at)
 
 if __name__ == "__main__":
     unittest.main()

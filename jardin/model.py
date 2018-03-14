@@ -72,7 +72,7 @@ class Model(object):
     """
     table_name = None
     table_alias = None
-    db_names = {} # {'master': database_master_url, 'replica': database_replica_url}
+    db_names = {}
     has_many = []
     belongs_to = {}
     scopes = {}
@@ -88,6 +88,9 @@ class Model(object):
             self.attributes[column] = kwargs.get(
                 column,
                 table_schema.get(column, {}).get('default'))
+            # MySQL filth
+            if self.attributes[column] == '0000-00-00 00:00:00':
+                self.attributes[column] = None
             if column in kwargs:
                 del kwargs[column]
         self.init_relationships()
@@ -179,6 +182,9 @@ class Model(object):
         else:
             raise RecordNotPersisted("Record's primary key is None")
 
+    def reload(self):
+        self.__init__(**self.__class__.find(self.attributes[self.primary_key]).attributes)
+
     @property
     def persisted(self):
         return self.attributes.get(self.primary_key) is not None
@@ -205,8 +211,8 @@ class Model(object):
     @classmethod
     def collection_instance(self, result):
         return self.collection_class.from_records(
-            result[0],
-            columns=result[1],
+            result.to_dict(orient='records'),
+            columns=result.columns,
             coerce_float=True,
             model_class=self
             )
@@ -218,7 +224,7 @@ class Model(object):
         line_number = stack[1][2]
         stack = [filename, function_name, str(line_number)]
         if db_conn:
-          stack = [db_conn.connection().dsn] + stack
+          stack = [db_conn.name] + stack
         return ':'.join(stack)
 
     @classmethod
@@ -316,14 +322,15 @@ class Model(object):
         :returns: integer
         """
         if 'select' in kwargs:
-            kwargs['select'] = 'COUNT(%s)' % kwargs['select']
+            kwargs['select'] = {'cnt': 'COUNT(%s)' % kwargs['select']}
         else:
-            kwargs['select'] = 'COUNT(*)'
+            kwargs['select'] = {'cnt': 'COUNT(*)'}
 
-        return self.db_adapter(
+        res = self.db_adapter(
             db_name=kwargs.get('db'),
             role=kwargs.get('role') or 'replica'
-            ).select(**kwargs)[0][0]['count']
+            ).select(**kwargs)
+        return res.cnt[0]
 
     @classmethod
     def insert(self, **kwargs):
@@ -355,8 +362,8 @@ class Model(object):
 
     @classmethod
     def record_or_model(self, results):
-        if len(results[0]) == 1:
-            return self(**results[0][0])
+        if len(results) == 1:
+            return self(**results.to_dict(orient='records')[0])
         else:
             return self.collection_instance(results)
 
@@ -377,7 +384,6 @@ class Model(object):
         now = datetime.utcnow()
         if 'updated_at' in column_names:
             kwargs['values']['updated_at'] = now
-
         results = self.db_adapter(role='master').update(**kwargs)
         return self.record_or_model(results)
 
@@ -387,7 +393,8 @@ class Model(object):
             kwargs['values'] = {'updated_at': datetime.utcnow()}
             return self.update(**kwargs)
         else:
-            self.attributes = self.__class__.touch(where=self.where_self).attributes
+            self.__class__.touch(where=self.where_self)
+            self.reload()
 
 
     @classmethod
@@ -429,14 +436,11 @@ class Model(object):
         :returns: an instance of the model.
         """
         try:
-            return self(**self.db_adapter(
-                db_name=kwargs.get('db'),
-                role=kwargs.get('role') or 'replica'
-                ).select(
+            return self(**self.select(
                     where=values,
-                    limit=1
-                    )[0][0]
-                )
+                    limit=1,
+                    **kwargs
+                    ).to_dict(orient='records')[0])
         except IndexError:
             return None
 
@@ -446,7 +450,7 @@ class Model(object):
         Finds a record by its id in the model's table in the replica database.
         :returns: an instance of the model.
         """
-        return self.find_by(values={'id': id}, **kwargs)
+        return self.find_by(values={self.primary_key: id}, **kwargs)
 
     @classmethod
     def db_adapter(self, role='replica', db_name=None):
@@ -546,9 +550,14 @@ class Model(object):
         """
         if self.__dict__.get('_table_schema') is None:
             self._table_schema = {}
+            scheme = self.db().db_config.scheme
             for row in self.query_schema():
-                default = row['column_default']
-                name = row['column_name']
+                if scheme == 'postgres':
+                    default = row['column_default']
+                    name = row['column_name']
+                elif scheme == 'mysql':
+                    default = row[4]
+                    name = row[0]
                 if isinstance(default, str):
                     json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
                     if len(json_matches) > 0:
@@ -562,12 +571,17 @@ class Model(object):
     @classmethod
     def query_schema(self):
         table_name = self.model_metadata()['table_name']
-        return self.db_adapter().raw_query(
-            sql="SELECT column_name, column_default FROM " \
-            "information_schema.columns WHERE " \
-            "table_name=%(table_name)s AND table_schema='public';",
-            where={'table_name': table_name}
-            )[0]
+        if self.db().db_config.scheme == 'postgres':
+            return self.db_adapter().raw_query(
+                sql="SELECT column_name, column_default FROM " \
+                "information_schema.columns WHERE " \
+                "table_name=%(table_name)s AND table_schema='public';",
+                where={'table_name': table_name}
+                )[0]
+        if self.db().db_config.scheme =='mysql':
+            return self.db_adapter().raw_query(
+                sql="SHOW COLUMNS FROM %s;" % table_name
+                )[0]
 
     @classmethod
     def clear_caches(self):

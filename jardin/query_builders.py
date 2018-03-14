@@ -1,4 +1,4 @@
-import re, collections, json
+import re, collections, json, sys
 from memoized_property import memoized_property
 import pandas as pd
 import numpy as np
@@ -21,6 +21,10 @@ class PGQueryBuilder(object):
         return self.model_metadata['table_name']
 
     @memoized_property
+    def scheme(self):
+        return self.kwargs.get('scheme')
+
+    @memoized_property
     def table_alias(self):
         return self.model_metadata['table_alias']
 
@@ -32,10 +36,11 @@ class PGQueryBuilder(object):
     def scopes(self):
         return self.model_metadata['scopes']
 
-    def extrapolators(self, fields, sep = ', '):
-        extrapolators = []
-        for field in fields: extrapolators.append('%(' + '%s' % field + ')s')
-        return sep.join(extrapolators)
+    def extrapolators(self, fields):
+        return ['%(' + '%s' % field + ')s' for field in fields]
+
+    def extrapolator(self, field):
+        return '%(' + '%s' % field + ')s'
 
     @memoized_property
     def stack(self):
@@ -254,6 +259,10 @@ class WriteQueryBuilder(PGQueryBuilder):
                     v = bool(v)
                 if isinstance(v, np.datetime64) and np.isnat(v):
                     v = None
+                # Foul hack for pymysql
+                if isinstance(v, pd.Timestamp) and self.scheme == 'mysql' \
+                    and sys.version_info[0] == 3:
+                    v = v.strftime('%Y-%m-%d %H:%M:%S')
                 if isinstance(v, pd._libs.tslib.NaTType):
                     v = None
                 if isinstance(v, float) and np.isnan(v):
@@ -265,11 +274,12 @@ class WriteQueryBuilder(PGQueryBuilder):
         return all_values
 
     @memoized_property
-    def value_extrapolators(self): 
-        return ', '.join([
-            "(" + self.extrapolators(fa, sep = ', ') + ")"
-            for fa in [v.keys() for v in self.values_list]
-            ])
+    def value_extrapolators(self):
+        ext = []
+        for v in self.values_list:
+            for fa in v.keys():
+                ext += [self.extrapolator(fa)]
+        return ext
 
     @memoized_property
     def values(self):
@@ -280,14 +290,17 @@ class WriteQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def fields(self):
-        return ', '.join(self.write_values.columns)
+        return self.write_values.columns
 
 
 class InsertQueryBuilder(WriteQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + "INSERT INTO " + self.table_name + " (" + self.fields + ") VALUES " + self.value_extrapolators + " RETURNING " + self.primary_key + ";"
+        query = self.watermark + "INSERT INTO " + self.table_name + " (" +  ', '.join(self.fields) + ") VALUES (" + ', '.join(self.value_extrapolators) + ')'
+        if self.scheme == 'postgres':
+            query += " RETURNING " + self.primary_key
+        query += ";"
         return (query, self.values)
 
 
@@ -295,9 +308,18 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + 'UPDATE ' + self.table_name + ' SET (' + self.fields + ') = ' + self.value_extrapolators
+        query = self.watermark + 'UPDATE ' + self.table_name + ' SET '
+        if self.scheme == 'postgres':
+            query += '(' + ', '.join(self.fields) + ') = (' + ', '.join(self.value_extrapolators) + ')'
+        if self.scheme == 'mysql':
+            values = []
+            for field_ext in zip(self.fields, self.value_extrapolators):
+                values += ['%s = %s' % field_ext]
+            query += ', '.join(values)
         if self.wheres: query += " WHERE " + self.wheres
-        query += ' RETURNING ' + self.primary_key + ';'
+        if self.scheme == 'postgres':
+            query += ' RETURNING ' + self.primary_key
+        query += ';'
         values = self.where_values
         values.update(self.values)
         return (query, values)
