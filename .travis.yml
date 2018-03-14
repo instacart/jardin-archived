@@ -10,4 +10,4 @@ services:
   - mysql
 before_script:
   - psql -c 'create database jardin_test;' -U postgres
-  - mysql -e 'CREATE DATABASE myapp_test;'
+  - mysql -e 'CREATE DATABASE jardin_test;'
