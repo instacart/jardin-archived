@@ -1,4 +1,4 @@
-import re, collections, json
+import re, collections, json, sys
 from memoized_property import memoized_property
 import pandas as pd
 import numpy as np
@@ -259,6 +259,10 @@ class WriteQueryBuilder(PGQueryBuilder):
                     v = bool(v)
                 if isinstance(v, np.datetime64) and np.isnat(v):
                     v = None
+                # Foul hack for pymysql
+                if isinstance(v, pd.Timestamp) and self.scheme == 'mysql' \
+                    and sys.version_info[0] == 3:
+                    v = v.strftime('%Y-%m-%d %H:%M:%S')
                 if isinstance(v, pd._libs.tslib.NaTType):
                     v = None
                 if isinstance(v, float) and np.isnan(v):

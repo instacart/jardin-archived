@@ -77,6 +77,7 @@ class DatabaseAdapter(object):
             row_ids = self.db.cursor().fetchall()
             row_ids = [r[kwargs['primary_key']] for r in row_ids]
         if self.db.db_config.scheme == 'mysql' and query_builder == InsertQueryBuilder:
+            config.logger.info('SELECT LAST_INSERT_ID();')
             self.db.execute('SELECT LAST_INSERT_ID();')
             row_ids = [self.db.cursor().fetchall()[0][0]]
         if len(row_ids) > 0:

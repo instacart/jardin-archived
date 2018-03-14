@@ -88,6 +88,8 @@ class Model(object):
             self.attributes[column] = kwargs.get(
                 column,
                 table_schema.get(column, {}).get('default'))
+            if self.attributes[column] == '0000-00-00 00:00:00':
+                self.attributes[column] = None
             if column in kwargs:
                 del kwargs[column]
         self.init_relationships()
@@ -180,7 +182,7 @@ class Model(object):
             raise RecordNotPersisted("Record's primary key is None")
 
     def reload(self):
-        self.attributes = self.__class__.find(self.attributes[self.primary_key]).attributes
+        self.__init__(**self.__class__.find(self.attributes[self.primary_key]).attributes)
 
     @property
     def persisted(self):
