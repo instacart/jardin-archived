@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang='en'>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Jardin, the easy ORM for Python</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#ffffff">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">  </script>
+    <script>hljs.initHighlightingOnLoad();</script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.1/js/all.js"></script>
+  </head>
+  <body>
+    <div class='jumbotron text-center' style="background-color: #A8F5FF;">
+      <img src='images/jardin-header.jpg'>
+    </div>
+    <div class="container">
+      <div class='row'>
+        <div class='col-lg-8 col-sm-12'>
+          <h2 class='display-4'>The easy ORM for Python</h2>
+          <large class='lead'><pre>pip install jardin</pre></large>
+        </div>
+        <div class='col-lg-4 col-sm-12'>
+          <div class='row'>
+            <div class='col-sm-4 text-center'>
+              <a href="https://github.com/instacart/jardin">
+              <i class="fab fa-github fa-3x"></i>
+              <br>
+              github</a>
+            </div>
+            <div class='col-sm-4 text-center'>
+              <a href="https://pypi.org/project/jardin">
+              <i class="fab fa-python fa-3x"></i>
+              <br>
+              pip</a>
+            </div>
+            <div class='col-sm-4 text-center'>
+              <a href="dthedocs.org/projects/jardin/">
+              <i class="fas fa-book fa-3x"></i>
+              <br>
+              readthedocs</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col-lg-4 col-sm-12'>
+          <h3>Configure</h3>
+          <small><pre class='python'><code># jardin_conf.py
+
+import logging
+
+DATABASES = {
+    'mydb1_master': 'https://...',
+    'mydb1_replica': 'https://...',
+}
+
+LOG_LEVEL = logging.DEBUG
+
+WATERMARK = 'MyCoolApp'
+</code></pre></small>
+          <p>Configure access to as many databases as you want.</p>
+        </div>
+        <div class='col-lg-4 col-sm-12'>
+          <h3>Declare</h3>
+          <small><pre class='python'><code># db_models.py
+
+import jardin
+
+class Db1AbstractModel(jardin.Model):
+    db_names = {
+        'master': 'mydb1_master',
+        'replica': 'mydb1_replica'
+        }
+
+class User(Db1AbstractModel): pass
+
+</code></pre></small>
+          <p>Declare your models, one per database table. Singular names for plural tables, ActiveRecord-style.</p>
+        </div>
+        <div class='col-lg-4 col-sm-12'>
+          <h3>Profit</h3>
+          <small><pre class='python'><code style='overflow-x:hidden;'>>>> from db_models import User
+>>> user = User.insert(values={'name': 'jardin'})
+User(id=123, name='jardin')
+>>> User.select(where={'active': False})
+        name   active
+0     jardin    False
+1    sqlalch    False
+>>> user.active = True
+>>> user.save()
+>>> User.select(where={'active': True})
+        name   active
+0     jardin    True
+</code></pre></small>
+          <p>Use jardin to interact with your database in a clean and esthetic way.</p>
+        </div>
+      </div>
+      <div class='row'>
+        <div class='col-sm-12'>
+          <h2>Jardin is fully featured</h2>
+          <large style='font-size: 1.2rem; font-weight: 200; line-height: 2.2rem;'>
+            <ul>
+              <li>Works with python 2.7+ and 3.5+</li>
+              <li>PostgreSQL, MySQL, SQLite, AWS Redshift and Snowflake supported</li>
+              <li>Support for multiple databases with master/replica split</li>
+              <li>User-controlled database transactions</li>
+              <li>Transparent connection drop recovery</li>
+              <li>Single-statement dataframe insertion</li>
+              <li>À la ActiveRecord query scopes</li>
+              <li><code>created_at</code>, <code>updated_at</code> and soft-deletes out-of-the-box support</li>
+            </ul>
+          </large>
+        </div>
+      </div>
+    </div>
+    <p class='text-center'><small>jardin is an open-source package supported by <a href='https://tech.instacart.com/'>Instacart</a> – We're <a href='https://careers.instacart.com/'>hiring</a>.<br><a href='https://github.com/instacart/jardin/blob/master/LICENSE'>MIT license</a>, &copy; 2018 Instacart.</small></p>
+  </body>
+</html>

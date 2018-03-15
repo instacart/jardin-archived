@@ -21,7 +21,7 @@ class DatabaseConnections(object):
     _connections = {}
     _urls = {}
 
-    SUPPORTED_SCHEMES = ('postgres', 'mysql')
+    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite')
 
     @classmethod
     def connection(self, db_name):
@@ -38,6 +38,8 @@ class DatabaseConnections(object):
             import jardin.database.pg as driver
         elif db.scheme == 'mysql':
             import jardin.database.mysql as driver
+        elif db.scheme == 'sqlite':
+            import jardin.database.sqlite as driver
 
         return driver.DatabaseConnection(db, name)
 
@@ -48,7 +50,10 @@ class DatabaseConnections(object):
             config.init()
         for (nme, url) in config.DATABASES.items():
             if url:
-                self._urls[nme] = urlparse(url)
+                db = urlparse(url)
+                if db.scheme == '':
+                    db = urlparse('sqlite://localhost/%s' % url)
+                self._urls[nme] = db
         return self._urls[name]
 
 
@@ -60,6 +65,7 @@ class DatabaseAdapter(object):
 
     def select(self, **kwargs):
         kwargs['model_metadata'] = self.model_metadata
+        kwargs['scheme'] = self.db.db_config.scheme
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
@@ -76,10 +82,13 @@ class DatabaseAdapter(object):
         if self.db.db_config.scheme == 'postgres':
             row_ids = self.db.cursor().fetchall()
             row_ids = [r[kwargs['primary_key']] for r in row_ids]
-        if self.db.db_config.scheme == 'mysql' and query_builder == InsertQueryBuilder:
-            config.logger.debug('SELECT LAST_INSERT_ID();')
-            self.db.execute('SELECT LAST_INSERT_ID();')
-            row_ids = [self.db.cursor().fetchall()[0][0]]
+        if query_builder == InsertQueryBuilder:
+            if self.db.db_config.scheme == 'mysql':
+                config.logger.debug('SELECT LAST_INSERT_ID();')
+                self.db.execute('SELECT LAST_INSERT_ID();')
+                row_ids = [self.db.cursor().fetchall()[0][0]]
+            if self.db.db_config.scheme == 'sqlite':
+                row_ids = [self.db.cursor().lastrowid]
         if len(row_ids) > 0:
             return self.select(where={kwargs['primary_key']: row_ids})
 
@@ -93,11 +102,13 @@ class DatabaseAdapter(object):
 
     def delete(self, **kwargs):
         kwargs['model_metadata'] = self.model_metadata
+        kwargs['scheme'] = self.db.db_config.scheme
         query = DeleteQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
 
     def raw_query(self, **kwargs):
+        kwargs['scheme'] = self.db.db_config.scheme
         query = RawQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)

@@ -558,6 +558,9 @@ class Model(object):
                 elif scheme == 'mysql':
                     default = row[4]
                     name = row[0]
+                elif scheme == 'sqlite':
+                    default = row[4]
+                    name = row[1]
                 if isinstance(default, str):
                     json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
                     if len(json_matches) > 0:
@@ -571,17 +574,11 @@ class Model(object):
     @classmethod
     def query_schema(self):
         table_name = self.model_metadata()['table_name']
-        if self.db().db_config.scheme == 'postgres':
-            return self.db_adapter().raw_query(
-                sql="SELECT column_name, column_default FROM " \
-                "information_schema.columns WHERE " \
-                "table_name=%(table_name)s AND table_schema='public';",
-                where={'table_name': table_name}
-                )[0]
-        if self.db().db_config.scheme =='mysql':
-            return self.db_adapter().raw_query(
-                sql="SHOW COLUMNS FROM %s;" % table_name
-                )[0]
+        return self.db_adapter().raw_query(
+            sql=self.db().table_schema_query(table_name),
+            where={'table_name': table_name}
+            )[0]
+
 
     @classmethod
     def clear_caches(self):

@@ -19,3 +19,7 @@ class DatabaseConnection(BaseConnection):
     @retry(DRIVER.InterfaceError, tries=3)
     def execute(self, *query):
         return super(DatabaseConnection, self).execute(*query)
+
+    @staticmethod
+    def table_schema_query(table_name):
+        return "SHOW COLUMNS FROM %s;" % table_name

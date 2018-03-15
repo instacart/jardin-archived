@@ -29,9 +29,13 @@ class BaseConnection(object):
             connect_timeout=5
             )
 
+    @memoized_property
+    def connect_args(self):
+        return []
+
     def connect(self):
         self._cursor = None
-        return self.DRIVER.connect(**self.connect_kwargs)
+        return self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
 
     @memoized_property
     def cursor_kwargs(self):
@@ -55,3 +59,7 @@ class BaseConnection(object):
         except Exception as e:
             self.connection().rollback()
             raise e
+
+    @staticmethod
+    def transaction_begin_query():
+        return 'BEGIN;'

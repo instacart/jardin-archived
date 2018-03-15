@@ -15,18 +15,21 @@ class TestTransaction(object):
             self._model.query(sql="SET sql_mode = '';")
         for table in self.tables + [self._model.model_metadata()['table_name']]:
             self._model.query(
-                sql='drop table if exists %s cascade;' % table
+                sql='DROP TABLE IF EXISTS %s;' % table
                 )
         self._model._columns = None
         self._connection.autocommit = False
-        self._model.query(sql='BEGIN;', role='master')
+        self._model.query(
+            sql=self._model.db().transaction_begin_query(),
+            role='master'
+            )
         if self.create_table:
             self._model.query(
                 sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model.model_metadata()['table_name']
                 )
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._model.query(sql='ROLLBACK;', role='master')
+        self._model.db(role='master').connection().rollback()
         self._connection.autocommit = True
 
 

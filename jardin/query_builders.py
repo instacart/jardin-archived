@@ -36,11 +36,11 @@ class PGQueryBuilder(object):
     def scopes(self):
         return self.model_metadata['scopes']
 
-    def extrapolators(self, fields):
-        return ['%(' + '%s' % field + ')s' for field in fields]
-
     def extrapolator(self, field):
-        return '%(' + '%s' % field + ')s'
+        if self.scheme == 'sqlite':
+            return ':%s' % field
+        else:
+            return '%(' + '%s' % field + ')s'
 
     @memoized_property
     def stack(self):
@@ -104,7 +104,7 @@ class SelectQueryBuilder(PGQueryBuilder):
             value = tuple(value)
         key = self.where_key(key)
         self.where_values[key] = value
-        return '%(' + key + ')s'
+        return self.extrapolator(key)#'%(' + key + ')s'
 
     def where_items(self, where):
         results = []
@@ -260,8 +260,8 @@ class WriteQueryBuilder(PGQueryBuilder):
                 if isinstance(v, np.datetime64) and np.isnat(v):
                     v = None
                 # Foul hack for pymysql
-                if isinstance(v, pd.Timestamp) and self.scheme == 'mysql' \
-                    and sys.version_info[0] == 3:
+                if isinstance(v, pd.Timestamp) and ((self.scheme == 'mysql' \
+                    and sys.version_info[0] == 3) or self.scheme == 'sqlite'):
                     v = v.strftime('%Y-%m-%d %H:%M:%S')
                 if isinstance(v, pd._libs.tslib.NaTType):
                     v = None

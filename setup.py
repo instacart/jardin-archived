@@ -45,5 +45,5 @@ setup(
       'Topic :: Database',
       'Topic :: Database :: Database Engines/Servers'
       ],
-      keywords = 'postgres database ORM'
+      keywords = 'postgres mysql database ORM'
       )

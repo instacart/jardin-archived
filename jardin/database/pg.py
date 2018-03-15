@@ -36,3 +36,9 @@ class DatabaseConnection(BaseConnection):
         tries=3)
     def execute(self, *query):
         return super(DatabaseConnection, self).execute(*query)
+
+    @staticmethod
+    def table_schema_query(table_name):
+        return "SELECT column_name, column_default FROM " \
+            "information_schema.columns WHERE " \
+            "table_name=%(table_name)s AND table_schema='public';"
