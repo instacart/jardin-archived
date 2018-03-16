@@ -22,7 +22,7 @@ class Lexicon(BaseLexicon):
     @staticmethod
     def row_ids(db, primary_key):
         db.execute('SELECT LAST_INSERT_ID();')
-        return [self.db.cursor().fetchall()[0][0]]
+        return [db.cursor().fetchall()[0][0]]
 
 
 class DatabaseConnection(BaseConnection):
