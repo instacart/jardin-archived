@@ -87,17 +87,7 @@ class DatabaseAdapter(object):
         query = query_builder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
-        row_ids = []
-        if self.db.db_config.scheme == 'postgres':
-            row_ids = self.db.cursor().fetchall()
-            row_ids = [r[kwargs['primary_key']] for r in row_ids]
-        if query_builder == InsertQueryBuilder:
-            if self.db.db_config.scheme == 'mysql':
-                config.logger.debug('SELECT LAST_INSERT_ID();')
-                self.db.execute('SELECT LAST_INSERT_ID();')
-                row_ids = [self.db.cursor().fetchall()[0][0]]
-            if self.db.db_config.scheme == 'sqlite':
-                row_ids = [self.db.cursor().lastrowid]
+        row_ids = self.db.lexicon.row_ids(self.db, kwargs['primary_key'])
         if len(row_ids) > 0:
             return self.select(where={kwargs['primary_key']: row_ids})
 

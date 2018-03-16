@@ -19,6 +19,11 @@ class Lexicon(BaseLexicon):
     def column_name_default(row):
         return row[0], row[4]
 
+    @staticmethod
+    def row_ids(db, primary_key):
+        db.execute('SELECT LAST_INSERT_ID();')
+        return [self.db.cursor().fetchall()[0][0]]
+
 
 class DatabaseConnection(BaseConnection):
 

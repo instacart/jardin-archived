@@ -23,6 +23,10 @@ class Lexicon(BaseLexicon):
     def extrapolator(field):
         return ':%s' % field
 
+    @staticmethod
+    def row_ids(db, primary_key):
+        return [db.cursor().lastrowid]
+
 
 class DatabaseConnection(BaseConnection):
 

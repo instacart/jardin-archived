@@ -27,6 +27,12 @@ class Lexicon(BaseLexicon):
             + ') = (' \
             + ', '.join(value_extrapolators) + ')'
 
+    @staticmethod
+    def row_ids(db, primary_key):
+        row_ids = db.cursor().fetchall()
+        row_ids = [r[primary_key] for r in row_ids]
+        return row_ids
+
 
 class DatabaseConnection(BaseConnection):
 

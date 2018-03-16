@@ -1,6 +1,4 @@
-from abc import ABC, abstractmethod
-
-class BaseLexicon(ABC):
+class BaseLexicon(object):
 
     @staticmethod
     def transaction_begin_query():
@@ -22,3 +20,6 @@ class BaseLexicon(ABC):
         for field_ext in zip(fields, value_extrapolators):
             values += ['%s = %s' % field_ext]
         return ', '.join(values)
+
+    @staticmethod
+    def row_ids(db): pass
