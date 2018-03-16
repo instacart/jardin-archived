@@ -102,9 +102,21 @@ class SelectQueryBuilder(PGQueryBuilder):
     def add_to_where_values(self, key, value):
         if isinstance(value, pd.Series) or isinstance(value, list):
             value = tuple(value)
+            if self.scheme == 'sqlite':
+                keys = []
+                for v in value:
+                    key = self.where_key(key)
+                    self.where_values[key] = v
+                    keys += [':' + key]
+                return '(' + ', '.join(keys) + ')'
+        
         key = self.where_key(key)
         self.where_values[key] = value
-        return self.extrapolator(key)#'%(' + key + ')s'
+
+        if self.scheme == 'sqlite':
+            return ':' + key
+        else:
+            return '%(' + key + ')s'
 
     def where_items(self, where):
         results = []
@@ -218,6 +230,17 @@ class SelectQueryBuilder(PGQueryBuilder):
         if self.order_bys: query += ' ORDER BY ' + self.order_bys
         if self.limit: query += ' LIMIT ' + str(self.limit)
         query += ';'
+        #where_values = self.where_values
+        #if self.scheme == 'sqlite':
+        #    where_values = []
+        #    if len(self.where_values.values()):
+        #        for value in list(self.where_values.values()):
+        #            if isinstance(value, list) or isinstance(value, tuple):
+        #                where_values += value
+        #            else:
+        #                where_values += [value]
+        #    else:
+        #        where_values = []
         return (query, self.where_values)
 
 
@@ -292,6 +315,13 @@ class WriteQueryBuilder(PGQueryBuilder):
     def fields(self):
         return self.write_values.columns
 
+    @memoized_property
+    def watermark(self):
+        if self.scheme == 'sqlite':
+            return ''
+        else:
+            return super(WriteQueryBuilder, self).watermark
+
 
 class InsertQueryBuilder(WriteQueryBuilder):
 
@@ -311,7 +341,7 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
         query = self.watermark + 'UPDATE ' + self.table_name + ' SET '
         if self.scheme == 'postgres':
             query += '(' + ', '.join(self.fields) + ') = (' + ', '.join(self.value_extrapolators) + ')'
-        if self.scheme == 'mysql':
+        if self.scheme in ('mysql', 'sqlite'):
             values = []
             for field_ext in zip(self.fields, self.value_extrapolators):
                 values += ['%s = %s' % field_ext]

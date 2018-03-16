@@ -32,9 +32,14 @@ class TestModel(unittest.TestCase):
 
     @transaction(model=User, create_table=False)
     def test_no_created_at_updated_at(self):
-        User.query(
-            sql='CREATE TABLE users (id serial PRIMARY KEY, name varchar(256));'
-            )
+        if User.db().db_config.scheme == 'sqlite':
+            User.query(
+                sql='CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256));'
+                )            
+        else:
+            User.query(
+                sql='CREATE TABLE users (id serial PRIMARY KEY, name varchar(256));'
+                )
         user = User.insert(values={'name': 'Jardinier'})
         self.assertEqual(User.count(), 1)
         self.assertFalse('updated_at' in user.attributes)

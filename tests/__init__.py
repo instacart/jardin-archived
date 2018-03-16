@@ -24,9 +24,14 @@ class TestTransaction(object):
             role='master'
             )
         if self.create_table:
-            self._model.query(
-                sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model.model_metadata()['table_name']
-                )
+            if self._model.db().db_config.scheme == 'sqlite':
+               self._model.query(
+                    sql='CREATE TABLE %s (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model.model_metadata()['table_name']
+                    )
+            else:
+                self._model.query(
+                    sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model.model_metadata()['table_name']
+                    )
 
     def __exit__(self, exc_type, exc_value, traceback):
         self._model.db(role='master').connection().rollback()
