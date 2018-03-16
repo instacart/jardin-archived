@@ -552,15 +552,7 @@ class Model(object):
             self._table_schema = {}
             scheme = self.db().db_config.scheme
             for row in self.query_schema():
-                if scheme == 'postgres':
-                    default = row['column_default']
-                    name = row['column_name']
-                elif scheme == 'mysql':
-                    default = row[4]
-                    name = row[0]
-                elif scheme == 'sqlite':
-                    default = row[4]
-                    name = row[1]
+                name, default = self.db().lexicon.column_name_default(row)
                 if isinstance(default, str):
                     json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
                     if len(json_matches) > 0:
@@ -575,7 +567,7 @@ class Model(object):
     def query_schema(self):
         table_name = self.model_metadata()['table_name']
         return self.db_adapter().raw_query(
-            sql=self.db().table_schema_query(table_name),
+            sql=self.db().lexicon.table_schema_query(table_name),
             where={'table_name': table_name}
             )[0]
 

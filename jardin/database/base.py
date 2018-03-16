@@ -4,6 +4,7 @@ from memoized_property import memoized_property
 class BaseConnection(object):
 
     DRIVER = None
+    LEXICON = None
 
     _connection = None
     _cursor = None
@@ -12,6 +13,7 @@ class BaseConnection(object):
         self.db_config = db_config
         self.autocommit = True
         self.name = name
+        self.lexicon = self.LEXICON()
 
     def connection(self):
         if self._connection is None:
@@ -59,7 +61,3 @@ class BaseConnection(object):
         except Exception as e:
             self.connection().rollback()
             raise e
-
-    @staticmethod
-    def transaction_begin_query():
-        return 'BEGIN;'

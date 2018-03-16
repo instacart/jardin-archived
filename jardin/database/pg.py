@@ -4,12 +4,34 @@ from memoized_property import memoized_property
 
 from jardin.tools import retry
 from jardin.database.base import BaseConnection
+from jardin.database.lexicon import BaseLexicon
 import jardin.config as config
+
+
+class Lexicon(BaseLexicon):
+
+    @staticmethod
+    def table_schema_query(table_name):
+        return "SELECT column_name, column_default FROM " \
+            "information_schema.columns WHERE " \
+            "table_name=%(table_name)s AND table_schema='public';" 
+
+    @staticmethod
+    def column_name_default(row):
+        return row['column_name'], row['column_default']
+
+    @staticmethod
+    def update_values(fields, value_extrapolators):
+        return '(' \
+            + ', '.join(fields) \
+            + ') = (' \
+            + ', '.join(value_extrapolators) + ')'
 
 
 class DatabaseConnection(BaseConnection):
 
     DRIVER = pg
+    LEXICON = Lexicon
 
     @retry(pg.OperationalError, tries=3)
     def connect(self):
@@ -36,9 +58,3 @@ class DatabaseConnection(BaseConnection):
         tries=3)
     def execute(self, *query):
         return super(DatabaseConnection, self).execute(*query)
-
-    @staticmethod
-    def table_schema_query(table_name):
-        return "SELECT column_name, column_default FROM " \
-            "information_schema.columns WHERE " \
-            "table_name=%(table_name)s AND table_schema='public';"

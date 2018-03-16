@@ -57,24 +57,33 @@ class DatabaseConnections(object):
         return self._urls[name]
 
 
+def set_defaults(func):
+    def wrapper(self, **kwargs):
+        kwargs.update(
+            model_metadata=self.model_metadata,
+            scheme=self.db.db_config.scheme,
+            lexicon=self.db.lexicon
+            )
+        return func(self, **kwargs)
+    return wrapper
+
+
 class DatabaseAdapter(object):
 
     def __init__(self, db, model_metadata):
         self.db = db
         self.model_metadata = model_metadata
 
+    @set_defaults
     def select(self, **kwargs):
-        kwargs['model_metadata'] = self.model_metadata
-        kwargs['scheme'] = self.db.db_config.scheme
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
         results = self.db.cursor().fetchall()
         return pandas.DataFrame(list(results), columns=self.columns())
 
+    @set_defaults
     def write(self, query_builder, **kwargs):
-        kwargs['model_metadata'] = self.model_metadata
-        kwargs['scheme'] = self.db.db_config.scheme
         query = query_builder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
@@ -100,15 +109,14 @@ class DatabaseAdapter(object):
     def update(self, **kwargs):
         return self.write(UpdateQueryBuilder, **kwargs)
 
+    @set_defaults
     def delete(self, **kwargs):
-        kwargs['model_metadata'] = self.model_metadata
-        kwargs['scheme'] = self.db.db_config.scheme
         query = DeleteQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
 
+    @set_defaults
     def raw_query(self, **kwargs):
-        kwargs['scheme'] = self.db.db_config.scheme
         query = RawQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)

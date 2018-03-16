@@ -25,6 +25,10 @@ class PGQueryBuilder(object):
         return self.kwargs.get('scheme')
 
     @memoized_property
+    def lexicon(self):
+        return self.kwargs.get('lexicon')
+
+    @memoized_property
     def table_alias(self):
         return self.model_metadata['table_alias']
 
@@ -37,10 +41,7 @@ class PGQueryBuilder(object):
         return self.model_metadata['scopes']
 
     def extrapolator(self, field):
-        if self.scheme == 'sqlite':
-            return ':%s' % field
-        else:
-            return '%(' + '%s' % field + ')s'
+        return self.lexicon.extrapolator(field)
 
     @memoized_property
     def stack(self):
@@ -113,10 +114,7 @@ class SelectQueryBuilder(PGQueryBuilder):
         key = self.where_key(key)
         self.where_values[key] = value
 
-        if self.scheme == 'sqlite':
-            return ':' + key
-        else:
-            return '%(' + key + ')s'
+        return self.extrapolator(key)
 
     def where_items(self, where):
         results = []
@@ -230,17 +228,6 @@ class SelectQueryBuilder(PGQueryBuilder):
         if self.order_bys: query += ' ORDER BY ' + self.order_bys
         if self.limit: query += ' LIMIT ' + str(self.limit)
         query += ';'
-        #where_values = self.where_values
-        #if self.scheme == 'sqlite':
-        #    where_values = []
-        #    if len(self.where_values.values()):
-        #        for value in list(self.where_values.values()):
-        #            if isinstance(value, list) or isinstance(value, tuple):
-        #                where_values += value
-        #            else:
-        #                where_values += [value]
-        #    else:
-        #        where_values = []
         return (query, self.where_values)
 
 
@@ -339,16 +326,12 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     @memoized_property
     def query(self):
         query = self.watermark + 'UPDATE ' + self.table_name + ' SET '
-        if self.scheme == 'postgres':
-            query += '(' + ', '.join(self.fields) + ') = (' + ', '.join(self.value_extrapolators) + ')'
-        if self.scheme in ('mysql', 'sqlite'):
-            values = []
-            for field_ext in zip(self.fields, self.value_extrapolators):
-                values += ['%s = %s' % field_ext]
-            query += ', '.join(values)
+        query += self.lexicon.update_values(self.fields, self.value_extrapolators)
+
         if self.wheres: query += " WHERE " + self.wheres
         if self.scheme == 'postgres':
             query += ' RETURNING ' + self.primary_key
+
         query += ';'
         values = self.where_values
         values.update(self.values)

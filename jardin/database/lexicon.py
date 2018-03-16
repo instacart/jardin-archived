@@ -1,0 +1,24 @@
+from abc import ABC, abstractmethod
+
+class BaseLexicon(ABC):
+
+    @staticmethod
+    def transaction_begin_query():
+        return 'BEGIN;'
+
+    @staticmethod
+    def table_schema_query(table_name): pass
+
+    @staticmethod
+    def table_name_default(row): pass
+
+    @staticmethod
+    def extrapolator(field):
+        return '%(' + '%s' % field + ')s'
+
+    @staticmethod
+    def update_values(fields, value_extrapolators):
+        values = []
+        for field_ext in zip(fields, value_extrapolators):
+            values += ['%s = %s' % field_ext]
+        return ', '.join(values)

@@ -20,7 +20,7 @@ class TestTransaction(object):
         self._model._columns = None
         self._connection.autocommit = False
         self._model.query(
-            sql=self._model.db().transaction_begin_query(),
+            sql=self._model.db().lexicon.transaction_begin_query(),
             role='master'
             )
         if self.create_table:
