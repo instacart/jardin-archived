@@ -58,13 +58,13 @@ class DatabaseConnections(object):
 
 
 def set_defaults(func):
-    def wrapper(self, **kwargs):
+    def wrapper(self, *args, **kwargs):
         kwargs.update(
             model_metadata=self.model_metadata,
             scheme=self.db.db_config.scheme,
             lexicon=self.db.lexicon
             )
-        return func(self, **kwargs)
+        return func(self, *args, **kwargs)
     return wrapper
 
 
