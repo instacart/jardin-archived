@@ -4,6 +4,7 @@ from memoized_property import memoized_property
 class BaseConnection(object):
 
     DRIVER = None
+    LEXICON = None
 
     _connection = None
     _cursor = None
@@ -12,6 +13,7 @@ class BaseConnection(object):
         self.db_config = db_config
         self.autocommit = True
         self.name = name
+        self.lexicon = self.LEXICON()
 
     def connection(self):
         if self._connection is None:
@@ -29,9 +31,13 @@ class BaseConnection(object):
             connect_timeout=5
             )
 
+    @memoized_property
+    def connect_args(self):
+        return []
+
     def connect(self):
         self._cursor = None
-        return self.DRIVER.connect(**self.connect_kwargs)
+        return self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
 
     @memoized_property
     def cursor_kwargs(self):

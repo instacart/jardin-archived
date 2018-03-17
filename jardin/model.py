@@ -552,12 +552,7 @@ class Model(object):
             self._table_schema = {}
             scheme = self.db().db_config.scheme
             for row in self.query_schema():
-                if scheme == 'postgres':
-                    default = row['column_default']
-                    name = row['column_name']
-                elif scheme == 'mysql':
-                    default = row[4]
-                    name = row[0]
+                name, default = self.db().lexicon.column_name_default(row)
                 if isinstance(default, str):
                     json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
                     if len(json_matches) > 0:
@@ -571,17 +566,11 @@ class Model(object):
     @classmethod
     def query_schema(self):
         table_name = self.model_metadata()['table_name']
-        if self.db().db_config.scheme == 'postgres':
-            return self.db_adapter().raw_query(
-                sql="SELECT column_name, column_default FROM " \
-                "information_schema.columns WHERE " \
-                "table_name=%(table_name)s AND table_schema='public';",
-                where={'table_name': table_name}
-                )[0]
-        if self.db().db_config.scheme =='mysql':
-            return self.db_adapter().raw_query(
-                sql="SHOW COLUMNS FROM %s;" % table_name
-                )[0]
+        return self.db_adapter().raw_query(
+            sql=self.db().lexicon.table_schema_query(table_name),
+            where={'table_name': table_name}
+            )[0]
+
 
     @classmethod
     def clear_caches(self):

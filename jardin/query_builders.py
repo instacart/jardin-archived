@@ -25,6 +25,10 @@ class PGQueryBuilder(object):
         return self.kwargs.get('scheme')
 
     @memoized_property
+    def lexicon(self):
+        return self.kwargs.get('lexicon')
+
+    @memoized_property
     def table_alias(self):
         return self.model_metadata['table_alias']
 
@@ -36,11 +40,8 @@ class PGQueryBuilder(object):
     def scopes(self):
         return self.model_metadata['scopes']
 
-    def extrapolators(self, fields):
-        return ['%(' + '%s' % field + ')s' for field in fields]
-
     def extrapolator(self, field):
-        return '%(' + '%s' % field + ')s'
+        return self.lexicon.extrapolator(field)
 
     @memoized_property
     def stack(self):
@@ -102,9 +103,18 @@ class SelectQueryBuilder(PGQueryBuilder):
     def add_to_where_values(self, key, value):
         if isinstance(value, pd.Series) or isinstance(value, list):
             value = tuple(value)
+            if self.scheme == 'sqlite':
+                keys = []
+                for v in value:
+                    key = self.where_key(key)
+                    self.where_values[key] = v
+                    keys += [':' + key]
+                return '(' + ', '.join(keys) + ')'
+        
         key = self.where_key(key)
         self.where_values[key] = value
-        return '%(' + key + ')s'
+
+        return self.extrapolator(key)
 
     def where_items(self, where):
         results = []
@@ -260,8 +270,8 @@ class WriteQueryBuilder(PGQueryBuilder):
                 if isinstance(v, np.datetime64) and np.isnat(v):
                     v = None
                 # Foul hack for pymysql
-                if isinstance(v, pd.Timestamp) and self.scheme == 'mysql' \
-                    and sys.version_info[0] == 3:
+                if isinstance(v, pd.Timestamp) and ((self.scheme == 'mysql' \
+                    and sys.version_info[0] == 3) or self.scheme == 'sqlite'):
                     v = v.strftime('%Y-%m-%d %H:%M:%S')
                 if isinstance(v, pd._libs.tslib.NaTType):
                     v = None
@@ -292,6 +302,13 @@ class WriteQueryBuilder(PGQueryBuilder):
     def fields(self):
         return self.write_values.columns
 
+    @memoized_property
+    def watermark(self):
+        if self.scheme == 'sqlite':
+            return ''
+        else:
+            return super(WriteQueryBuilder, self).watermark
+
 
 class InsertQueryBuilder(WriteQueryBuilder):
 
@@ -309,16 +326,12 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     @memoized_property
     def query(self):
         query = self.watermark + 'UPDATE ' + self.table_name + ' SET '
-        if self.scheme == 'postgres':
-            query += '(' + ', '.join(self.fields) + ') = (' + ', '.join(self.value_extrapolators) + ')'
-        if self.scheme == 'mysql':
-            values = []
-            for field_ext in zip(self.fields, self.value_extrapolators):
-                values += ['%s = %s' % field_ext]
-            query += ', '.join(values)
+        query += self.lexicon.update_values(self.fields, self.value_extrapolators)
+
         if self.wheres: query += " WHERE " + self.wheres
         if self.scheme == 'postgres':
             query += ' RETURNING ' + self.primary_key
+
         query += ';'
         values = self.where_values
         values.update(self.values)

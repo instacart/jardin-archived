@@ -21,7 +21,7 @@ class DatabaseConnections(object):
     _connections = {}
     _urls = {}
 
-    SUPPORTED_SCHEMES = ('postgres', 'mysql')
+    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite')
 
     @classmethod
     def connection(self, db_name):
@@ -38,6 +38,8 @@ class DatabaseConnections(object):
             import jardin.database.pg as driver
         elif db.scheme == 'mysql':
             import jardin.database.mysql as driver
+        elif db.scheme == 'sqlite':
+            import jardin.database.sqlite as driver
 
         return driver.DatabaseConnection(db, name)
 
@@ -48,8 +50,22 @@ class DatabaseConnections(object):
             config.init()
         for (nme, url) in config.DATABASES.items():
             if url:
-                self._urls[nme] = urlparse(url)
+                db = urlparse(url)
+                if db.scheme == '':
+                    db = urlparse('sqlite://localhost/%s' % url)
+                self._urls[nme] = db
         return self._urls[name]
+
+
+def set_defaults(func):
+    def wrapper(self, *args, **kwargs):
+        kwargs.update(
+            model_metadata=self.model_metadata,
+            scheme=self.db.db_config.scheme,
+            lexicon=self.db.lexicon
+            )
+        return func(self, *args, **kwargs)
+    return wrapper
 
 
 class DatabaseAdapter(object):
@@ -58,28 +74,20 @@ class DatabaseAdapter(object):
         self.db = db
         self.model_metadata = model_metadata
 
+    @set_defaults
     def select(self, **kwargs):
-        kwargs['model_metadata'] = self.model_metadata
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
         results = self.db.cursor().fetchall()
         return pandas.DataFrame(list(results), columns=self.columns())
 
+    @set_defaults
     def write(self, query_builder, **kwargs):
-        kwargs['model_metadata'] = self.model_metadata
-        kwargs['scheme'] = self.db.db_config.scheme
         query = query_builder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
-        row_ids = []
-        if self.db.db_config.scheme == 'postgres':
-            row_ids = self.db.cursor().fetchall()
-            row_ids = [r[kwargs['primary_key']] for r in row_ids]
-        if self.db.db_config.scheme == 'mysql' and query_builder == InsertQueryBuilder:
-            config.logger.debug('SELECT LAST_INSERT_ID();')
-            self.db.execute('SELECT LAST_INSERT_ID();')
-            row_ids = [self.db.cursor().fetchall()[0][0]]
+        row_ids = self.db.lexicon.row_ids(self.db, kwargs['primary_key'])
         if len(row_ids) > 0:
             return self.select(where={kwargs['primary_key']: row_ids})
 
@@ -91,12 +99,13 @@ class DatabaseAdapter(object):
     def update(self, **kwargs):
         return self.write(UpdateQueryBuilder, **kwargs)
 
+    @set_defaults
     def delete(self, **kwargs):
-        kwargs['model_metadata'] = self.model_metadata
         query = DeleteQueryBuilder(**kwargs).query
         config.logger.debug(query)
         self.db.execute(*query)
 
+    @set_defaults
     def raw_query(self, **kwargs):
         query = RawQueryBuilder(**kwargs).query
         config.logger.debug(query)

@@ -134,9 +134,14 @@ class TestModel(unittest.TestCase):
 
     @transaction(model=User, extra_tables=['projects'])
     def test_relationships(self):
-        Project.query(
-            sql="CREATE TABLE projects (id serial PRIMARY KEY, user_id integer);"
-            )
+        if Project.db().db_config.scheme == 'sqlite':
+            Project.query(
+                sql="CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id integer);"
+                )
+        else:
+            Project.query(
+                sql="CREATE TABLE projects (id serial PRIMARY KEY, user_id integer);"
+                )
         user = User.insert(values={'name': 'Jardin'})
         project = Project.insert(values={'user_id': user.id})
         user_projects = user.projects()

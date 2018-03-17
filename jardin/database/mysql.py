@@ -6,11 +6,29 @@ else:
 
 from jardin.tools import retry
 from jardin.database.base import BaseConnection
+from jardin.database.lexicon import BaseLexicon
+
+
+class Lexicon(BaseLexicon):
+
+    @staticmethod
+    def table_schema_query(table_name):
+        return "SHOW COLUMNS FROM %s;" % table_name
+
+    @staticmethod
+    def column_name_default(row):
+        return row[0], row[4]
+
+    @staticmethod
+    def row_ids(db, primary_key):
+        db.execute('SELECT LAST_INSERT_ID();')
+        return [db.cursor().fetchall()[0][0]]
 
 
 class DatabaseConnection(BaseConnection):
 
     DRIVER = MySQLdb
+    LEXICON = Lexicon
 
     @retry(DRIVER.OperationalError, tries=3)
     def connect(self):
