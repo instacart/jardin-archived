@@ -115,10 +115,10 @@ class Model(object):
 
     def __repr__(self):
         attrs = []
-        if 'id' in self.attributes:
-            attrs += ['id=%s' % self.id]
+        if self.primary_key in self.attributes:
+            attrs += ['%s=%s' % (self.primary_key, self.id)]
         for (att_name, attr_value) in self.attributes.items():
-            if att_name == 'id': continue
+            if att_name == self.primary_key: continue
             attrs += ['%s=%s' % (att_name, attr_value.__repr__())]
         return '%s(%s)' % (self.__class__.__name__, ', '.join(attrs))
 
@@ -155,7 +155,8 @@ class Model(object):
         if self.persisted:
             return self.__class__.update(
                 values=self,
-                where=self.where_self)
+                where=self.where_self
+                )
         else:
             self.attributes = self.__class__.insert(values=self).attributes
 
@@ -219,12 +220,9 @@ class Model(object):
 
     @classmethod
     def stack_mark(self, stack, db_conn=None):
-        filename = stack[1][1]
-        function_name = stack[1][3]
-        line_number = stack[1][2]
-        stack = [filename, function_name, str(line_number)]
-        if db_conn:
-          stack = [db_conn.name] + stack
+        filename, line_number, function_name = stack[1][1:4]
+        stack = [db_conn.name] if db_conn else []
+        stack += [filename, function_name, str(line_number)]
         return ':'.join(stack)
 
     @classmethod
@@ -292,7 +290,7 @@ class Model(object):
         
         results = self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role') or 'replica'
+            role=kwargs.get('role', 'replica')
             ).raw_query(
                 sql=sql,
                 filename=filename,
@@ -328,7 +326,7 @@ class Model(object):
 
         res = self.db_adapter(
             db_name=kwargs.get('db'),
-            role=kwargs.get('role') or 'replica'
+            role=kwargs.get('role', 'replica')
             ).select(**kwargs)
         return res.cnt[0]
 
@@ -418,7 +416,7 @@ class Model(object):
         return self.collection_instance(
             self.db_adapter(
                 db_name=kwargs.get('db'),
-                role=kwargs.get('role') or 'replica'
+                role=kwargs.get('role', 'replica')
                 ).select(
                     where='created_at IS NOT NULL',
                     order='created_at DESC',
@@ -604,7 +602,10 @@ class Transaction(object):
 
     def __enter__(self):
         self._connection.autocommit = False
-        self._model.query(sql='BEGIN;', role='master')
+        self._model.query(
+            sql=self._model.db().lexicon.begin_transaction_query(),
+            role='master'
+            )
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:

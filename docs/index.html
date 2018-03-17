@@ -12,6 +12,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js">  </script>
     <script>hljs.initHighlightingOnLoad();</script>
     <script defer src="https://use.fontawesome.com/releases/v5.0.1/js/all.js"></script>
+    <style type="text/css">
+div.logos div {
+  vertical-align: middle;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+div.row {
+  padding-top: 50px;
+}
+    </style>
   </head>
   <body>
     <div class='jumbotron text-center' style="background-color: #A8F5FF;">
@@ -24,7 +34,7 @@
           <large class='lead'><pre>pip install jardin</pre></large>
         </div>
         <div class='col-lg-4 col-sm-12'>
-          <div class='row'>
+          <div class='row' style='padding-top: 0px;'>
             <div class='col-sm-4 text-center'>
               <a href="https://github.com/instacart/jardin">
               <i class="fab fa-github fa-3x"></i>
@@ -62,7 +72,7 @@ LOG_LEVEL = logging.DEBUG
 
 WATERMARK = 'MyCoolApp'
 </code></pre></small>
-          <p>Configure access to as many databases as you want.</p>
+          <p>Configure access to as many databases as you need.</p>
         </div>
         <div class='col-lg-4 col-sm-12'>
           <h3>Declare</h3>
@@ -99,6 +109,28 @@ User(id=123, name='jardin')
           <p>Use jardin to interact with your database in a clean and esthetic way.</p>
         </div>
       </div>
+      <div class="row logos">
+        <div class='col-sm-3 col-lg-1'>
+        </div>
+          <div class='col-sm-3 col-lg-2'>
+          <img src="images/sqlite.png" style='width: 140px'>
+        </div>
+                <div class='col-sm-3 col-lg-2'>
+          <img src="images/mysql.png" style='width: 140px'>
+        </div>
+          <div class='col-sm-3 col-lg-2'>
+          <img src="images/pg.png" style='width: 140px'>
+        </div>
+        <div class='col-sm-3 col-lg-2'>
+          <img src="images/redshift.png" style='width: 140px'>
+        </div>
+          <div class='col-sm-3 col-lg-2'>
+          <img src="images/snowflake.png" style='width: 140px'>
+        </div>
+        <div class='col-sm-3 col-lg-1'>
+        </div>
+
+      </div>
       <div class='row'>
         <div class='col-sm-12'>
           <h2>Jardin is fully featured</h2>
@@ -116,7 +148,11 @@ User(id=123, name='jardin')
           </large>
         </div>
       </div>
+      <div class="row">
+        <div class='col-sm-12'>
+        <p class='text-center'><small>jardin is an open-source package supported by <a href='https://tech.instacart.com/'>Instacart</a> – We're <a href='https://careers.instacart.com/'>hiring</a>.<br><a href='https://github.com/instacart/jardin/blob/master/LICENSE'>MIT license</a>, &copy; 2018 Instacart.</small></p>
+      </div>
+      </div>
     </div>
-    <p class='text-center'><small>jardin is an open-source package supported by <a href='https://tech.instacart.com/'>Instacart</a> – We're <a href='https://careers.instacart.com/'>hiring</a>.<br><a href='https://github.com/instacart/jardin/blob/master/LICENSE'>MIT license</a>, &copy; 2018 Instacart.</small></p>
   </body>
 </html>

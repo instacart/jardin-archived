@@ -205,7 +205,7 @@ class SelectQueryBuilder(PGQueryBuilder):
                     js += [self.build_join(j, how = how)]
             return ' '.join(js)
 
-    def build_join(self, join_model, how = 'INNER'):
+    def build_join(self, join_model, how='INNER'):
         join_model = join_model.model_metadata()
         table_name, join_table_name = self.table_name, join_model['table_name']
         table_alias, join_table_alias = self.table_alias, join_model['table_alias']
