@@ -11,7 +11,7 @@ def operator(op, *args, **kwargs):
         if len(args) > 0:
             return op, args[0]
         if 'column' in kwargs:
-            return '%s %s' % kwargs['field'], None
+            return '%s %s' % (op, kwargs['field']), None
     return func
 
 def greater_than(*args, **kwargs):

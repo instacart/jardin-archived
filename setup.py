@@ -22,7 +22,7 @@ setup(
       author = 'Emmanuel Turlay',
       license = 'MIT',
       author_email = 'emmanuel@instacart.com',
-      packages = ['jardin'],
+      packages = ['jardin', 'jardin.database'],
       install_requires = [
       'pandas',
       'numpy',
