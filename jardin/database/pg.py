@@ -22,10 +22,13 @@ class Lexicon(BaseLexicon):
 
     @staticmethod
     def update_values(fields, value_extrapolators):
-        return '(' \
+        result = '(' \
             + ', '.join(fields) \
-            + ') = (' \
-            + ', '.join(value_extrapolators) + ')'
+            + ') = '
+        result += ', '.join(
+            ['(' + ', '.join(ext) + ')' for ext in value_extrapolators]
+            )
+        return result
 
     @staticmethod
     def row_ids(db, primary_key):

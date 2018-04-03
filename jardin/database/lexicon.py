@@ -17,7 +17,7 @@ class BaseLexicon(object):
     @staticmethod
     def update_values(fields, value_extrapolators):
         values = []
-        for field_ext in zip(fields, value_extrapolators):
+        for field_ext in zip(fields, value_extrapolators[0]):
             values += ['%s = %s' % field_ext]
         return ', '.join(values)
 
