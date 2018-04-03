@@ -603,7 +603,7 @@ class Transaction(object):
     def __enter__(self):
         self._connection.autocommit = False
         self._model.query(
-            sql=self._model.db().lexicon.begin_transaction_query(),
+            sql=self._model.db().lexicon.transaction_begin_query(),
             role='master'
             )
 
