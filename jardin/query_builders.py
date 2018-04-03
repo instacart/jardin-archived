@@ -289,11 +289,7 @@ class WriteQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def value_extrapolators(self):
-        ext = []
-        for v in self.values_list:
-            for fa in v.keys():
-                ext += [self.extrapolator(fa)]
-        return ext
+        return [[self.extrapolator(fa) for fa in v.keys()] for v in self.values_list]
 
     @memoized_property
     def values(self):
@@ -318,7 +314,10 @@ class InsertQueryBuilder(WriteQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + "INSERT INTO " + self.table_name + " (" +  ', '.join(self.fields) + ") VALUES (" + ', '.join(self.value_extrapolators) + ')'
+        query = self.watermark + "INSERT INTO " + self.table_name + " (" +  ', '.join(self.fields) + ") VALUES "
+        query += ', '.join(
+            ['(' + ', '.join(ext) + ')' for ext in self.value_extrapolators]
+            )
         if self.scheme == 'postgres':
             query += " RETURNING " + self.primary_key
         query += ";"
