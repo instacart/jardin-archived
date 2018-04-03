@@ -9,9 +9,9 @@ def is_not_null():
 def operator(op, *args, **kwargs):
     def func():
         if len(args) > 0:
-            return '%s %s' % (op, args[0])
-        if len(kwargs) > 0:
-            return op + ' %(' + kwargs.keys()[0] + ')s'
+            return op, args[0]
+        if 'column' in kwargs:
+            return '%s %s' % kwargs['field'], None
     return func
 
 def greater_than(*args, **kwargs):
