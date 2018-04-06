@@ -35,7 +35,7 @@ class DatabaseConnection(BaseConnection):
 
     @memoized_property
     def connect_args(self):
-        return [self.db_config.path[1:]]
+        return [self.db_config.database]
 
     @memoized_property
     def connect_kwargs(self):

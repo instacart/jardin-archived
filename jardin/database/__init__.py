@@ -1,7 +1,7 @@
 from future.standard_library import install_aliases
 install_aliases()
 from urllib.parse import urlparse
-
+from collections import namedtuple
 import pandas
 
 from jardin.query_builders import \
@@ -11,6 +11,7 @@ from jardin.query_builders import \
     DeleteQueryBuilder, \
     RawQueryBuilder
 import jardin.config as config
+from jardin.database.database_config import DatabaseConfig
 
 
 class UnsupportedDriver(Exception): pass
@@ -21,7 +22,7 @@ class DatabaseConnections(object):
     _connections = {}
     _urls = {}
 
-    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite')
+    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake')
 
     @classmethod
     def connection(self, db_name):
@@ -35,11 +36,13 @@ class DatabaseConnections(object):
         if db.scheme not in self.SUPPORTED_SCHEMES:
             raise UnsupportedDriver('%s is not a supported driver' % db.scheme)
         elif db.scheme == 'postgres':
-            import jardin.database.pg as driver
+            import jardin.database.drivers.pg as driver
         elif db.scheme == 'mysql':
-            import jardin.database.mysql as driver
+            import jardin.database.drivers.mysql as driver
         elif db.scheme == 'sqlite':
-            import jardin.database.sqlite as driver
+            import jardin.database.drivers.sqlite as driver
+        elif db.scheme == 'snowflake':
+            import jardin.database.drivers.sf as driver
 
         return driver.DatabaseConnection(db, name)
 
@@ -50,10 +53,7 @@ class DatabaseConnections(object):
             config.init()
         for (nme, url) in config.DATABASES.items():
             if url:
-                db = urlparse(url)
-                if db.scheme == '':
-                    db = urlparse('sqlite://localhost/%s' % url)
-                self._urls[nme] = db
+                self._urls[nme] = DatabaseConfig(url)
         return self._urls[name]
 
 
@@ -117,6 +117,9 @@ class DatabaseAdapter(object):
 
     def columns(self):
         cursor_desc = self.db.cursor().description
+        columns = []
         if cursor_desc:
-            return [col_desc[0] for col_desc in cursor_desc]
-        return []
+            columns = [col_desc[0] for col_desc in cursor_desc]
+            if self.db.db_config.lowercase_columns:
+                columns = [col.lower() for col in columns]
+        return columns

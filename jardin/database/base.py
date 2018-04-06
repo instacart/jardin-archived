@@ -23,10 +23,10 @@ class BaseConnection(object):
     @memoized_property
     def connect_kwargs(self):
         return dict(
-            database=self.db_config.path[1:],
+            database=self.db_config.database,
             user=self.db_config.username,
             password=self.db_config.password,
-            host=self.db_config.hostname,
+            host=self.db_config.host,
             port=self.db_config.port,
             connect_timeout=5
             )
