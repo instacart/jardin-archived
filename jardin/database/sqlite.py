@@ -13,7 +13,7 @@ class Lexicon(BaseLexicon):
 
     @staticmethod
     def transaction_begin_query():
-        return 'BEGIN TRANSACTION;'
+        return 'BEGIN;'
 
     @staticmethod
     def column_name_default(row):
@@ -39,4 +39,4 @@ class DatabaseConnection(BaseConnection):
 
     @memoized_property
     def connect_kwargs(self):
-        return {}
+        return {'isolation_level': 'DEFERRED'}

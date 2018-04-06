@@ -24,6 +24,10 @@ class Lexicon(BaseLexicon):
         db.execute('SELECT LAST_INSERT_ID();')
         return [db.cursor().fetchall()[0][0]]
 
+    @staticmethod
+    def apply_watermark(query, watermark):
+        return ' '.join([watermark, query])
+
 
 class DatabaseConnection(BaseConnection):
 

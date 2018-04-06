@@ -609,7 +609,7 @@ class Transaction(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:
-            self._model.query(sql='COMMIT;', role='master')
+            self._connection.connection().commit()
         else:
-            self._model.query(sql='ROLLBACK;', role='master')
+            self._connection.connection().rollback()
         self._connection.autocommit = True

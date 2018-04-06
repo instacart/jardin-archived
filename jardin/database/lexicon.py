@@ -23,3 +23,7 @@ class BaseLexicon(object):
 
     @staticmethod
     def row_ids(db): pass
+
+    @staticmethod
+    def apply_watermark(query, watermark):
+        return ' '.join([query, watermark])

@@ -49,8 +49,14 @@ class PGQueryBuilder(object):
 
     @memoized_property
     def watermark(self):
-        return "/*%s | %s */ " % (config.WATERMARK, self.stack)
+        return "/*%s | %s */" % (config.WATERMARK, self.stack)
 
+    def apply_watermark(self, query):
+        return self.lexicon.apply_watermark(query, self.watermark)
+
+    @staticmethod
+    def list_wrap(array):
+        return '(' + ', '.join(array) + ')'
 
 class SelectQueryBuilder(PGQueryBuilder):
 
@@ -184,30 +190,19 @@ class SelectQueryBuilder(PGQueryBuilder):
     @memoized_property
     def inner_joins(self):
         joins = self.kwargs.get('inner_join', None)
-        if joins is None: return
-        if isinstance(joins, str):
-            return "INNER JOIN %s" % joins
-        elif isinstance(joins, list):
-            js = []
-            for j in joins:
-                if isinstance(j, str):
-                    js += ["INNER JOIN %s" % j]
-                elif issubclass(j, jardin.model.Model):
-                    js += [self.build_join(j, how = 'INNER')]
-        return ' '.join(js)
+        return self.joins(joins, 'INNER')
 
     def joins(self, joins, how):
-        if joins is None: return
+        if joins is None: return []
         if isinstance(joins, str):
-            return "%s JOIN %s" % (how, joins)
-        elif isinstance(joins, list):
-            js = []
-            for j in joins:
-                if isinstance(j, str):
-                    js += ["%s JOIN %s" % (how, j)]
-                elif issubclass(j, jardin.model.Model):
-                    js += [self.build_join(j, how = how)]
-            return ' '.join(js)
+            joins = [joins]
+        js = []
+        for j in joins:
+            if isinstance(j, str):
+                js += [how, 'JOIN', j]
+            elif issubclass(j, jardin.model.Model):
+                js += [self.build_join(j, how=how)]
+        return js
 
     def build_join(self, join_model, how='INNER'):
         join_model = join_model.model_metadata()
@@ -223,15 +218,16 @@ class SelectQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + "SELECT " + self.selects + ' FROM ' + self.froms
-        if self.left_joins: query += ' ' + self.left_joins
-        if self.inner_joins: query += ' ' + self.inner_joins
-        if self.wheres: query += ' WHERE ' + self.wheres
-        if self.group_bys: query += ' GROUP BY ' + self.group_bys
-        if self.having: query += ' HAVING ' + self.having
-        if self.order_bys: query += ' ORDER BY ' + self.order_bys
-        if self.limit: query += ' LIMIT ' + str(self.limit)
-        query += ';'
+        query = ['SELECT', self.selects, 'FROM', self.froms]
+        query += self.left_joins
+        query += self.inner_joins
+        if self.wheres: query += ['WHERE', self.wheres]
+        if self.group_bys: query += ['GROUP BY', self.group_bys]
+        if self.having: query += ['HAVING', self.having]
+        if self.order_bys: query += ['ORDER BY', self.order_bys]
+        if self.limit: query += ['LIMIT', str(self.limit)]
+        query = ' '.join(query) + ';'
+        query = self.apply_watermark(query)
         return (query, self.where_values)
 
 
@@ -314,13 +310,19 @@ class InsertQueryBuilder(WriteQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + "INSERT INTO " + self.table_name + " (" +  ', '.join(self.fields) + ") VALUES "
-        query += ', '.join(
-            ['(' + ', '.join(ext) + ')' for ext in self.value_extrapolators]
-            )
+        query = [
+                'INSERT INTO',
+                self.table_name,
+                self.list_wrap(self.fields),
+                'VALUES',
+                ', '.join(
+                    [self.list_wrap(ext) for ext in self.value_extrapolators]
+                )
+            ]
         if self.scheme == 'postgres':
-            query += " RETURNING " + self.primary_key
-        query += ";"
+            query += ['RETURNING', self.primary_key]
+        query = ' '.join(query) + ';'
+        query = self.apply_watermark(query)
         return (query, self.values)
 
 
@@ -328,7 +330,7 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + 'UPDATE ' + self.table_name + ' SET '
+        query = 'UPDATE ' + self.table_name + ' SET '
         query += self.lexicon.update_values(self.fields, self.value_extrapolators)
 
         if self.wheres: query += " WHERE " + self.wheres
@@ -336,6 +338,7 @@ class UpdateQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
             query += ' RETURNING ' + self.primary_key
 
         query += ';'
+        query = self.apply_watermark(query)
         values = self.where_values
         values.update(self.values)
         return (query, values)
@@ -345,7 +348,8 @@ class DeleteQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + 'DELETE FROM ' +self.table_name + ' WHERE ' + self.wheres + ';'
+        query = ' '.join(['DELETE', 'FROM', self.table_name, 'WHERE', self.wheres]) + ';'
+        query = self.apply_watermark(query)
         return (query, self.where_values)
 
 
@@ -365,6 +369,6 @@ class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
 
     @memoized_property
     def query(self):
-        query = self.watermark + self.sql
+        query = self.apply_watermark(self.sql)
         self.wheres
         return (query, self.where_values)
