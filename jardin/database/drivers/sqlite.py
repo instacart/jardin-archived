@@ -17,7 +17,7 @@ class Lexicon(BaseLexicon):
 
     @staticmethod
     def column_name_default(row):
-        return row[1], row[4]
+        return row['name'], row['dflt_value']
 
     @staticmethod
     def extrapolator(field):

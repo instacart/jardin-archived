@@ -17,7 +17,7 @@ class Lexicon(BaseLexicon):
 
     @staticmethod
     def column_name_default(row):
-        return row[0], row[4]
+        return row['Field'], row['Default']
 
     @staticmethod
     def row_ids(db, primary_key):

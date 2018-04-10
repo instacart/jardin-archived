@@ -184,7 +184,11 @@ class Model(object):
             raise RecordNotPersisted("Record's primary key is None")
 
     def reload(self):
-        self.__init__(**self.__class__.find(self.attributes[self.primary_key]).attributes)
+        self.__init__(
+            **self.__class__.find(
+                self.attributes[self.primary_key]
+                ).attributes
+            )
 
     @property
     def persisted(self):
@@ -433,11 +437,13 @@ class Model(object):
         :returns: an instance of the model.
         """
         try:
-            return self(**self.select(
+            return self(
+                **self.select(
                     where=values,
                     limit=1,
                     **kwargs
-                    ).to_dict(orient='records')[0])
+                    ).to_dict(orient='records')[0]
+                )
         except IndexError:
             return None
 
@@ -566,12 +572,12 @@ class Model(object):
         return self.db_adapter().raw_query(
             sql=self.db().lexicon.table_schema_query(table_name),
             where={'table_name': table_name}
-            ).to_records()
-
+            ).to_dict(orient='records')
 
     @classmethod
     def clear_caches(self):
         self._table_schema = None
+
 
 class ModelIterator(object):
 
