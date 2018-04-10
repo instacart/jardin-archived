@@ -566,7 +566,7 @@ class Model(object):
         return self.db_adapter().raw_query(
             sql=self.db().lexicon.table_schema_query(table_name),
             where={'table_name': table_name}
-            )[0]
+            ).to_records()
 
 
     @classmethod
