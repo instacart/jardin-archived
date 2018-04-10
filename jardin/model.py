@@ -297,11 +297,10 @@ class Model(object):
                 **kwargs
                 )
 
-        if results:
-            return self.collection_instance(results)
-        else:
+        if results is None:
             return None
-
+        else:
+            return self.collection_instance(results)
 
     @classmethod
     @soft_del

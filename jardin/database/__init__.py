@@ -111,7 +111,8 @@ class DatabaseAdapter(object):
         config.logger.debug(query)
         self.db.execute(*query)
         if self.db.cursor().description:
-            return self.db.cursor().fetchall(), self.columns()
+            results = self.db.cursor().fetchall()
+            return pandas.DataFrame(list(results), columns=self.columns())
         else:
             return None
 

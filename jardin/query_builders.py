@@ -228,7 +228,7 @@ class SelectQueryBuilder(PGQueryBuilder):
         if self.limit: query += ['LIMIT', str(self.limit)]
         query = ' '.join(query) + ';'
         query = self.apply_watermark(query)
-        return (query, self.where_values)
+        return (query, self.lexicon.format_args(self.where_values))
 
 
 class WriteQueryBuilder(PGQueryBuilder):
@@ -350,7 +350,7 @@ class DeleteQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     def query(self):
         query = ' '.join(['DELETE', 'FROM', self.table_name, 'WHERE', self.wheres]) + ';'
         query = self.apply_watermark(query)
-        return (query, self.where_values)
+        return (query, self.lexicon.format_args(self.where_values))
 
 
 class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
@@ -371,4 +371,4 @@ class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     def query(self):
         query = self.apply_watermark(self.sql)
         self.wheres
-        return (query, self.where_values)
+        return (query, self.lexicon.format_args(self.where_values))

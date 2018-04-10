@@ -3,8 +3,19 @@ from memoized_property import memoized_property
 import snowflake.connector as sf
 
 from jardin.tools import retry
-from jardin.database.drivers.pg import Lexicon
+from jardin.database.drivers.pg import Lexicon as PGLexicon
 from jardin.database.base import BaseConnection
+
+
+class Lexicon(PGLexicon):
+
+    @staticmethod
+    def extrapolator(_):
+        return '%s'
+
+    @staticmethod
+    def format_args(args):
+        return args.values()
 
 
 class DatabaseConnection(BaseConnection):
