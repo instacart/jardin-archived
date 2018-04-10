@@ -1,7 +1,7 @@
 import logging
 
 DATABASES = {
-    'jardin_test': 'jardin_test.db'
+    'jardin_test': 'sqlite://localhost/jardin_test.db'
 }
 
 LOG_LEVEL = logging.INFO

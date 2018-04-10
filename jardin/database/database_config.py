@@ -13,8 +13,6 @@ class DatabaseConfig(object):
     def __init__(self, config):
         if isinstance(config, str):
             db = urlparse(config)
-            if db.scheme == '':
-                db = urlparse('sqlite://localhost/%s' % config)
             self.scheme = db.scheme
             self.username = db.username
             self.password = db.password
