@@ -27,7 +27,3 @@ class BaseLexicon(object):
     @staticmethod
     def apply_watermark(query, watermark):
         return ' '.join([query, watermark])
-
-    @staticmethod
-    def format_args(args):
-        return args

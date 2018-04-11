@@ -215,12 +215,15 @@ class Model(object):
 
     @classmethod
     def collection_instance(self, result):
-        return self.collection_class.from_records(
-            result.to_dict(orient='records'),
-            columns=result.columns,
-            coerce_float=True,
-            model_class=self
-            )
+        #re = self.collection_class.from_records(
+        #    result.to_dict(orient='records'),
+        #    columns=result.columns,
+        #    coerce_float=True,
+        #    model_class=self
+        #    )
+        collection = self.collection_class(result)
+        collection.model_class = self
+        return collection
 
     @classmethod
     def stack_mark(self, stack, db_conn=None):

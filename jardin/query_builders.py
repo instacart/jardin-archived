@@ -370,5 +370,4 @@ class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     @memoized_property
     def query(self):
         query = self.apply_watermark(self.sql)
-        self.wheres
-        return (query, self.lexicon.format_args(self.where_values))
+        return (query, self.kwargs.get('where', ()))
