@@ -293,7 +293,8 @@ class Model(object):
         if filename:
             filename = os.path.join(os.environ['PWD'], filename)
         
-        kwargs['where'] = kwargs.get('where', kwargs.get('params'))
+        if 'where' not in kwargs and 'params' in kwargs:
+            kwargs['where'] = kwargs['params']
         
         results = self.db_adapter(
             db_name=kwargs.get('db'),
