@@ -11,7 +11,7 @@ class DatabaseConfig(object):
     lowercase_columns = False
 
     def __init__(self, config):
-        if isinstance(config, str):
+        if isinstance(config, str) or isinstance(config, unicode):
             db = urlparse(config)
             self.scheme = db.scheme
             self.username = db.username
@@ -23,4 +23,4 @@ class DatabaseConfig(object):
             for (k, v) in config.items():
                 setattr(self, k, v)
         else:
-            raise UnknownConfigFormat(config)
+            raise UnknownConfigFormat(type(config), config)
