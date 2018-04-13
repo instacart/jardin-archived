@@ -22,7 +22,7 @@ class DatabaseConnections(object):
     _connections = {}
     _urls = {}
 
-    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake')
+    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake', 'redshift')
 
     @classmethod
     def connection(self, db_name):
@@ -35,7 +35,7 @@ class DatabaseConnections(object):
         db = self.urls(name)
         if db.scheme not in self.SUPPORTED_SCHEMES:
             raise UnsupportedDriver('%s is not a supported driver' % db.scheme)
-        elif db.scheme == 'postgres':
+        elif db.scheme == 'postgres' or db.scheme == 'redshift':
             import jardin.database.drivers.pg as driver
         elif db.scheme == 'mysql':
             import jardin.database.drivers.mysql as driver
