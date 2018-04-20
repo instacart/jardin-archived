@@ -1,3 +1,6 @@
+import re
+
+
 class BaseLexicon(object):
 
     @staticmethod
@@ -31,3 +34,7 @@ class BaseLexicon(object):
     @staticmethod
     def format_args(args):
         return args
+
+    @staticmethod
+    def standardize_interpolators(sql, params):
+        return re.sub(r'\{(\w+?)\}', r'%(\1)s', sql), params

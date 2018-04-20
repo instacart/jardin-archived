@@ -1,3 +1,4 @@
+import re
 from memoized_property import memoized_property
 
 import snowflake.connector as sf
@@ -16,6 +17,16 @@ class Lexicon(PGLexicon):
     @staticmethod
     def format_args(args):
         return args.values()
+
+    @staticmethod
+    def standardize_interpolators(sql, params):
+        sql, params = super(Lexicon, Lexicon).standardize_interpolators(sql, params)
+        param_names = re.findall(r'\%\((\w+)\)s', sql)
+        if len(param_names):
+            sql = re.sub(r'\%\(\w+\)s', '%s', sql)
+            if isinstance(params, dict):
+                params = map(lambda x: params[x], param_names)
+        return sql, params
 
 
 class DatabaseConnection(BaseConnection):

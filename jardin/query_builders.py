@@ -365,9 +365,11 @@ class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
         if 'filename' in self.kwargs and self.kwargs['filename']:
             with open(self.kwargs['filename']) as file:
                 raw_sql = file.read()
-        return re.sub(r'\{(\w+?)\}', r'%(\1)s', raw_sql)
+        return raw_sql
 
     @memoized_property
     def query(self):
         query = self.apply_watermark(self.sql)
-        return (query, self.kwargs.get('where', ()))
+        params = self.kwargs.get('where', self.kwargs.get('params', {}))
+        query, params = self.lexicon.standardize_interpolators(query, params)
+        return (query, params)

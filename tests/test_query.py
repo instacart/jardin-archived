@@ -44,5 +44,17 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(len(df), 1)
         self.assertEqual(df.name.iloc[0], 'jardin')
 
+    def test_snowflake_lexicon(self):
+        from jardin.database.drivers.sf import Lexicon
+        sql, params = Lexicon.standardize_interpolators(
+            'SELECT * FROM users WHERE a = %(abc)s AND b = %(def)s',
+            {'def': 2, 'abc': 1}
+            )
+        self.assertEqual(
+            'SELECT * FROM users WHERE a = %s AND b = %s',
+            sql
+            )
+        self.assertEqual([1, 2], params)
+
 if __name__ == "__main__":
     unittest.main()
