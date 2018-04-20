@@ -3,6 +3,13 @@ from operator import is_not
 from functools import partial, wraps
 import time
 
+
+def stack_marker(stack, db_conn=None):
+    filename, line_number, function_name = stack[1][1:4]
+    stack = [db_conn.name] if db_conn else []
+    stack += [filename, function_name, str(line_number)]
+    return ':'.join(stack)
+
 class classorinstancemethod(object):
     def __init__(self, method):
         self.method = method

@@ -1,12 +1,14 @@
 from datetime import datetime
 import pandas
 import re, inspect
-import os
 import json
 
 import jardin.config as config
 from jardin.database import DatabaseAdapter, DatabaseConnections
-from jardin.tools import soft_del, classorinstancemethod
+from jardin.tools import soft_del, classorinstancemethod, stack_marker
+from jardin.transaction import Transaction
+from jardin.query import query
+
 
 class Collection(pandas.DataFrame):
     """
@@ -227,10 +229,7 @@ class Model(object):
 
     @classmethod
     def stack_mark(self, stack, db_conn=None):
-        filename, line_number, function_name = stack[1][1:4]
-        stack = [db_conn.name] if db_conn else []
-        stack += [filename, function_name, str(line_number)]
-        return ':'.join(stack)
+        return stack_marker(stack, db_conn=db_conn)
 
     @classmethod
     @soft_del
@@ -288,22 +287,12 @@ class Model(object):
         :type role: string
         :returns: ``jardin.Collection`` collection, which is a ``pandas.DataFrame``.
         """
-        kwargs['stack'] = self.stack_mark(inspect.stack())
-        
-        if filename:
-            filename = os.path.join(os.environ['PWD'], filename)
-        
-        if 'where' not in kwargs and 'params' in kwargs:
-            kwargs['where'] = kwargs['params']
-        
-        results = self.db_adapter(
-            db_name=kwargs.get('db'),
-            role=kwargs.get('role', 'replica')
-            ).raw_query(
-                sql=sql,
-                filename=filename,
-                **kwargs
-                )
+        results = query(
+            sql=sql,
+            filename=filename,
+            db=self.db_names[kwargs.get('role', 'replica')],
+            **kwargs
+            )
 
         if results is None:
             return None
@@ -546,7 +535,7 @@ class Model(object):
         """
         Enables multiple statements to be ran within a single transaction, see :doc:`features`.
         """
-        return Transaction(self)
+        return Transaction(self.db(role='master').name)
 
     @classmethod
     def table_schema(self):
@@ -557,7 +546,6 @@ class Model(object):
         """
         if self.__dict__.get('_table_schema') is None:
             self._table_schema = {}
-            scheme = self.db().db_config.scheme
             for row in self.query_schema():
                 name, default = self.db().lexicon.column_name_default(row)
                 if isinstance(default, str):
@@ -601,47 +589,3 @@ class ModelIterator(object):
             return record
         else:
             raise StopIteration()
-
-
-class Transaction(object):
-
-    def __init__(self, model):
-        self._model = model
-        self._connection = self._model.db(role='master')
-
-    def __enter__(self):
-        self._connection.autocommit = False
-        self._model.query(
-            sql=self._model.db().lexicon.transaction_begin_query(),
-            role='master'
-            )
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type is None:
-            self._connection.connection().commit()
-        else:
-            self._connection.connection().rollback()
-        self._connection.autocommit = True
-
-import argparse
-
-def query(sql=None, filename=None, extract=None, db=None, **kwargs):
-    if db is None:
-        raise argparse.ArgumentError('You must provide a database name')
-
-    kwargs['stack'] = Model.stack_mark(inspect.stack())
-
-    filename = filename or extract
-
-    if filename and not filename.startswith('/'):
-        filename = os.path.join(os.environ['PWD'], filename)
-
-    if 'where' not in kwargs and 'params' in kwargs:
-        kwargs['where'] = kwargs['params']
-
-    return DatabaseAdapter(
-        DatabaseConnections.connection(db),
-        None
-        ).raw_query(
-            sql=sql, filename=filename, **kwargs
-        )
