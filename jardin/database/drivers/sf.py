@@ -25,7 +25,7 @@ class Lexicon(PGLexicon):
         if len(param_names):
             sql = re.sub(r'\%\(\w+\)s', '%s', sql)
             if isinstance(params, dict):
-                params = map(lambda x: params[x], param_names)
+                params = list(map(lambda x: params[x], param_names))
         return sql, params
 
 
