@@ -1,7 +1,3 @@
-from future.standard_library import install_aliases
-install_aliases()
-from urllib.parse import urlparse
-from collections import namedtuple
 import pandas
 
 from jardin.query_builders import \

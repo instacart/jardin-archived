@@ -130,7 +130,7 @@ class SelectQueryBuilder(PGQueryBuilder):
             results += [[self.add_to_where_values(*where)]]
         elif isinstance(where, dict):
             for (k, v) in where.items():
-                if isinstance(v, tuple):
+                if isinstance(v, tuple) and len(v) == 2:
                     from_label = self.add_to_where_values(k, v[0])
                     to_label = self.add_to_where_values(k, v[1])
                     results += [[k, 'BETWEEN', from_label, 'AND', to_label]]
@@ -151,7 +151,8 @@ class SelectQueryBuilder(PGQueryBuilder):
                     else:
                         results += [[k, op]]
                 else:
-                    if isinstance(v, list) or isinstance(v, pd.Series):
+                    if isinstance(v, list) or isinstance(v, pd.Series) or \
+                        (isinstance(v, tuple) and len(v) != 2):
                         operator = 'IN'
                     else:
                         operator = '='
