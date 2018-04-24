@@ -15,26 +15,28 @@ class User(JardinTestModel):
 class TestCollection(unittest.TestCase):
 
     def test_model_class(self):
-        df = User.collection({'a': [0, 1]})
+        df = User.collection_instance({'a': [0, 1]})
         self.assertEqual(df.model_class, User)
         df = df[df.a == 1]
         self.assertEqual(df.model_class, User)
 
     def test_collection_class(self):
-        df = User.collection({'a': [0, 1]})
+        df = User.collection_instance({'a': [0, 1]})
         self.assertIsInstance(df, UserCollection)
         df = df[df.a == 1]
         self.assertIsInstance(df, UserCollection)
 
     def test_concat(self):
         self.assertEqual(
-            pandas.concat([User.collection(), User.collection()]).model_class,
+            pandas.concat(
+                [User.collection_instance(), User.collection_instance()]
+                ).model_class,
             User
             )
 
     def test_append(self):
         self.assertEqual(
-            User.collection().append(User.collection()).model_class,
+            User.collection_instance().append(User.collection_instance()).model_class,
             User
             )
 

@@ -201,7 +201,7 @@ class Model(object):
             setattr(self.__class__, other_table_name, func)
 
     @classmethod
-    def collection_instance(self, result):
+    def collection_instance(self, result=None):
         if isinstance(result, list) and len(result) and isinstance(result[0], dict):
             collection = self.collection_class.from_records(result)
         else:
