@@ -21,15 +21,6 @@ class Collection(pandas.DataFrame):
             instance.model_class = self.model_class
         return instance
 
-    @classmethod
-    def from_records(self, *args, **kwargs):
-        model_class = kwargs['model_class']
-        del kwargs['model_class']
-        collection = super(Collection, self).from_records(*args, **kwargs)
-        collection.model_class = model_class
-        return collection
-
-
     def records(self):
         """
         Returns an iterator to loop over the rows, each being an instance of the model's record class, i.e. :doc:`jardin_record` by default.
@@ -210,20 +201,11 @@ class Model(object):
             setattr(self.__class__, other_table_name, func)
 
     @classmethod
-    def collection(self, *args, **kwargs):
-        collection = self.collection_class(*args, **kwargs)
-        collection.model_class = self
-        return collection
-
-    @classmethod
     def collection_instance(self, result):
-        #re = self.collection_class.from_records(
-        #    result.to_dict(orient='records'),
-        #    columns=result.columns,
-        #    coerce_float=True,
-        #    model_class=self
-        #    )
-        collection = self.collection_class(result)
+        if isinstance(result, list) and len(result) and isinstance(result[0], dict):
+            collection = self.collection_class.from_records(result)
+        else:
+            collection = self.collection_class(result)
         collection.model_class = self
         return collection
 
