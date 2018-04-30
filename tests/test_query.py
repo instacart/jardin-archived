@@ -25,6 +25,8 @@ class TestQuery(unittest.TestCase):
 
     @transaction(model=User)
     def test_query_params(self):
+        if User.db().db_config.scheme == 'sqlite':
+            return
         User.insert(values={'name': 'jardin'})
         df = jardin.query(
             sql='SELECT * FROM users WHERE name IN %(names)s;',
