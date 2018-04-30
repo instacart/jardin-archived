@@ -5,15 +5,15 @@ __all__ = (
 
 def not_null():
     def func():
-        return 'IS NOT NULL'
+        return 'IS NOT NULL', None
     return func
 
 def operator(op, *args, **kwargs):
     def func():
         if len(args) > 0:
             return op, args[0]
-        if 'column' in kwargs:
-            return '%s %s' % (op, kwargs['field']), None
+        if 'col' in kwargs:
+            return '%s %s' % (op, kwargs['col']), None
     return func
 
 def greater_than(*args, **kwargs):

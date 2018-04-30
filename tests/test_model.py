@@ -1,4 +1,5 @@
 import unittest
+import pandas as pd
 from freezegun import freeze_time
 from datetime import datetime, timedelta
 from time import sleep
@@ -67,6 +68,12 @@ class TestModel(unittest.TestCase):
             ])
         self.assertEqual(len(users), 1)
         self.assertTrue('Jardin' in users.name.tolist())
+
+    @transaction(model=User)
+    def test_select_list(self):
+        User.insert(values={'name': 'jardin'})
+        self.assertEqual(User.count(where={'name': ['jardin']}), 1)
+        self.assertEqual(User.count(where={'name': pd.Series(['jardin'])}), 1)
 
     @transaction(model=User)
     def test_count(self):

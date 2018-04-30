@@ -11,6 +11,7 @@ class PGQueryBuilder(object):
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
+        self.where_values = collections.OrderedDict()
 
     @memoized_property
     def model_metadata(self):
@@ -95,7 +96,6 @@ class SelectQueryBuilder(PGQueryBuilder):
 
     @memoized_property
     def wheres(self):
-        self.where_values = collections.OrderedDict()
         wheres = self.kwargs.get('where', None)
         if not isinstance(wheres, list): wheres = [wheres]
         wheres += self.scope_wheres
@@ -372,5 +372,7 @@ class RawQueryBuilder(WriteQueryBuilder, SelectQueryBuilder):
     def query(self):
         query = self.apply_watermark(self.sql)
         params = self.kwargs.get('where', self.kwargs.get('params', {}))
-        query, params = self.lexicon.standardize_interpolators(query, params)
+        for (k, v) in params.items():
+            self.add_to_where_values(k, v)
+        query, params = self.lexicon.standardize_interpolators(query, self.where_values)
         return (query, params)

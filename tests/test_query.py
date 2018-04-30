@@ -24,6 +24,16 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(df.name.iloc[0], 'jardin')
 
     @transaction(model=User)
+    def test_query_params(self):
+        User.insert(values={'name': 'jardin'})
+        df = jardin.query(
+            sql='SELECT * FROM users WHERE name IN %(names)s;',
+            params={'names': ['jardin']},
+            db='jardin_test'
+            )
+        self.assertEqual(len(df), 1)
+
+    @transaction(model=User)
     def test_query_filename_relative(self):
         User.insert(values={'name': 'jardin'})
         df = jardin.query(
