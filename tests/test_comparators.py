@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta
 from jardin.comparators import *
 from tests import transaction
 
@@ -20,8 +20,16 @@ class TestComparators(unittest.TestCase):
     @transaction(model=User)
     def test_greater_than(self):
         User.insert(values={'name': 'jardin'})
-        self.assertEqual(User.count(where={'created_at': lt(datetime.utcnow())}), 1)
-        self.assertEqual(User.count(where={'created_at': gt(col='updated_at')}), 0)
+        self.assertEqual(
+            User.count(
+                where={'created_at': lt(datetime.utcnow() + timedelta(hours=1))}
+                )
+            , 1)
+        self.assertEqual(
+            User.count(
+                where={'created_at': gt(col='updated_at')}
+                )
+            , 0)
 
 
 if __name__ == "__main__":
