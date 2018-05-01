@@ -1,4 +1,4 @@
-jardin.Record
+jardin.Collection
 =============
 
 .. autoclass:: jardin.Collection
