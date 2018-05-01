@@ -15,5 +15,6 @@ Jardin is a ``pandas.DataFrame``-based ORM for Python applications.
 
    getting_started
    querying
+   comparators
    features
    api_reference

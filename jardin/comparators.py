@@ -1,6 +1,7 @@
 __all__ = (
     'not_null', 'greater_than', 'gt', 'greater_or_equal', 'geq',
-    'less_than', 'lt', 'less_or_equal', 'leq', 'not_equal', 'neq'
+    'less_than', 'lt', 'less_or_equal', 'leq', 'not_equal', 'neq',
+    'not_in'
     )
 
 def not_null():
@@ -35,3 +36,6 @@ leq = less_or_equal
 def not_equal(field):
     return operator('!=', field)
 neq = not_equal
+
+def not_in(lst):
+    return operator('NOT IN', lst)

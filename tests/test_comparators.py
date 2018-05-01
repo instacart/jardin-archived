@@ -31,6 +31,22 @@ class TestComparators(unittest.TestCase):
                 )
             , 0)
 
+    @transaction(model=User)
+    def test_not_in(self):
+        User.insert(values={'name': 'jardin'})
+        self.assertEqual(
+            User.count(
+                where={'name': not_in(['test'])}
+                ),
+            1
+            )
+        self.assertEqual(
+            User.count(
+                where={'name': not_in(['jardin'])}
+                ),
+            0
+            )
+
 
 if __name__ == "__main__":
     unittest.main()
