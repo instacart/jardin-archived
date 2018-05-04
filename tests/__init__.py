@@ -25,7 +25,7 @@ class TestTransaction(object):
                 )
 
     def teardown(self):
-        for table in self.tables + [self._model.model_metadata()['table_name']]:
+        for table in self.tables + [self._model._table_name()]:
             self._model.query(
                 sql='DROP TABLE IF EXISTS %s;' % table
                 )
