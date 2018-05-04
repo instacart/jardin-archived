@@ -12,3 +12,5 @@ services:
 before_script:
   - psql -c 'create database jardin_test;' -U postgres
   - mysql -e 'CREATE DATABASE jardin_test;'
+addons:
+  postgresql: "9.4"

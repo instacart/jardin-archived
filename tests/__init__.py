@@ -15,12 +15,12 @@ class TestTransaction(object):
         self.teardown()
         if self._connection.db_config.scheme == 'sqlite':
             query(
-                sql='CREATE TABLE %s (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model.model_metadata()['table_name'],
+                sql='CREATE TABLE %s (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model._table_name(),
                 db='jardin_test'
                 )
         else:
             query(
-                sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model.model_metadata()['table_name'],
+                sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model._table_name(),
                 db='jardin_test'
                 )
 
