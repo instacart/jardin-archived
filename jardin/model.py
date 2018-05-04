@@ -437,33 +437,47 @@ class Model(object):
         db_name = db_name or self.db_names.get(role)
         key = '%s_%s' % (db_name, role)
         if key not in self._db_adapter:
-          self._db_adapter[key] = DatabaseAdapter(
-              self.db(role=role, db_name=db_name), 
-              self.model_metadata()
-              )
+            self._db_adapter[key] = DatabaseAdapter(
+                self.db(role=role, db_name=db_name),
+                self.model_metadata()
+                )
 
         return self._db_adapter[key]
 
     @classmethod
-    def model_metadata(self):
-        table_name = self.table_name or self._default_table_name()
-        table_alias = self.table_alias or self._default_table_alias(table_name)
-        return {
-            'table_name': table_name,
-            'table_alias': table_alias,
+    def model_metadata(self, include_schema=True):
+        metadata = {
+            'table_name': self._table_name(),
+            'table_alias': self._table_alias(),
             'belongs_to': self.belongs_to,
             'scopes': self.scopes
         }
+        if include_schema:
+            metadata['table_schema'] = self.table_schema()
+        return metadata
 
     @staticmethod
     def _default_table_alias(table_name):
         return ''.join([w[0] for w in table_name.split('_')])
 
     @classmethod
+    def _table_name(self):
+        if self.__dict__.get('__table_name') is None:
+            self.__table_name = self.table_name or self._default_table_name()
+        return self.__table_name
+
+    @classmethod
+    def _table_alias(self):
+        if self.__dict__.get('__table_alias') is None:
+            self.__table_alias = self.table_alias or self._default_table_alias(
+                self._table_name()
+                )
+        return self.__table_alias
+
+    @classmethod
     def _default_table_name(self):
         import inflect
         name = self.__name__
-        #s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
         s1 = re.sub('([A-Z])', r'_\1', name)[1:]
         s1 = s1.split('_')
         s1 = list(map(lambda x: x.lower(), s1))
@@ -527,31 +541,38 @@ class Model(object):
         :returns: dict
         """
         if self.__dict__.get('_table_schema') is None:
-            self._table_schema = {}
+            self._table_schema = None
+            table_schema = {}
             for row in self.query_schema():
-                name, default = self.db().lexicon.column_name_default(row)
+                name, default, dtype = self.db().lexicon.column_info(row)
                 if isinstance(default, str):
                     json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
                     if len(json_matches) > 0:
                         default = json.loads(json_matches[0])
                 if name == self.primary_key:
                     default = None
-                self._table_schema[name] = {'default': default}
-
+                table_schema[name] = {'default': default, 'type': dtype}
+            if len(table_schema):
+                self._table_schema = table_schema
         return self._table_schema
 
     @classmethod
     def query_schema(self):
-        table_name = self.model_metadata()['table_name']
-        return self.db_adapter().raw_query(
-            sql=self.db().lexicon.table_schema_query(table_name),
-            where={'table_name': table_name}
+        db_adapter = DatabaseAdapter(
+            self.db(role='replica', db_name=self.db_names.get('replica')),
+            self.model_metadata(include_schema=False)
+            )
+        return db_adapter.raw_query(
+            sql=db_adapter.db.lexicon.table_schema_query(self._table_name()),
+            where={'table_name': self._table_name()}
             ).to_dict(orient='records')
 
     @classmethod
     def clear_caches(self):
         self._table_schema = None
-
+        self._db_adapter = {}
+        self.__table_alias = None
+        self.__table_name = None
 
 class ModelIterator(object):
 

@@ -2,9 +2,10 @@ import unittest
 import pandas
 import numpy
 
-from tests import transaction
+from tests import transaction, only_schemes
 
 from tests.models import JardinTestModel
+from jardin.query import query
 
 
 class User(JardinTestModel): pass
@@ -21,6 +22,34 @@ class TestInsert(unittest.TestCase):
         User.insert(values=df)
         self.assertEqual(User.count(), len(df))
 
+
+    @only_schemes('postgres')
+    @transaction(create_table=False)
+    def test_pg_array(self):
+        User.clear_caches()
+        query(
+            'CREATE TABLE users (id SERIAL PRIMARY KEY, ids TEXT ARRAY);',
+            db='jardin_test'
+            )
+        self.assertEqual(User.count(), 0)
+        User.insert(
+            values={'ids': ['a', 'b', 'c']}
+            )
+        self.assertEqual(User.count(), 1)
+
+    @only_schemes('postgres')
+    @transaction(create_table=False)
+    def test_pg_jsonb_list(self):
+        User.clear_caches()
+        query(
+            'CREATE TABLE users (id SERIAL PRIMARY KEY, ids JSONB);',
+            db='jardin_test'
+            )
+        self.assertEqual(User.count(), 0)
+        User.insert(
+            values={'ids': ['a', 'b', 'c']}
+            )
+        self.assertEqual(User.count(), 1)
 
 if __name__ == "__main__":
     unittest.main()

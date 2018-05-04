@@ -16,8 +16,8 @@ class Lexicon(BaseLexicon):
         return "SHOW COLUMNS FROM %s;" % table_name
 
     @staticmethod
-    def column_name_default(row):
-        return row['Field'], row['Default']
+    def column_info(row):
+        return row['Field'], row['Default'], row['Type']
 
     @staticmethod
     def row_ids(db, primary_key):

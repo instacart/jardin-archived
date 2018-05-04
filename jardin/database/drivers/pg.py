@@ -12,13 +12,13 @@ class Lexicon(BaseLexicon):
 
     @staticmethod
     def table_schema_query(table_name):
-        return "SELECT column_name, column_default FROM " \
+        return "SELECT column_name, column_default, data_type FROM " \
             "information_schema.columns WHERE " \
             "table_name=%(table_name)s AND table_schema='public';" 
 
     @staticmethod
-    def column_name_default(row):
-        return row['column_name'], row['column_default']
+    def column_info(row):
+        return row['column_name'], row['column_default'], row['data_type']
 
     @staticmethod
     def update_values(fields, value_extrapolators):

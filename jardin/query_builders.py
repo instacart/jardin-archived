@@ -22,6 +22,10 @@ class PGQueryBuilder(object):
         return self.model_metadata['table_name']
 
     @memoized_property
+    def table_schema(self):
+        return self.model_metadata['table_schema']
+
+    @memoized_property
     def scheme(self):
         return self.kwargs.get('scheme')
 
@@ -264,8 +268,11 @@ class WriteQueryBuilder(PGQueryBuilder):
             values = collections.OrderedDict()
 
             for k, v in val.iteritems():
-                if isinstance(v, dict) or isinstance(v, list):
+                if isinstance(v, dict):
                     v = json.dumps(v)
+                if isinstance(v, list):
+                    if self.table_schema[k]['type'] == 'jsonb':
+                        v = json.dumps(v)
                 if isinstance(v, np.bool_):
                     v = bool(v)
                 if isinstance(v, np.datetime64) and np.isnat(v):

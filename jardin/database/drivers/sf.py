@@ -39,14 +39,16 @@ class DatabaseConnection(BaseConnection):
 
     @memoized_property
     def connect_kwargs(self):
-        return dict(
+        kwargs = dict(
             user=self.db_config.username,
             password=self.db_config.password,
             account=self.db_config.account,
-            warehouse=self.db_config.warehouse,
             database=self.db_config.database,
             schema=self.db_config.schema
             )
+        if 'warehouse' in dir(self.db_config):
+            kwargs['warehouse'] = self.db_config.warehouse
+        return kwargs
 
     @retry(sf.OperationalError, tries=3)
     def connect(self):

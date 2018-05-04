@@ -16,8 +16,8 @@ class Lexicon(BaseLexicon):
         return 'BEGIN;'
 
     @staticmethod
-    def column_name_default(row):
-        return row['name'], row['dflt_value']
+    def column_info(row):
+        return row['name'], row['dflt_value'], row['type']
 
     @staticmethod
     def extrapolator(field):
