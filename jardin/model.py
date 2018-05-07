@@ -188,9 +188,9 @@ class Model(object):
         return self.attributes.get(self.primary_key) is not None
 
     def init_relationships(self):
-        this_table_name = self.model_metadata()['table_name']
+        this_table_name = self._table_name()
         for h in self.has_many:
-            other_table_name = h.model_metadata()['table_name']
+            other_table_name = h._table_name()
             def func(slf, **kwargs):
                 where = kwargs.get('where', {})
                 where.update(**{
