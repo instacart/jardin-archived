@@ -23,12 +23,10 @@ class JardinUser(JardinTestModel): pass
 class TestModel(unittest.TestCase):
 
     def test_table_name_and_alias(self):
-        model_metadata = User.model_metadata()
-        self.assertEqual(model_metadata['table_name'], 'users')
-        self.assertEqual(model_metadata['table_alias'], 'u')
-        model_metadata = JardinUser.model_metadata()
-        self.assertEqual(model_metadata['table_name'], 'jardin_users')
-        self.assertEqual(model_metadata['table_alias'], 'ju')
+        self.assertEqual(User._table_name(), 'users')
+        self.assertEqual(User._table_alias(), 'u')
+        self.assertEqual(JardinUser._table_name(), 'jardin_users')
+        self.assertEqual(JardinUser._table_alias(), 'ju')
 
 
     @transaction(model=User)
