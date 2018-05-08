@@ -21,21 +21,21 @@ def greater_than(*args, **kwargs):
     return operator('>', *args, **kwargs)
 gt = greater_than
 
-def greater_or_equal(field):
-    return operator('>=', field)
+def greater_or_equal(*args, **kwargs):
+    return operator('>=', *args, **kwargs)
 geq = greater_or_equal
 
-def less_than(field):
-    return operator('<', field)
+def less_than(*args, **kwargs):
+    return operator('<', *args, **kwargs)
 lt = less_than
 
-def less_or_equal(field):
-    return operator('<=', field)
+def less_or_equal(*args, **kwargs):
+    return operator('<=', *args, **kwargs)
 leq = less_or_equal
 
-def not_equal(field):
-    return operator('!=', field)
+def not_equal(*args, **kwargs):
+    return operator('!=', *args, **kwargs)
 neq = not_equal
 
-def not_in(lst):
-    return operator('NOT IN', lst)
+def not_in(*args, **kwargs):
+    return operator('NOT IN', *args, **kwargs)
