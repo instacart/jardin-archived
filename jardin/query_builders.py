@@ -120,7 +120,7 @@ class SelectQueryBuilder(PGQueryBuilder):
                     self.where_values[key] = v
                     keys += [':' + key]
                 return '(' + ', '.join(keys) + ')'
-        
+
         key = self.where_key(key)
         self.where_values[key] = value
 
@@ -246,7 +246,7 @@ class WriteQueryBuilder(PGQueryBuilder):
             kw_values = kw_values.attributes
         if isinstance(kw_values, dict):
             kw_values = [kw_values]
-        
+
         kw_values = pd.DataFrame(kw_values).copy()
         kw_values.reset_index(drop=True, inplace=True)
 
@@ -281,7 +281,7 @@ class WriteQueryBuilder(PGQueryBuilder):
                 if isinstance(v, pd.Timestamp) and ((self.scheme == 'mysql' \
                     and sys.version_info[0] == 3) or self.scheme == 'sqlite'):
                     v = v.strftime('%Y-%m-%d %H:%M:%S')
-                if isinstance(v, pd._libs.tslib.NaTType):
+                if isinstance(v, type(pd.NaT)):
                     v = None
                 if isinstance(v, float) and np.isnan(v):
                     v = None
