@@ -23,7 +23,7 @@ class TestModel(unittest.TestCase):
         self.assertNotEqual(user.name, user2.name)
         self.assertIsNotNone(user.created_at)
         self.assertIsNotNone(user.updated_at)
-        with freeze_time(datetime.utcnow() + timedelta(hours=1)):
+        with freeze_time(_mydatetime.utcnow() + timedelta(hours=1)):
             User.update(
                 values={'name': 'Jardinier 3'},
                 where={'id': user.id}
