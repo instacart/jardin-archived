@@ -164,7 +164,7 @@ class TestModel(unittest.TestCase):
         users = User.select(select='name', group='name', having='COUNT(*) > 1')
         self.assertEqual(len(users), 1)
 
-    @patch('pd.datetime', _mydatetime) #hack to fix https://github.com/spulec/freezegun/issues/242
+    @patch('pandas.datetime', _mydatetime) #hack to fix https://github.com/spulec/freezegun/issues/242
     @transaction(model=User)
     def test_touch(self):
         user = User.insert(values={'name': 'Jardin'})
