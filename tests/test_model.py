@@ -11,6 +11,7 @@ from jardin.model import RecordNotPersisted
 from tests import transaction
 
 from tests.models import JardinTestModel
+from support.mydatetime import _mydatetime
 
 
 class Project(JardinTestModel):
@@ -18,7 +19,6 @@ class Project(JardinTestModel):
 class User(JardinTestModel):
     has_many = [Project]
 class JardinUser(JardinTestModel): pass
-
 
 class TestModel(unittest.TestCase):
 
@@ -163,6 +163,7 @@ class TestModel(unittest.TestCase):
         users = User.select(select='name', group='name', having='COUNT(*) > 1')
         self.assertEqual(len(users), 1)
 
+    @mock.patch('pandas.datetime', _mydatetime) #hack to fix https://github.com/spulec/freezegun/issues/242
     @transaction(model=User)
     def test_touch(self):
         user = User.insert(values={'name': 'Jardin'})

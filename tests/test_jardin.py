@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 from time import sleep
 from freezegun import freeze_time
 from datetime import datetime, timedelta
@@ -6,13 +7,14 @@ import pandas as pd
 
 from tests import transaction
 from tests.models import JardinTestModel
+from support.mydatetime import _mydatetime
 
 
 class User(JardinTestModel): pass
 
-
 class TestModel(unittest.TestCase):
 
+    @mock.patch('pandas.datetime', _mydatetime) #hack to fix https://github.com/spulec/freezegun/issues/242
     @transaction(model=User)
     def test_created_at_updated_at(self):
         user = User.insert(values={'name': 'Jardinier'})
@@ -35,7 +37,7 @@ class TestModel(unittest.TestCase):
         if User.db().db_config.scheme == 'sqlite':
             User.query(
                 sql='CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256));'
-                )            
+                )
         else:
             User.query(
                 sql='CREATE TABLE users (id serial PRIMARY KEY, name varchar(256));'
