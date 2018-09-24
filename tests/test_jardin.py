@@ -14,7 +14,6 @@ class User(JardinTestModel): pass
 
 class TestModel(unittest.TestCase):
 
-    @patch('pandas.datetime', _mydatetime) #hack to fix https://github.com/spulec/freezegun/issues/242
     @transaction(model=User)
     def test_created_at_updated_at(self):
         user = User.insert(values={'name': 'Jardinier'})
@@ -23,7 +22,7 @@ class TestModel(unittest.TestCase):
         self.assertNotEqual(user.name, user2.name)
         self.assertIsNotNone(user.created_at)
         self.assertIsNotNone(user.updated_at)
-        with freeze_time(_mydatetime.utcnow() + timedelta(hours=1)):
+        with freeze_time(datetime.utcnow() + timedelta(hours=1)):
             User.update(
                 values={'name': 'Jardinier 3'},
                 where={'id': user.id}
