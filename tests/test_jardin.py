@@ -1,5 +1,5 @@
 import unittest
-from unittest import mock
+from mock import patch
 from time import sleep
 from freezegun import freeze_time
 from datetime import datetime, timedelta
@@ -14,7 +14,7 @@ class User(JardinTestModel): pass
 
 class TestModel(unittest.TestCase):
 
-    @mock.patch('pandas.datetime', _mydatetime) #hack to fix https://github.com/spulec/freezegun/issues/242
+    @patch('pandas.datetime', _mydatetime) #hack to fix https://github.com/spulec/freezegun/issues/242
     @transaction(model=User)
     def test_created_at_updated_at(self):
         user = User.insert(values={'name': 'Jardinier'})
