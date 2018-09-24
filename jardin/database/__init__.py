@@ -76,7 +76,7 @@ class DatabaseAdapter(object):
         config.logger.debug(query)
         self.db.execute(*query)
         results = self.db.cursor().fetchall()
-        return pandas.from_records(list(results), columns=self.columns(), coerce_float=True)
+        return pandas.DataFrame.from_records(list(results), columns=self.columns(), coerce_float=True)
 
     @set_defaults
     def write(self, query_builder, **kwargs):
@@ -108,7 +108,7 @@ class DatabaseAdapter(object):
         self.db.execute(*query)
         if self.db.cursor().description:
             results = self.db.cursor().fetchall()
-            return pandas.from_records(list(results), columns=self.columns(), coerce_float=True)
+            return pandas.DataFrame.from_records(list(results), columns=self.columns(), coerce_float=True)
         else:
             return None
 
