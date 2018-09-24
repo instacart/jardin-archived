@@ -12,7 +12,7 @@ from jardin.model import RecordNotPersisted
 from tests import transaction
 
 from tests.models import JardinTestModel
-from support.mydatetime import _mydatetime
+from tests.support.mydatetime import _mydatetime
 
 
 class Project(JardinTestModel):
