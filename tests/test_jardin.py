@@ -7,7 +7,7 @@ import pandas as pd
 
 from tests import transaction
 from tests.models import JardinTestModel
-from support.mydatetime import _mydatetime
+from tests.support.mydatetime import _mydatetime
 
 
 class User(JardinTestModel): pass
