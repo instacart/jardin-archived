@@ -172,7 +172,7 @@ class TestModel(unittest.TestCase):
             user.touch()
             self.assertTrue(user.updated_at > user.created_at)
             updated_at = user.updated_at
-            with freeze_time(_mydatetime.utcnow() + timedelta(hours=1)):
+            with freeze_time(datetime.utcnow() + timedelta(hours=1)):
                 User.touch(where={'id': user.id})
                 user.reload()
                 self.assertTrue(user.updated_at > updated_at)
