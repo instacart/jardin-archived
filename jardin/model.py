@@ -216,7 +216,7 @@ class Model(object):
     @classmethod
     @soft_del
     def select(self, **kwargs):
-        #select='*', where=None, inner_joins=None, left_joins=None, 
+        #select='*', where=None, inner_joins=None, left_joins=None,
         #group=None, order=None, limit=None, db=None, role='replica'):
         """
         Perform a SELECT statement on the model's table in the replica database.
@@ -332,7 +332,8 @@ class Model(object):
         now = datetime.utcnow()
         for field in ('created_at', 'updated_at'):
             if field in column_names:
-                kwargs['values'][field] = now
+                if field not in kwargs['values']:
+                    kwargs['values'][field] = now
         results = self.db_adapter(role='master').insert(**kwargs)
         return self.record_or_model(results)
 
@@ -383,7 +384,7 @@ class Model(object):
         :type where: string, dict, array
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
-        
+
         return self.db_adapter(role='master').delete(**kwargs)
 
     @classmethod
@@ -488,7 +489,7 @@ class Model(object):
     def db(self, role='replica', db_name=None):
         if not hasattr(self, '_db'): self._db = {}
         name = db_name or self.db_names.get(role)
-        
+
         if name not in self._db:
             self._db[name] = DatabaseConnections.connection(name)
 
