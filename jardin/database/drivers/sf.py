@@ -48,6 +48,8 @@ class DatabaseConnection(BaseConnection):
             )
         if 'warehouse' in dir(self.db_config):
             kwargs['warehouse'] = self.db_config.warehouse
+        if 'authenticator' in dir(self.db_config):
+            kwargs['authenticator'] = self.db_config.authenticator
         return kwargs
 
     @retry(sf.OperationalError, tries=3)
