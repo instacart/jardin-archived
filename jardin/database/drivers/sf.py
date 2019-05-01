@@ -45,6 +45,7 @@ class DatabaseConnection(BaseConnection):
             account=self.db_config.account,
             database=self.db_config.database,
             schema=self.db_config.schema
+            authenticator='externalbrowser'
             )
         if 'warehouse' in dir(self.db_config):
             kwargs['warehouse'] = self.db_config.warehouse
