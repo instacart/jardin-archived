@@ -15,3 +15,7 @@ before_script:
   - mysql -e 'CREATE DATABASE jardin_test;'
 addons:
   postgresql: "10"
+  apt:
+    packages:
+    - postgresql-10
+    - postgresql-client-10
