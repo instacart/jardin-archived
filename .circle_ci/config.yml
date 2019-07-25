@@ -3,3 +3,7 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.6.4
+    steps:
+      - run:
+        name: first step
+        command: echo 'Hello World!'
