@@ -4,5 +4,4 @@ jobs:
     docker:
       - image: circleci/python:3.6.4
     steps:
-      - name: first step
-        run: echo 'Hello World!'
+      - run: echo 'Hello World!'
