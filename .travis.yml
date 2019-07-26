@@ -11,7 +11,7 @@ services:
   - postgresql
   - mysql
 before_install:
-  - sudo cp /etc/postgresql/{9.6,10}/main/pg_hba.conf
+  - sudo cp /etc/postgresql/9.6/main/pg_hba.conf /etc/postgresql/10/main/pg_hba.conf
   - sudo /etc/init.d/postgresql restart
 before_script:
   - psql --version
