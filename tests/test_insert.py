@@ -24,7 +24,6 @@ class TestInsert(unittest.TestCase):
 
     @transaction(model=User)
     def test_single_insert(self):
-        User.clear_caches()
         User.insert(values={'name': 'user3', 'deleted_at': None})
 
     @only_schemes('postgres')
