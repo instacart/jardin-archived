@@ -12,6 +12,7 @@ services:
   - mysql
 before_install:
   - sudo cp /etc/postgresql/{9.6,10}/main/pg_hba.conf
+  - sudo service postgresql restart 10
 before_script:
   - psql --version
   - psql -c 'create database jardin_test;' -U postgres
