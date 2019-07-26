@@ -10,7 +10,10 @@ script:
 services:
   - postgresql
   - mysql
+before_install:
+  - sudo cp /etc/postgresql/{9.6,10}/main/pg_hba.conf
 before_script:
+  - psql --version
   - psql -c 'create database jardin_test;' -U postgres
   - mysql -e 'CREATE DATABASE jardin_test;'
 addons:
