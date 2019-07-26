@@ -323,7 +323,7 @@ class Model(object):
         if isinstance(values, self):
             values = values.attributes.copy()
         if isinstance(values, dict):
-            for (k, v) in values.items():
+            for (k, v) in list(values.items()):
                 if v is None:
                     del kwargs['values'][k]
         kwargs['stack'] = self.stack_mark(inspect.stack())
