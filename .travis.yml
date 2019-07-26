@@ -12,7 +12,7 @@ services:
   - mysql
 before_install:
   - sudo cp /etc/postgresql/{9.6,10}/main/pg_hba.conf
-  - sudo service postgresql restart 10
+  - sudo /etc/init.d/postgresql restart
 before_script:
   - psql --version
   - psql -c 'create database jardin_test;' -U postgres
@@ -25,4 +25,4 @@ addons:
     - postgresql-client-10
 env:
   global:
-  - PGPORT=5433
+    - PGPORT=5433
