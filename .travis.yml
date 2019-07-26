@@ -2,6 +2,7 @@ language: python
 python:
   - 2.7.14
   - 3.5.2
+  - 3.6.4
 script:
   - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_pg.py python setup.py test
   - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_mysql.py python setup.py test
@@ -9,8 +10,19 @@ script:
 services:
   - postgresql
   - mysql
+before_install:
+  - sudo cp /etc/postgresql/9.6/main/pg_hba.conf /etc/postgresql/10/main/pg_hba.conf
+  - sudo /etc/init.d/postgresql restart
 before_script:
+  - psql --version
   - psql -c 'create database jardin_test;' -U postgres
   - mysql -e 'CREATE DATABASE jardin_test;'
 addons:
-  postgresql: "9.4"
+  postgresql: "10"
+  apt:
+    packages:
+    - postgresql-10
+    - postgresql-client-10
+env:
+  global:
+    - PGPORT=5433
