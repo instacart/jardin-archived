@@ -22,12 +22,15 @@ class Lexicon(BaseLexicon):
 
     @staticmethod
     def update_values(fields, value_extrapolators):
-        result = '(' \
-            + ', '.join(fields) \
-            + ') = '
-        result += ', '.join(
-            ['(' + ', '.join(ext) + ')' for ext in value_extrapolators]
-            )
+        if len(fields) == 1:
+            result = ', '.join(fields) + ' = ' + [', '.join(ext) for ext in value_extrapolators][0]
+        else:
+            result = '(' \
+                + ', '.join(fields) \
+                + ') = '
+            result += ', '.join(
+                ['(' + ', '.join(ext) + ')' for ext in value_extrapolators]
+                )
         return result
 
     @staticmethod

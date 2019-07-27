@@ -22,6 +22,9 @@ class TestInsert(unittest.TestCase):
         User.insert(values=df)
         self.assertEqual(User.count(), len(df))
 
+    @transaction(model=User)
+    def test_single_insert(self):
+        User.insert(values={'name': 'user3', 'deleted_at': None})
 
     @only_schemes('postgres')
     @transaction(create_table=False)

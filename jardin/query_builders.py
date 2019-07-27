@@ -281,7 +281,7 @@ class WriteQueryBuilder(PGQueryBuilder):
                 if isinstance(v, pd.Timestamp) and ((self.scheme == 'mysql' \
                     and sys.version_info[0] == 3) or self.scheme == 'sqlite'):
                     v = v.strftime('%Y-%m-%d %H:%M:%S')
-                if isinstance(v, pd._libs.tslib.NaTType):
+                if isinstance(v, type(pd.NaT)):
                     v = None
                 if isinstance(v, float) and np.isnan(v):
                     v = None
