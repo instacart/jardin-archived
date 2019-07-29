@@ -24,13 +24,9 @@ Jardin is a `pandas.DataFrame`-based ORM for Python applications.
 </table>
 
 ### Installation
+
 ```shell
 $ pip install jardin
-```
-or
-```shell
-$ echo 'jardin' >> requirements.txt
-$ pip install -r requirements.txt
 ```
 
 ### Documentation
