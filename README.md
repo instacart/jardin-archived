@@ -16,7 +16,7 @@ Jardin is a `pandas.DataFrame`-based ORM for Python applications.
   <tr>
   <td>Build Status (Travis)</td>
   <td>
-    <a href="https://travis-ci.org/instacart/jardin.svg?branch=master">
+    <a href="https://travis-ci.org/instacart/jardin">
       <img src="https://travis-ci.org/instacart/jardin.svg?branch=master" />
     </a>
   </td>
