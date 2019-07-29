@@ -16,7 +16,7 @@ with open(path.join(here, 'README.rst')) as f:
 setup(
       name = 'jardin',
       version = jardin.__version__,
-      description = 'A dataframe-base ORM',
+      description = 'A Pandas dataframe-based ORM',
       long_description = long_description,
       url = 'https://github.com/instacart/jardin',
       author = 'Emmanuel Turlay',
