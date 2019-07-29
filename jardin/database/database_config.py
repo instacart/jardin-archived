@@ -1,5 +1,11 @@
 from future.standard_library import install_aliases
 install_aliases()
+
+import sys
+if sys.version_info[0] >= 3:
+    unicode = str
+
+
 from urllib.parse import urlparse
 
 
