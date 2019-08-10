@@ -216,7 +216,7 @@ class Model(object):
     @classmethod
     @soft_del
     def select(self, **kwargs):
-        #select='*', where=None, inner_joins=None, left_joins=None, 
+        #select='*', where=None, inner_joins=None, left_joins=None,
         #group=None, order=None, limit=None, db=None, role='replica'):
         """
         Perform a SELECT statement on the model's table in the replica database.
@@ -383,7 +383,7 @@ class Model(object):
         :type where: string, dict, array
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
-        
+
         return self.db_adapter(role='master').delete(**kwargs)
 
     @classmethod
@@ -403,7 +403,7 @@ class Model(object):
                 )
 
     @classmethod
-    def find_by(self, values={}, **kwargs):
+    def find_by(self, values=None, **kwargs):
         """
         Returns a single record matching the criteria in ``values`` found in the model's table in the replica database.
 
@@ -411,6 +411,9 @@ class Model(object):
         :type values: dict
         :returns: an instance of the model.
         """
+
+        if values is None:
+            values = {}
         try:
             return self(
                 **self.select(
@@ -488,7 +491,7 @@ class Model(object):
     def db(self, role='replica', db_name=None):
         if not hasattr(self, '_db'): self._db = {}
         name = db_name or self.db_names.get(role)
-        
+
         if name not in self._db:
             self._db[name] = DatabaseConnections.connection(name)
 

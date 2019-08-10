@@ -3,9 +3,9 @@ from os import path
 
 import sys
 if len(sys.argv) > 1 and sys.argv[1] == 'test':
-      sys.jardin_setup = False
+    sys.jardin_setup = False
 else:
-      sys.jardin_setup = True
+    sys.jardin_setup = True
 
 import jardin
 

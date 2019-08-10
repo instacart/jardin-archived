@@ -61,13 +61,13 @@ def add_soft_delete(kwargs, deleted_at_column):
             )
 
 def grouper(iterable, n, fillvalue=None):
-  "Collect data into fixed-length chunks or blocks"
-  # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-  args = [iter(iterable)] * n
-  return itertools.izip_longest(fillvalue=fillvalue, *args)
+    "Collect data into fixed-length chunks or blocks"
+    # grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+    args = [iter(iterable)] * n
+    return itertools.izip_longest(fillvalue=fillvalue, *args)
 
 def remove_none(res):
-  return filter(partial(is_not, None), res)
+    return filter(partial(is_not, None), res)
 
 def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
     """Retry calling the decorated function using an exponential backoff.

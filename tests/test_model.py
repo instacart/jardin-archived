@@ -2,7 +2,6 @@ import unittest
 import pandas as pd
 from freezegun import freeze_time
 from datetime import datetime, timedelta
-from time import sleep
 import pandas
 
 from jardin import Collection

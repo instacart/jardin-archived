@@ -3,7 +3,11 @@ from jardin.query import query
 
 class TestTransaction(object):
 
-    def __init__(self, model=None, create_table=True, extra_tables=[]):
+    def __init__(self, model=None, create_table=True, extra_tables=None):
+
+        if extra_tables is None:
+            extra_tables = []
+
         self._model = model
         self.tables = extra_tables
         if self._model:
@@ -49,7 +53,10 @@ class TestTransaction(object):
         self._connection.autocommit = True
 
 
-def transaction(model=None, create_table=True, extra_tables=[]):
+def transaction(model=None, create_table=True, extra_tables=None):
+
+    if extra_tables is None:
+        extra_tables = []
 
     def decorator(func):
 
