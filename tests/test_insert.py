@@ -3,13 +3,12 @@ import pandas
 import numpy
 
 from tests import transaction, only_schemes
-
 from tests.models import JardinTestModel
 from jardin.query import query
 
 
-class User(JardinTestModel): pass
-
+class User(JardinTestModel):
+    pass
 
 class TestInsert(unittest.TestCase):
 
@@ -25,6 +24,12 @@ class TestInsert(unittest.TestCase):
     @transaction(model=User)
     def test_single_insert(self):
         User.insert(values={'name': 'user3', 'deleted_at': None})
+
+    @only_schemes('postgres')
+    @transaction(model=User)
+    def test_with_forced_primary_key(self):
+        user = User.insert(values={"id": 999})
+        self.assertEqual(user.id, 999)
 
     @only_schemes('postgres')
     @transaction(create_table=False)
@@ -53,6 +58,10 @@ class TestInsert(unittest.TestCase):
             values={'ids': ['a', 'b', 'c']}
             )
         self.assertEqual(User.count(), 1)
+
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

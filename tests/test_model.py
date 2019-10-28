@@ -15,10 +15,12 @@ from tests.models import JardinTestModel
 
 class Project(JardinTestModel):
     belongs_to = {'users': 'user_id'}
+
 class User(JardinTestModel):
     has_many = [Project]
-class JardinUser(JardinTestModel): pass
 
+class JardinUser(JardinTestModel):
+    pass
 
 class TestModel(unittest.TestCase):
 
