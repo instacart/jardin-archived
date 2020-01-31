@@ -50,6 +50,8 @@ class DatabaseConnection(BaseConnection):
             kwargs['warehouse'] = self.db_config.warehouse
         if 'authenticator' in dir(self.db_config):
             kwargs['authenticator'] = self.db_config.authenticator
+        if 'client_session_keep_alive' in dir(self.db_config):
+            kwargs['client_session_keep_alive'] = self.db_config.client_session_keep_alive
         return kwargs
 
     @retry(sf.OperationalError, tries=3)
