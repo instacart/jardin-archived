@@ -92,3 +92,4 @@ ENV/
 
 *.sql
 test.py
+deploy.sh
