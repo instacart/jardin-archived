@@ -74,7 +74,7 @@ class DatabaseAdapter(object):
     def select(self, **kwargs):
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        self.db.execute(*query)
+        self.db.execute(query[0], tuple(query[1]))
         results = self.db.cursor().fetchall()
         return pandas.DataFrame.from_records(list(results), columns=self.columns(), coerce_float=True)
 
