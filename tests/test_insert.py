@@ -28,6 +28,9 @@ class TestInsert(unittest.TestCase):
     @transaction(model=User)
     def test_single_insert_with_id(self):
         user = User.insert(values={'name': 'user999', 'id': 999})
+        print(user)
+        print(type(user))
+        print(len(user))
         self.assertEqual(user.id, 999)
 
     @transaction(model=User)
