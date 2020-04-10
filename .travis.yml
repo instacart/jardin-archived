@@ -1,6 +1,5 @@
 language: python
 python:
-  - 2.7.14
   - 3.5.2
   - 3.6.4
 script:
@@ -10,9 +9,6 @@ script:
 services:
   - postgresql
   - mysql
-before_install:
-  - sudo cp /etc/postgresql/9.6/main/pg_hba.conf /etc/postgresql/10/main/pg_hba.conf
-  - sudo /etc/init.d/postgresql restart
 before_script:
   - psql --version
   - psql -c 'create database jardin_test;' -U postgres
@@ -25,4 +21,4 @@ addons:
     - postgresql-client-10
 env:
   global:
-    - PGPORT=5433
+    - PGPORT=5432

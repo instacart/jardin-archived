@@ -250,7 +250,7 @@ class WriteQueryBuilder(PGQueryBuilder):
         kw_values = pd.DataFrame(kw_values).copy()
         kw_values.reset_index(drop=True, inplace=True)
 
-        for col in [self.primary_key, 'stack']:
+        for col in ['stack']:
             if col in kw_values:
                 del kw_values[col]
 

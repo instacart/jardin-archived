@@ -326,12 +326,16 @@ class Model(object):
             for (k, v) in list(values.items()):
                 if v is None:
                     del kwargs['values'][k]
+            
         kwargs['stack'] = self.stack_mark(inspect.stack())
         kwargs['primary_key'] = self.primary_key
+
         column_names = self.table_schema().keys()
         now = datetime.utcnow()
-        for field in ('created_at', 'updated_at'):
-            if field in column_names:
+        for field in [f for f in ('created_at', 'updated_at') if f in column_names]:
+            if isinstance(kwargs['values'], dict):
+                kwargs['values'][field] = kwargs['values'].get(field, now)
+            else:
                 kwargs['values'][field] = now
         results = self.db_adapter(role='master').insert(**kwargs)
         return self.record_or_model(results)
@@ -359,7 +363,8 @@ class Model(object):
         column_names = self.table_schema().keys()
         now = datetime.utcnow()
         if 'updated_at' in column_names:
-            kwargs['values']['updated_at'] = now
+            if 'updated_at' not in kwargs['values']:
+                kwargs['values']['updated_at'] = now
         results = self.db_adapter(role='master').update(**kwargs)
         return self.record_or_model(results)
 
