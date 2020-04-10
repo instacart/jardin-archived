@@ -1,15 +1,14 @@
 import unittest
+from datetime import datetime
 import pandas
 import numpy
-
 from tests import transaction, only_schemes
-
 from tests.models import JardinTestModel
 from jardin.query import query
 
 
-class User(JardinTestModel): pass
-
+class User(JardinTestModel):
+    pass
 
 class TestInsert(unittest.TestCase):
 
@@ -26,32 +25,33 @@ class TestInsert(unittest.TestCase):
     def test_single_insert(self):
         User.insert(values={'name': 'user3', 'deleted_at': None})
 
+    @transaction(model=User)
+    def test_single_insert_with_id(self):
+        user = User.insert(values={'name': 'user999', 'id': 999})
+        self.assertEqual(user.id, 999)
+
+    @transaction(model=User)
+    def test_single_insert_with_created_at(self):
+        now = datetime(2020, 1, 1)
+        user = User.insert(values={'name': 'user4', 'created_at': now})
+        self.assertEqual(user.created_at, now)
+
     @only_schemes('postgres')
     @transaction(create_table=False)
     def test_pg_array(self):
         User.clear_caches()
-        query(
-            'CREATE TABLE users (id SERIAL PRIMARY KEY, ids TEXT ARRAY);',
-            db='jardin_test'
-            )
+        query('CREATE TABLE users (id SERIAL PRIMARY KEY, ids TEXT ARRAY);', db='jardin_test')
         self.assertEqual(User.count(), 0)
-        User.insert(
-            values={'ids': ['a', 'b', 'c']}
-            )
+        User.insert(values={'ids': ['a', 'b', 'c']})
         self.assertEqual(User.count(), 1)
 
     @only_schemes('postgres')
     @transaction(create_table=False)
     def test_pg_jsonb_list(self):
         User.clear_caches()
-        query(
-            'CREATE TABLE users (id SERIAL PRIMARY KEY, ids JSONB);',
-            db='jardin_test'
-            )
+        query('CREATE TABLE users (id SERIAL PRIMARY KEY, ids JSONB);', db='jardin_test')
         self.assertEqual(User.count(), 0)
-        User.insert(
-            values={'ids': ['a', 'b', 'c']}
-            )
+        User.insert(values={'ids': ['a', 'b', 'c']})
         self.assertEqual(User.count(), 1)
 
 if __name__ == "__main__":
