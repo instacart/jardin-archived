@@ -32,9 +32,9 @@ class TestInsert(unittest.TestCase):
 
     @transaction(model=User)
     def test_single_insert_with_created_at(self):
-        now = datetime(2020, 1, 1)
-        user = User.insert(values={'name': 'user4', 'created_at': now})
-        self.assertEqual(user.created_at, now)
+        now = '2020-01-01 00:00:00'
+        user = User.insert(values={'name': 'user4', 'created_at': now}) 
+        self.assertEqual(str(user.created_at), now)
 
     @only_schemes('postgres')
     @transaction(create_table=False)
