@@ -27,7 +27,8 @@ class TestInsert(unittest.TestCase):
 
     @transaction(model=User)
     def test_single_insert_with_id(self):
-        user = User.insert(values={'name': 'user999', 'id': 999})
+        User.insert(values={'name': 'user999', 'id': 999})
+        user = User.last()
         print(user)
         print(type(user))
         print(len(user))
