@@ -15,11 +15,4 @@ before_script:
   - psql -c 'create database jardin_test;' -U postgres
   - mysql -e 'CREATE DATABASE jardin_test;'
 addons:
-  postgresql: "10"
-  apt:
-    packages:
-    - postgresql-10
-    - postgresql-client-10
-env:
-  global:
-  - PGPORT=5433
+  postgresql: 10
