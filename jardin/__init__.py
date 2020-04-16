@@ -4,6 +4,7 @@ if not hasattr(sys, 'jardin_setup') or (hasattr(sys, 'jardin_setup') and not sys
     from jardin.model import Model, Collection
     from jardin.query import query
     from jardin.transaction import Transaction
+    from jardin.tools import reset_session
     import jardin.config
 
 __author__ = 'Emmanuel Turlay'
