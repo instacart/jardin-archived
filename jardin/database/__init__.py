@@ -1,4 +1,6 @@
 import pandas
+import random
+import re
 
 from jardin.query_builders import \
     SelectQueryBuilder, \
@@ -15,42 +17,64 @@ class UnsupportedDriver(Exception): pass
 
 class DatabaseConnections(object):
 
-    _connections = {}
-    _urls = {}
+    _db_configs = {}          # For each db_name, it caches connection info of one or many DB instances
+
+    _connections = {}         # For each db_name, it caches one or many connections
+
+    _active_connections = {}  # For each db_name, it caches only ONE actively used connection. Active connection
+                              # can only be changed by a call to self.shuffle_connections(). The idea is to provide
+                              # connection stickiness during the lifetime of a session/task/job, etc.
 
     SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake', 'redshift')
 
     @classmethod
     def connection(self, db_name):
-        if db_name not in self._connections:
-            self._connections[db_name] = self.build_connection(db_name)
-        return self._connections[db_name]
+        if db_name not in self._active_connections:
+            connections = self._connections.get(db_name)
+            if connections is None:
+                connections = self.build_connections(db_name)
+                self._connections[db_name] = connections
+            self._active_connections[db_name] = connections[0] if len(connections) == 1 else random.choice(connections)
+        return self._active_connections[db_name]
 
     @classmethod
-    def build_connection(self, name):
-        db = self.urls(name)
-        if db.scheme not in self.SUPPORTED_SCHEMES:
-            raise UnsupportedDriver('%s is not a supported driver' % db.scheme)
-        elif db.scheme == 'postgres' or db.scheme == 'redshift':
-            import jardin.database.drivers.pg as driver
-        elif db.scheme == 'mysql':
-            import jardin.database.drivers.mysql as driver
-        elif db.scheme == 'sqlite':
-            import jardin.database.drivers.sqlite as driver
-        elif db.scheme == 'snowflake':
-            import jardin.database.drivers.sf as driver
-
-        return driver.DatabaseConnection(db, name)
-
+    def build_connections(self, name):
+        connections = []
+        configs = self.db_configs(name)
+        for db in configs:
+            if db.scheme not in self.SUPPORTED_SCHEMES:
+                raise UnsupportedDriver('%s is not a supported driver' % db.scheme)
+            elif db.scheme == 'postgres' or db.scheme == 'redshift':
+                import jardin.database.drivers.pg as driver
+            elif db.scheme == 'mysql':
+                import jardin.database.drivers.mysql as driver
+            elif db.scheme == 'sqlite':
+                import jardin.database.drivers.sqlite as driver
+            elif db.scheme == 'snowflake':
+                import jardin.database.drivers.sf as driver
+            connections.append(driver.DatabaseConnection(db, name))
+        return connections
 
     @classmethod
-    def urls(self, name):
-        if len(self._urls) == 0:
+    def db_configs(self, name):
+        if len(self._db_configs) == 0:
             config.init()
-        for (nme, url) in config.DATABASES.items():
-            if url:
-                self._urls[nme] = DatabaseConfig(url)
-        return self._urls[name]
+            for (nme, urls) in config.DATABASES.items():
+                if not urls:
+                    continue
+                url_list = re.split(r'\s+', urls) if isinstance(urls, str) else [urls]
+                self._db_configs[nme] = list(map(lambda x: DatabaseConfig(x), url_list))
+        return self._db_configs[name]
+
+    @classmethod
+    def shuffle_connections(self):
+        for name, conns in self._connections.items():
+            if len(conns) == 1:
+                self._active_connections[name] = conns[0]
+            else:
+                active = self._active_connections[name]
+                filtered = list(filter(lambda x: x is not active, conns))
+                self._active_connections[name] = filtered[0] if len(filtered) == 1 else random.choice(filtered)
 
 
 def set_defaults(func):

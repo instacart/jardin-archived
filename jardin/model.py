@@ -437,17 +437,16 @@ class Model(object):
 
     @classmethod
     def db_adapter(self, role='replica', db_name=None):
-        if not hasattr(self, '_db_adapter'):
-            self._db_adapter = {}
+        if not hasattr(self, '_db_metadata'):
+            self._db_metadata = {}
         db_name = db_name or self.db_names.get(role)
         key = '%s_%s' % (db_name, role)
-        if key not in self._db_adapter:
-            self._db_adapter[key] = DatabaseAdapter(
-                self.db(role=role, db_name=db_name),
-                self.model_metadata()
-                )
-
-        return self._db_adapter[key]
+        if key not in self._db_metadata:
+            self._db_metadata[key] = self.model_metadata()
+        return DatabaseAdapter(
+            self.db(role=role, db_name=db_name),
+            self._db_metadata[key]
+            )
 
     @classmethod
     def model_metadata(self, include_schema=True):
@@ -491,13 +490,8 @@ class Model(object):
 
     @classmethod
     def db(self, role='replica', db_name=None):
-        if not hasattr(self, '_db'): self._db = {}
         name = db_name or self.db_names.get(role)
-        
-        if name not in self._db:
-            self._db[name] = DatabaseConnections.connection(name)
-
-        return self._db[name]
+        return DatabaseConnections.connection(name)
 
     @classmethod
     def _use_replica(self, **kwargs):
@@ -575,7 +569,7 @@ class Model(object):
     @classmethod
     def clear_caches(self):
         self._table_schema = None
-        self._db_adapter = {}
+        self._db_metadata = {}
         self.__table_alias = None
         self.__table_name = None
 

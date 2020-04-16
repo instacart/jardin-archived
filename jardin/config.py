@@ -1,4 +1,5 @@
 import imp, os, logging, sys
+from jardin.database import DatabaseConnections
 
 DEFAULTS = {'WATERMARK': '', 'LOG_LEVEL': logging.INFO}
 
@@ -26,3 +27,7 @@ def init():
     logger.setLevel(LOG_LEVEL)
     
     setattr(this, 'INITIALIZED', True)
+
+
+def reset_session():
+    DatabaseConnections.shuffle_connections()
