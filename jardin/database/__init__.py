@@ -62,6 +62,7 @@ class DatabaseConnections(object):
             for (nme, urls) in config.DATABASES.items():
                 if not urls:
                     continue
+                # we don't support multi-configs of dictionary format yet; the "else [urls]" is for a dictionary
                 url_list = re.split(r'\s+', urls) if isinstance(urls, str) else [urls]
                 self._db_configs[nme] = list(map(lambda x: DatabaseConfig(x), url_list))
         return self._db_configs[name]
