@@ -34,7 +34,9 @@ class DatabaseConnections(object):
             if connections is None:
                 connections = self.build_connections(db_name)
                 self._connections[db_name] = connections
-            self._active_connections[db_name] = connections[0] if len(connections) == 1 else random.choice(connections)
+            c = connections[0] if len(connections) == 1 else random.choice(connections)
+            config.logger.info("[{}]: database connection {}:{}".format(db_name, c.db_config.host, c.db_config.port))
+            self._active_connections[db_name] = c
         return self._active_connections[db_name]
 
     @classmethod
@@ -70,12 +72,15 @@ class DatabaseConnections(object):
     @classmethod
     def shuffle_connections(self):
         for name, conns in self._connections.items():
+            c = None
             if len(conns) == 1:
-                self._active_connections[name] = conns[0]
+                c = conns[0]
             else:
                 active = self._active_connections[name]
                 filtered = list(filter(lambda x: x is not active, conns))
-                self._active_connections[name] = filtered[0] if len(filtered) == 1 else random.choice(filtered)
+                c = filtered[0] if len(filtered) == 1 else random.choice(filtered)
+            config.logger.info("[{}]: database connection {}:{}".format(name, c.db_config.host, c.db_config.port))
+            self._active_connections[name] = c
 
 
 def set_defaults(func):
