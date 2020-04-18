@@ -34,6 +34,19 @@ In your working directory (the root of your app), create a file named ``jardin_c
 
 You can also place this file anywhere you want and point to it with the environment variable ``JARDIN_CONF``.
 
+If you'd like to balance the load among a few databases - especially among replica databases - you may give
+multiple database URLs, separated by whitespace::
+
+  # jardin_conf.py
+
+  DATABASES = {
+    'my_replicas': 'https://user:pass@replica1.url:port https://user:pass@replica2.url:port'
+  }
+
+  # On first access, jardin randomly picks an URL from the list and maintains connection "stickiness" during
+  # the lifetime of the process. In a long-running process, application may ask jardin to switch to other
+  # connections on the list by calling 'jardin.reset_session()'.
+
 Then, in your app, say you have a table called ``users``::
 
 
