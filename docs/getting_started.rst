@@ -43,9 +43,10 @@ multiple database URLs, separated by whitespace::
     'my_replicas': 'https://user:pass@replica1.url:port https://user:pass@replica2.url:port'
   }
 
-  # On first access, jardin randomly picks an URL from the list and maintains connection "stickiness" during
-  # the lifetime of the process. In a long-running process, application may ask jardin to switch to other
-  # connections on the list by calling 'jardin.reset_session()'.
+  # On first access, jardin randomly picks an URL from the list and maintains connection
+  # "stickiness" during the lifetime of the process. In a long-running process,
+  # application may ask jardin to switch to other connections on the list by
+  # calling 'jardin.reset_session()'.
 
 Then, in your app, say you have a table called ``users``::
 
