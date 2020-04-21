@@ -35,7 +35,7 @@ class DatabaseConnections(object):
                 connections = self.build_connections(db_name)
                 self._connections[db_name] = connections
             c = connections[0] if len(connections) == 1 else random.choice(connections)
-            config.logger.info("[{}]: database connection {}:{}".format(db_name, c.db_config.host, c.db_config.port))
+            self.log_db_connection(db_name, c.db_config)
             self._active_connections[db_name] = c
         return self._active_connections[db_name]
 
@@ -79,9 +79,16 @@ class DatabaseConnections(object):
                 active = self._active_connections[name]
                 filtered = list(filter(lambda x: x is not active, conns))
                 c = filtered[0] if len(filtered) == 1 else random.choice(filtered)
-            config.logger.info("[{}]: database connection {}:{}".format(name, c.db_config.host, c.db_config.port))
+            self.log_db_connection(name, c.db_config)
             self._active_connections[name] = c
 
+    @classmethod
+    def log_db_connection(self, name, db_config):
+        host = getattr(db_config, 'host', None) or '_'  # use "_" for both missing attr or None value cases
+        port = getattr(db_config, 'port', None) or '_'
+        user = getattr(db_config, 'username', None) or '_'
+        database = getattr(db_config, 'database', None) or '_'
+        config.logger.debug("[{}]: database connection {}@{}:{}/{}".format(name, user, host, port, database))
 
 def set_defaults(func):
     def wrapper(self, *args, **kwargs):
