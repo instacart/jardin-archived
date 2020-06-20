@@ -2,8 +2,18 @@ language: python
 python:
   - 3.5.2
   - 3.6.4
-  - 3.7
-  - 3.8
+  - 3.7.0
+  - 3.7.1
+  - 3.7.2
+  - 3.7.3
+  - 3.7.4
+  - 3.7.5
+  - 3.7.6
+  - 3.7.7
+  - 3.8.0
+  - 3.8.1
+  - 3.8.2
+  - 3.8.3
 script:
   - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_pg.py python setup.py test
   - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_mysql.py python setup.py test
