@@ -20,9 +20,9 @@ class Lexicon(BaseLexicon):
         return row['Field'], row['Default'], row['Type']
 
     @staticmethod
-    def row_ids(db, primary_key):
-        db.execute('SELECT LAST_INSERT_ID();')
-        return [db.cursor().fetchall()[0][0]]
+    def row_ids(cursor, primary_key):
+        cursor.execute('SELECT LAST_INSERT_ID();')
+        return [cursor.fetchall()[0][0]]
 
     @staticmethod
     def apply_watermark(query, watermark):

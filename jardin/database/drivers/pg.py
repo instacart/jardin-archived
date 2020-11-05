@@ -1,4 +1,6 @@
+import sys
 import psycopg2 as pg
+from psycopg2.pool import SimpleConnectionPool, ThreadedConnectionPool
 from psycopg2 import extras
 from memoized_property import memoized_property
 
@@ -34,10 +36,9 @@ class Lexicon(BaseLexicon):
         return result
 
     @staticmethod
-    def row_ids(db, primary_key):
-        row_ids = db.cursor().fetchall()
-        row_ids = [r[primary_key] for r in row_ids]
-        return row_ids
+    def row_ids(cursor, primary_key):
+        row_ids = cursor.fetchall()
+        return [r[primary_key] for r in row_ids]
 
 
 class DatabaseConnection(BaseConnection):
@@ -61,12 +62,16 @@ class DatabaseConnection(BaseConnection):
     def cursor_kwargs(self):
         return dict(cursor_factory=pg.extras.RealDictCursor)
 
-    @retry(
-        (
-            pg.InterfaceError,
-            pg.extensions.TransactionRollbackError,
-            pg.extensions.QueryCanceledError
-            ),
-        tries=3)
+    @memoized_property
+    def pool(self):
+        if self.pool_config is None:
+            return None
+        pool_name = self.pool_config.get("pool", "SimpleConnectionPool")
+        pool = getattr(sys.modules[__name__], pool_name)
+        min_connections = self.pool_config.get("min_connections", 2)
+        max_connections = self.pool_config.get("max_connections", 2)
+        return pool(min_connections, max_connections, **self.connect_kwargs)
+
+    @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError, pg.extensions.QueryCanceledError), tries=3)
     def execute(self, *query):
         return super(DatabaseConnection, self).execute(*query)

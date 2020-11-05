@@ -24,8 +24,8 @@ class Lexicon(BaseLexicon):
         return ':%s' % field
 
     @staticmethod
-    def row_ids(db, primary_key):
-        return [db.cursor().lastrowid]
+    def row_ids(cursor, primary_key):
+        return [cursor.lastrowid]
 
 
 class DatabaseConnection(BaseConnection):
