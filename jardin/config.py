@@ -13,7 +13,7 @@ def init():
     config_file = imp.load_source('jardin_conf', os.environ.get('JARDIN_CONF', 'jardin_conf.py'))
     
     DATABASES = config_file.DATABASES
-    CONNECTION_POOLS = config_file.CONNECTION_POOLS if getattr(config_file, 'CONNECTION_POOLS') else {}
+    CONNECTION_POOLS = config_file.CONNECTION_POOLS if getattr(config_file, 'CONNECTION_POOLS', None) else {}
     
     this = sys.modules[__name__]
     
