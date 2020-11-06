@@ -62,15 +62,15 @@ class BaseConnection(object):
         
     def execute(self, *query, write=False, **kwargs):
         with self.connection() as connection:
-            cursor = connection.cursor(**self.cursor_kwargs)
-            cursor.execute(*query)
-            if self.autocommit:
-                connection.commit()
-            if write:
-                return self.lexicon.row_ids(cursor, kwargs['primary_key'])
-            if cursor.description:
-                return cursor.fetchall(), self.columns(cursor)
-            return None, None
+            with connection.cursor(**self.cursor_kwargs) as cursor:
+                cursor.execute(*query)
+                if self.autocommit:
+                    connection.commit()
+                if write:
+                    return self.lexicon.row_ids(cursor, kwargs['primary_key'])
+                if cursor.description:
+                    return cursor.fetchall(), self.columns(cursor)
+                return None, None
 
     def columns(self, cursor):
         cursor_desc = cursor.description
