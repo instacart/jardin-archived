@@ -112,20 +112,17 @@ class DatabaseAdapter(object):
     def select(self, **kwargs):
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        results, columns = self.db.execute(*query)
+        results, columns = self.db.execute(*query, write=False)
         return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
 
     @set_defaults
     def write(self, query_builder, **kwargs):
         query = query_builder(**kwargs).query
         config.logger.debug(query)
-
-        with self.db.connection() as connection:
-            cursor = connection.cursor(**self.db.cursor_kwargs)
-            cursor.execute(*query)
-            returning_ids = self.db.lexicon.row_ids(cursor, kwargs['primary_key'])
+        returning_ids = self.db.execute(*query, write=True, **kwargs)
         if len(returning_ids) > 0:
             return self.select(where={kwargs['primary_key']: returning_ids})
+        return None
 
     def insert(self, **kwargs):
         return self.write(InsertQueryBuilder, **kwargs)
@@ -137,11 +134,13 @@ class DatabaseAdapter(object):
     def delete(self, **kwargs):
         query = DeleteQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        self.db.execute(*query)
+        self.db.execute(*query, write=False)
 
     @set_defaults
     def raw_query(self, **kwargs):
         query = RawQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        results, columns = self.db.execute(*query)
-        return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
+        results, columns = self.db.execute(*query, write=False)
+        if results:
+            return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
+        return None

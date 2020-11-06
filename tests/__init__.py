@@ -45,7 +45,6 @@ class TestTransaction(object):
             self.setup()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._connection.connection().rollback()
         self._connection.autocommit = True
 
 

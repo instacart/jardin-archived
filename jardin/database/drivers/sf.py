@@ -59,5 +59,5 @@ class DatabaseConnection(BaseConnection):
         return super(DatabaseConnection, self).connect()
 
     @retry(sf.InterfaceError, tries=3)
-    def execute(self, *query):
-        return super(DatabaseConnection, self).execute(*query)
+    def execute(self, *query, **kwargs):
+        return super(DatabaseConnection, self).execute(*query, **kwargs)

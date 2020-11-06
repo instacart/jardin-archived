@@ -15,7 +15,7 @@ class Transaction(object):
 
     def __exit__(self, exc_type, exc_value, traceback):
         if exc_type is None:
-            self.connection.connection().commit()
+            self.connection._connection.commit()
         else:
-            self.connection.connection().rollback()
+            self.connection._connection.rollback()
         self.connection.autocommit = True

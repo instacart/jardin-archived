@@ -24,8 +24,8 @@ class BaseConnection(object):
         except self.DRIVER.InterfaceError:
             self._connection = None
             raise
-        except BaseConnection as e:
-            connection.rollback()
+        except Exception as e:
+            self._connection.rollback()
             raise
         finally:
             if self.pool is not None:
@@ -60,11 +60,17 @@ class BaseConnection(object):
     def cursor_kwargs(self):
         return {}
         
-    def execute(self, *query):
+    def execute(self, *query, write=False, **kwargs):
         with self.connection() as connection:
             cursor = connection.cursor(**self.cursor_kwargs)
             cursor.execute(*query)
-            return cursor.fetchall(), self.columns(cursor)
+            if self.autocommit:
+                connection.commit()
+            if write:
+                return self.lexicon.row_ids(cursor, kwargs['primary_key'])
+            if cursor.description:
+                return cursor.fetchall(), self.columns(cursor)
+            return None, None
 
     def columns(self, cursor):
         cursor_desc = cursor.description
