@@ -39,5 +39,14 @@ class DatabaseConnection(BaseConnection):
         return super(DatabaseConnection, self).connect()
 
     @retry(DRIVER.InterfaceError, tries=3)
-    def execute(self, *query, **kwargs):
-        return super(DatabaseConnection, self).execute(*query, **kwargs)
+    def execute(self, *query, write=False, **kwargs):
+        with self.connection() as connection:
+            cursor = connection.cursor(**self.cursor_kwargs)
+            cursor.execute(*query)
+            if self.autocommit:
+                connection.commit()
+            if write:
+                return self.lexicon.row_ids(cursor, kwargs['primary_key'])
+            if cursor.description:
+                return cursor.fetchall(), self.columns(cursor)
+            return None, None
