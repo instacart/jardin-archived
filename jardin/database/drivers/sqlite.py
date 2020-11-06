@@ -40,3 +40,15 @@ class DatabaseConnection(BaseConnection):
     @memoized_property
     def connect_kwargs(self):
         return {'isolation_level': 'DEFERRED'}
+
+    def execute(self, *query, write=False, **kwargs):
+        with self.connection() as connection:
+            cursor = connection.cursor(**self.cursor_kwargs)
+            cursor.execute(*query)
+            if self.autocommit:
+                connection.commit()
+            if write:
+                return self.lexicon.row_ids(cursor, kwargs['primary_key'])
+            if cursor.description:
+                return cursor.fetchall(), self.columns(cursor)
+            return None, None

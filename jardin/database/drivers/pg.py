@@ -16,7 +16,7 @@ class Lexicon(BaseLexicon):
     def table_schema_query(table_name):
         return "SELECT column_name, column_default, data_type FROM " \
             "information_schema.columns WHERE " \
-            "table_name=%(table_name)s AND table_schema='public';" 
+            "table_name=%(table_name)s AND table_schema='public';"
 
     @staticmethod
     def column_info(row):
@@ -25,14 +25,16 @@ class Lexicon(BaseLexicon):
     @staticmethod
     def update_values(fields, value_extrapolators):
         if len(fields) == 1:
-            result = ', '.join(fields) + ' = ' + [', '.join(ext) for ext in value_extrapolators][0]
+            result = ', '.join(fields) + ' = ' + \
+                [', '.join(ext)
+                 for ext in value_extrapolators][0]
         else:
             result = '(' \
                 + ', '.join(fields) \
                 + ') = '
             result += ', '.join(
                 ['(' + ', '.join(ext) + ')' for ext in value_extrapolators]
-                )
+            )
         return result
 
     @staticmethod
@@ -73,5 +75,14 @@ class DatabaseConnection(BaseConnection):
         return pool(min_connections, max_connections, **self.connect_kwargs)
 
     @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError, pg.extensions.QueryCanceledError), tries=3)
-    def execute(self, *query, **kwargs):
-        return super(DatabaseConnection, self).execute(*query, **kwargs)
+    def execute(self, *query, write=False, **kwargs):
+        with self.connection() as connection:
+            with connection.cursor(**self.cursor_kwargs) as cursor:
+                cursor.execute(*query)
+                if self.autocommit:
+                    connection.commit()
+                if write:
+                    return self.lexicon.row_ids(cursor, kwargs['primary_key'])
+                if cursor.description:
+                    return cursor.fetchall(), self.columns(cursor)
+                return None, None

@@ -1,6 +1,7 @@
 from memoized_property import memoized_property
 from contextlib import contextmanager
 
+
 class BaseConnection(object):
 
     DRIVER = None
@@ -31,7 +32,7 @@ class BaseConnection(object):
             if self.pool is not None:
                 self.pool.putconn(self._connection)
                 self._connection = None
-                
+
     @memoized_property
     def connect_kwargs(self):
         return dict(
@@ -41,7 +42,7 @@ class BaseConnection(object):
             host=self.db_config.host,
             port=self.db_config.port,
             connect_timeout=5
-            )
+        )
 
     @memoized_property
     def connect_args(self):
@@ -59,18 +60,9 @@ class BaseConnection(object):
     @memoized_property
     def cursor_kwargs(self):
         return {}
-        
+
     def execute(self, *query, write=False, **kwargs):
-        with self.connection() as connection:
-            with connection.cursor(**self.cursor_kwargs) as cursor:
-                cursor.execute(*query)
-                if self.autocommit:
-                    connection.commit()
-                if write:
-                    return self.lexicon.row_ids(cursor, kwargs['primary_key'])
-                if cursor.description:
-                    return cursor.fetchall(), self.columns(cursor)
-                return None, None
+        raise NotImplementedError
 
     def columns(self, cursor):
         cursor_desc = cursor.description
