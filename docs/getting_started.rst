@@ -49,9 +49,9 @@ multiple database URLs, separated by whitespace::
   # calling 'jardin.reset_session()'.
 
 
-  You can also setup database connections with connection pools (only with Postgres for now).
-  See (https://www.psycopg.org/docs/pool.html)
-  To do this, you need to specify the connection pools config in `CONNECTION_POOLS` like so::
+You can also setup database connections with connection pools (only with Postgres for now).
+See (https://www.psycopg.org/docs/pool.html)
+To do this, you need to specify the connection pools config in `CONNECTION_POOLS` like so::
 
   # jardin_conf.py
 
