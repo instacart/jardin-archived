@@ -113,6 +113,8 @@ class DatabaseAdapter(object):
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
         results, columns = self.db.execute(*query, write=False)
+        if results is None and columns is None:
+            return None
         return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
 
     @set_defaults
@@ -141,6 +143,6 @@ class DatabaseAdapter(object):
         query = RawQueryBuilder(**kwargs).query
         config.logger.debug(query)
         results, columns = self.db.execute(*query, write=False)
-        if results:
-            return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
-        return None
+        if results is None and columns is None:
+            return None
+        return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
