@@ -26,12 +26,23 @@ class BaseConnection(object):
             self._connection = None
             raise
         except Exception as e:
-            self._connection.rollback()
+            self.rollback()
             raise
         finally:
+            self.commit()
+    
+    def commit(self):
+        if self.autocommit:
+            self._connection.commit()
             if self.pool is not None:
                 self.pool.putconn(self._connection)
                 self._connection = None
+
+    def rollback(self):
+        self._connection.rollback()
+        if self.pool is not None:
+             self.pool.putconn(self._connection)
+             self._connection = None
 
     @memoized_property
     def connect_kwargs(self):
@@ -61,9 +72,6 @@ class BaseConnection(object):
     def cursor_kwargs(self):
         return {}
 
-    def execute(self, *query, write=False, **kwargs):
-        raise NotImplementedError
-
     def columns(self, cursor):
         cursor_desc = cursor.description
         columns = []
@@ -72,3 +80,6 @@ class BaseConnection(object):
             if self.db_config.lowercase_columns:
                 columns = [col.lower() for col in columns]
         return columns
+
+    def execute(self, *query, write=False, **kwargs):
+        raise NotImplementedError

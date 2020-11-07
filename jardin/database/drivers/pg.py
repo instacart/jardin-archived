@@ -79,8 +79,6 @@ class DatabaseConnection(BaseConnection):
         with self.connection() as connection:
             with connection.cursor(**self.cursor_kwargs) as cursor:
                 cursor.execute(*query)
-                if self.autocommit:
-                    connection.commit()
                 if write:
                     return self.lexicon.row_ids(cursor, kwargs['primary_key'])
                 if cursor.description:

@@ -64,8 +64,6 @@ class DatabaseConnection(BaseConnection):
         with self.connection() as connection:
             with connection.cursor(**self.cursor_kwargs) as cursor:
                 cursor.execute(*query)
-                if self.autocommit:
-                    connection.commit()
                 if cursor.description:
                     return cursor.fetchall(), self.columns(cursor)
                 return None, None
