@@ -68,7 +68,9 @@ class DatabaseConnection(BaseConnection):
     def pool(self):
         if self.pool_config is None:
             return None
-        pool_name = self.pool_config.get("pool", "SimpleConnectionPool")
+        pool_name = self.pool_config.get("pool", None)
+        if pool_name is None:
+            return None
         pool = getattr(sys.modules[__name__], pool_name)
         min_connections = self.pool_config.get("min_connections", 2)
         max_connections = self.pool_config.get("max_connections", 2)
