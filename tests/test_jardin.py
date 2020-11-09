@@ -31,10 +31,8 @@ class TestModel(unittest.TestCase):
         self.assertEqual(updated_user.created_at, user.created_at)
 
     @transaction(model=User)
-    def test_no_update(self):
-        user = User.insert(values={'name': 'Jardinier 1'})
-        user2 = User.update(where={'id': 99999999}, values={'name': 'new name'})
-        self.assertTrue(user2 is None)
+    def test_update_on_missing_record(self):
+        User.update(where={'name': 'unknown'}, values={'name': 'new name'})
         
     @transaction(model=User, create_table=False)
     def test_no_created_at_updated_at(self):
