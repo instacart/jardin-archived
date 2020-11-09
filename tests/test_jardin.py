@@ -30,6 +30,12 @@ class TestModel(unittest.TestCase):
         self.assertTrue(updated_user.updated_at > user.updated_at)
         self.assertEqual(updated_user.created_at, user.created_at)
 
+    @transaction(model=User)
+    def test_no_update(self):
+        user = User.insert(values={'name': 'Jardinier 1'})
+        user2 = User.update(where={'id': 99999999}, values={'name': 'new name'})
+        self.assertTrue(user2 is None)
+        
     @transaction(model=User, create_table=False)
     def test_no_created_at_updated_at(self):
         if User.db().db_config.scheme == 'sqlite':

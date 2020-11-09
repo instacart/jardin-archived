@@ -342,6 +342,8 @@ class Model(object):
 
     @classmethod
     def record_or_model(self, results):
+        if results is None:
+            return None
         if len(results) == 1:
             return self(**results.to_dict(orient='records')[0])
         else:
