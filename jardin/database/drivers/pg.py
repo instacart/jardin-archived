@@ -49,8 +49,8 @@ class DatabaseConnection(BaseConnection):
     LEXICON = Lexicon
 
     @retry(pg.OperationalError, tries=3)
-    def connect(self):
-        connection = super(DatabaseConnection, self).connect()
+    def get_connection(self):
+        connection = super(DatabaseConnection, self).get_connection()
         connection.initialize(config.logger)
         return connection
 
@@ -73,7 +73,7 @@ class DatabaseConnection(BaseConnection):
             return None
         pool = getattr(sys.modules[__name__], pool_name)
         min_connections = self.pool_config.get("min_connections", 2)
-        max_connections = self.pool_config.get("max_connections", 2)
+        max_connections = self.pool_config.get("max_connections", min_connections * 2)
         return pool(min_connections, max_connections, **self.connect_kwargs)
 
     @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError, pg.extensions.QueryCanceledError), tries=3)

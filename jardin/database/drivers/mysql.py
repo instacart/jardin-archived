@@ -35,16 +35,10 @@ class DatabaseConnection(BaseConnection):
     LEXICON = Lexicon
 
     @retry(DRIVER.OperationalError, tries=3)
-    def connect(self):
-        return super(DatabaseConnection, self).connect()
+    def get_connection(self):
+        return super(DatabaseConnection, self).get_connection()
 
     @retry(DRIVER.InterfaceError, tries=3)
     def execute(self, *query, write=False, **kwargs):
-        with self.connection() as connection:
-            cursor = connection.cursor(**self.cursor_kwargs)
-            cursor.execute(*query)
-            if write:
-                return self.lexicon.row_ids(cursor, kwargs['primary_key'])
-            if cursor.description:
-                return cursor.fetchall(), self.columns(cursor)
-            return None, None
+        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)
+

@@ -42,11 +42,4 @@ class DatabaseConnection(BaseConnection):
         return {'isolation_level': 'DEFERRED'}
 
     def execute(self, *query, write=False, **kwargs):
-        with self.connection() as connection:
-            cursor = connection.cursor(**self.cursor_kwargs)
-            cursor.execute(*query)
-            if write:
-                return self.lexicon.row_ids(cursor, kwargs['primary_key'])
-            if cursor.description:
-                return cursor.fetchall(), self.columns(cursor)
-            return None, None
+        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)

@@ -56,14 +56,10 @@ class DatabaseConnection(BaseConnection):
         return kwargs
 
     @retry(sf.OperationalError, tries=3)
-    def connect(self):
-        return super(DatabaseConnection, self).connect()
+    def get_connection(self):
+        return super(DatabaseConnection, self).get_connection()
 
     @retry(sf.InterfaceError, tries=3)
     def execute(self, *query, write=False, **kwargs):
-        with self.connection() as connection:
-            with connection.cursor(**self.cursor_kwargs) as cursor:
-                cursor.execute(*query)
-                if cursor.description:
-                    return cursor.fetchall(), self.columns(cursor)
-                return None, None
+        return super(DatabaseConnection, self).execute(*query, write=False, **kwargs)
+
