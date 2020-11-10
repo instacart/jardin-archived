@@ -12,40 +12,39 @@ class TestTransaction(object):
         self.create_table = create_table
 
     def setup(self):
-        self.teardown()
-        if self._connection.db_config.scheme == 'sqlite':
-            query(
-                sql='CREATE TABLE %s (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model._table_name(),
-                db='jardin_test'
-                )
-        else:
-            query(
-                sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model._table_name(),
-                db='jardin_test'
-                )
+        if self.create_table and self._model:
+            self.teardown()
+            if self._connection.db_config.scheme == 'sqlite':
+                query(
+                    sql='CREATE TABLE %s (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model._table_name(),
+                    db='jardin_test'
+                    )
+            else:
+                query(
+                    sql='CREATE TABLE %s (id serial PRIMARY KEY, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model._table_name(),
+                    db='jardin_test'
+                    )
 
     def teardown(self):
-        for table in self.tables + [self._model._table_name()]:
-            self._model.query(
-                sql='DROP TABLE IF EXISTS %s;' % table
-                )
+        if self._model:
+            for table in self.tables + [self._model._table_name()]:
+                self._model.query(
+                    sql='DROP TABLE IF EXISTS %s;' % table
+                    )
+            self._model._columns = None
 
     def __enter__(self):
         if self._connection.db_config.scheme == 'mysql':
             query(sql="SET sql_mode = '';", db='jardin_test')
-        if self._model:
-            self.teardown()
-            self._model._columns = None
-        self._connection.autocommit = False
+        self.teardown()
         query(
             sql=self._connection.lexicon.transaction_begin_query(),
             db='jardin_test'
             )
-        if self.create_table and self._model:
-            self.setup()
+        self.setup()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self._connection.autocommit = True
+        pass
 
 
 def transaction(model=None, create_table=True, extra_tables=[]):
