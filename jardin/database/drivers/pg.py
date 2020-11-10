@@ -78,11 +78,4 @@ class DatabaseConnection(BaseConnection):
 
     @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError, pg.extensions.QueryCanceledError), tries=3)
     def execute(self, *query, write=False, **kwargs):
-        with self.connection() as connection:
-            with connection.cursor(**self.cursor_kwargs) as cursor:
-                cursor.execute(*query)
-                if write:
-                    return self.lexicon.row_ids(cursor, kwargs['primary_key'])
-                if cursor.description:
-                    return cursor.fetchall(), self.columns(cursor)
-                return None, None
+        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)

@@ -27,13 +27,16 @@ class BaseConnection(object):
         except Exception as e:
             self.rollback()
         finally:
-            if self.pool is not None:
+            if self.pool is not None and self.autocommit:
                 key = threading.current_thread().ident
                 self.pool.putconn(conn, key=key)
 
     def commit(self):
         conn = self.get_connection()
         conn.commit()
+        if self.pool:
+            key = threading.current_thread().ident
+            self.pool.putconn(conn, key=key)
 
     def rollback(self):
         conn = self.get_connection()
