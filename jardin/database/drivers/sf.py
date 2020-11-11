@@ -35,9 +35,6 @@ class DatabaseConnection(BaseConnection):
     DRIVER = sf
     LEXICON = Lexicon
 
-    def __init__(self, db_config, name):
-        super(DatabaseConnection, self).__init__(db_config, name)
-
     @memoized_property
     def connect_kwargs(self):
         kwargs = dict(
