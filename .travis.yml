@@ -1,11 +1,13 @@
 language: python
 python:
-  - 3.5.2
+  - 3.5.6
   - 3.6.4
+  - 3.7.8
 script:
   - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_pg.py python setup.py test
   - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_mysql.py python setup.py test
   - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_sqlite.py python setup.py test
+  - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_pg_with_connection_pool.py python setup.py test
 services:
   - postgresql
   - mysql

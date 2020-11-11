@@ -54,7 +54,8 @@ class DatabaseConnections(object):
                 import jardin.database.drivers.sqlite as driver
             elif db.scheme == 'snowflake':
                 import jardin.database.drivers.sf as driver
-            connections.append(driver.DatabaseConnection(db, name))
+            pool_config = config.CONNECTION_POOLS.get(name, None)
+            connections.append(driver.DatabaseConnection(db, name, pool_config=pool_config))
         return connections
 
     @classmethod
@@ -111,20 +112,19 @@ class DatabaseAdapter(object):
     def select(self, **kwargs):
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        self.db.execute(*query)
-        results = self.db.cursor().fetchall()
-        return pandas.DataFrame.from_records(list(results), columns=self.columns(), coerce_float=True)
+        results, columns = self.db.execute(*query, write=False)
+        if results is None and columns is None:
+            return None
+        return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
 
     @set_defaults
     def write(self, query_builder, **kwargs):
         query = query_builder(**kwargs).query
         config.logger.debug(query)
-        self.db.execute(*query)
-        row_ids = self.db.lexicon.row_ids(self.db, kwargs['primary_key'])
-        if len(row_ids) > 0:
-            return self.select(where={kwargs['primary_key']: row_ids})
-
-        return pandas.DataFrame(columns=self.columns())
+        returning_ids = self.db.execute(*query, write=True, **kwargs)
+        if len(returning_ids) > 0:
+            return self.select(where={kwargs['primary_key']: returning_ids})
+        return None
 
     def insert(self, **kwargs):
         return self.write(InsertQueryBuilder, **kwargs)
@@ -136,24 +136,13 @@ class DatabaseAdapter(object):
     def delete(self, **kwargs):
         query = DeleteQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        self.db.execute(*query)
+        self.db.execute(*query, write=False)
 
     @set_defaults
     def raw_query(self, **kwargs):
         query = RawQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        self.db.execute(*query)
-        if self.db.cursor().description:
-            results = self.db.cursor().fetchall()
-            return pandas.DataFrame.from_records(list(results), columns=self.columns(), coerce_float=True)
-        else:
+        results, columns = self.db.execute(*query, write=False)
+        if results is None and columns is None:
             return None
-
-    def columns(self):
-        cursor_desc = self.db.cursor().description
-        columns = []
-        if cursor_desc:
-            columns = [col_desc[0] for col_desc in cursor_desc]
-            if self.db.db_config.lowercase_columns:
-                columns = [col.lower() for col in columns]
-        return columns
+        return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)

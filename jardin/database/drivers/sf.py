@@ -20,7 +20,8 @@ class Lexicon(PGLexicon):
 
     @staticmethod
     def standardize_interpolators(sql, params):
-        sql, params = super(Lexicon, Lexicon).standardize_interpolators(sql, params)
+        sql, params = super(
+            Lexicon, Lexicon).standardize_interpolators(sql, params)
         param_names = re.findall(r'\%\((\w+)\)s', sql)
         if len(param_names):
             sql = re.sub(r'\%\(\w+\)s', '%s', sql)
@@ -45,7 +46,7 @@ class DatabaseConnection(BaseConnection):
             account=self.db_config.account,
             database=self.db_config.database,
             schema=self.db_config.schema
-            )
+        )
         if 'warehouse' in dir(self.db_config):
             kwargs['warehouse'] = self.db_config.warehouse
         if 'authenticator' in dir(self.db_config):
@@ -55,9 +56,10 @@ class DatabaseConnection(BaseConnection):
         return kwargs
 
     @retry(sf.OperationalError, tries=3)
-    def connect(self):
-        return super(DatabaseConnection, self).connect()
+    def get_connection(self):
+        return super(DatabaseConnection, self).get_connection()
 
     @retry(sf.InterfaceError, tries=3)
-    def execute(self, *query):
-        return super(DatabaseConnection, self).execute(*query)
+    def execute(self, *query, write=False, **kwargs):
+        return super(DatabaseConnection, self).execute(*query, write=False, **kwargs)
+

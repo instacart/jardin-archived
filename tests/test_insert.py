@@ -38,7 +38,7 @@ class TestInsert(unittest.TestCase):
         self.assertEqual(str(user.created_at), now)
 
     @only_schemes('postgres')
-    @transaction(create_table=False)
+    @transaction(model=User, create_table=False)
     def test_pg_array(self):
         User.clear_caches()
         query('CREATE TABLE users (id SERIAL PRIMARY KEY, ids TEXT ARRAY);', db='jardin_test')
@@ -47,7 +47,7 @@ class TestInsert(unittest.TestCase):
         self.assertEqual(User.count(), 1)
 
     @only_schemes('postgres')
-    @transaction(create_table=False)
+    @transaction(model=User, create_table=False)
     def test_pg_jsonb_list(self):
         User.clear_caches()
         query('CREATE TABLE users (id SERIAL PRIMARY KEY, ids JSONB);', db='jardin_test')

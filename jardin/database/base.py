@@ -1,4 +1,6 @@
 from memoized_property import memoized_property
+from contextlib import contextmanager
+import threading
 
 
 class BaseConnection(object):
@@ -7,18 +9,38 @@ class BaseConnection(object):
     LEXICON = None
 
     _connection = None
-    _cursor = None
 
-    def __init__(self, db_config, name):
+    def __init__(self, db_config, name, pool_config=None):
         self.db_config = db_config
         self.autocommit = True
         self.name = name
         self.lexicon = self.LEXICON()
+        self.pool_config = pool_config
 
+    @contextmanager
     def connection(self):
-        if self._connection is None:
-            self._connection = self.connect()
-        return self._connection
+        try:
+            conn = self.get_connection()
+            yield conn
+            if self.autocommit:
+                conn.commit()
+        except Exception as e:
+            self.rollback()
+        finally:
+            if self.pool is not None and self.autocommit:
+                key = threading.current_thread().ident
+                self.pool.putconn(conn, key=key)
+
+    def commit(self):
+        conn = self.get_connection()
+        conn.commit()
+        if self.pool:
+            key = threading.current_thread().ident
+            self.pool.putconn(conn, key=key)
+
+    def rollback(self):
+        conn = self.get_connection()
+        conn.rollback()
 
     @memoized_property
     def connect_kwargs(self):
@@ -29,35 +51,43 @@ class BaseConnection(object):
             host=self.db_config.host,
             port=self.db_config.port,
             connect_timeout=5
-            )
+        )
 
     @memoized_property
     def connect_args(self):
         return []
 
-    def connect(self):
-        self._cursor = None
-        return self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
+    @memoized_property
+    def pool(self):
+        return None
+
+    def get_connection(self):
+        if self.pool is None:
+            if self._connection is None:
+                self._connection = self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
+            return self._connection
+        key = threading.current_thread().ident
+        return self.pool.getconn(key=key)
 
     @memoized_property
     def cursor_kwargs(self):
         return {}
 
-    def cursor(self):
-        if self._cursor is None:
-            self._cursor = self.connection().cursor(**self.cursor_kwargs)
-        return self._cursor
+    def columns(self, cursor):
+        cursor_desc = cursor.description
+        columns = []
+        if cursor_desc:
+            columns = [col_desc[0] for col_desc in cursor_desc]
+            if self.db_config.lowercase_columns:
+                columns = [col.lower() for col in columns]
+        return columns
 
-    def execute(self, *query):
-        try:
-            results = self.cursor().execute(*query)
-            if self.autocommit:
-                self.connection().commit()
-            return results
-        except self.DRIVER.InterfaceError:
-            self._connection = None
-            self._cursor = None
-            raise
-        except Exception as e:
-            self.connection().rollback()
-            raise e
+    def execute(self, *query, write=False, **kwargs):
+        with self.connection() as connection:
+            cursor = connection.cursor(**self.cursor_kwargs)
+            cursor.execute(*query)
+            if write:
+                return self.lexicon.row_ids(cursor, kwargs['primary_key'])
+            if cursor.description:
+                return cursor.fetchall(), self.columns(cursor)
+            return None, None

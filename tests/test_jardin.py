@@ -30,6 +30,10 @@ class TestModel(unittest.TestCase):
         self.assertTrue(updated_user.updated_at > user.updated_at)
         self.assertEqual(updated_user.created_at, user.created_at)
 
+    @transaction(model=User)
+    def test_update_on_missing_record(self):
+        User.update(where={'name': 'unknown'}, values={'name': 'new name'})
+        
     @transaction(model=User, create_table=False)
     def test_no_created_at_updated_at(self):
         if User.db().db_config.scheme == 'sqlite':

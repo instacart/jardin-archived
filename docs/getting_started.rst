@@ -48,6 +48,28 @@ multiple database URLs, separated by whitespace::
   # application may ask jardin to switch to other connections on the list by
   # calling 'jardin.reset_session()'.
 
+
+You can also setup database connections with connection pools (only with Postgres for now).
+See (https://www.psycopg.org/docs/pool.html)
+To do this, you need to specify the connection pools config in `CONNECTION_POOLS` like so::
+
+  # jardin_conf.py
+
+  DATABASES = {
+    'my_replica_database': 'https://username:password@replica_database.url:port'
+  }
+
+  CONNECTION_POOLS = {
+    'my_replica_database': {
+        'pool': 'ThreadedConnectionPool', # ThreadedConnectionPool or SimpleConnectionPool
+        'min_connections': 1,
+        'max_connections': 10,
+    }
+  }
+
+
+
+
 Then, in your app, say you have a table called ``users``::
 
 

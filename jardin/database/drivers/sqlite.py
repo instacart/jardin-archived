@@ -24,8 +24,8 @@ class Lexicon(BaseLexicon):
         return ':%s' % field
 
     @staticmethod
-    def row_ids(db, primary_key):
-        return [db.cursor().lastrowid]
+    def row_ids(cursor, primary_key):
+        return [cursor.lastrowid]
 
 
 class DatabaseConnection(BaseConnection):
@@ -40,3 +40,6 @@ class DatabaseConnection(BaseConnection):
     @memoized_property
     def connect_kwargs(self):
         return {'isolation_level': 'DEFERRED'}
+
+    def execute(self, *query, write=False, **kwargs):
+        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)

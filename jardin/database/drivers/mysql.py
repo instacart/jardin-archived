@@ -20,9 +20,9 @@ class Lexicon(BaseLexicon):
         return row['Field'], row['Default'], row['Type']
 
     @staticmethod
-    def row_ids(db, primary_key):
-        db.execute('SELECT LAST_INSERT_ID();')
-        return [db.cursor().fetchall()[0][0]]
+    def row_ids(cursor, primary_key):
+        cursor.execute('SELECT LAST_INSERT_ID();')
+        return [cursor.fetchall()[0][0]]
 
     @staticmethod
     def apply_watermark(query, watermark):
@@ -35,9 +35,10 @@ class DatabaseConnection(BaseConnection):
     LEXICON = Lexicon
 
     @retry(DRIVER.OperationalError, tries=3)
-    def connect(self):
-        return super(DatabaseConnection, self).connect()
+    def get_connection(self):
+        return super(DatabaseConnection, self).get_connection()
 
     @retry(DRIVER.InterfaceError, tries=3)
-    def execute(self, *query):
-        return super(DatabaseConnection, self).execute(*query)
+    def execute(self, *query, write=False, **kwargs):
+        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)
+
