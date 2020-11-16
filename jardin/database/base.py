@@ -24,6 +24,9 @@ class BaseConnection(object):
             yield conn
             if self.autocommit:
                 conn.commit()
+        except self.DRIVER.InterfaceError:
+            self._connection = None
+            raise
         except Exception as e:
             self.rollback()
         finally:
