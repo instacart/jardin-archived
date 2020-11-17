@@ -26,6 +26,7 @@ class BaseConnection(object):
                 conn.commit()
         except self.DRIVER.InterfaceError:
             self._connection = None
+            self._cursor = None
             raise
         except Exception as e:
             self.rollback()
@@ -94,3 +95,4 @@ class BaseConnection(object):
             if cursor.description:
                 return cursor.fetchall(), self.columns(cursor)
             return None, None
+            
