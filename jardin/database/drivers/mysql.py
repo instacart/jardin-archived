@@ -1,8 +1,4 @@
-import sys
-if sys.version_info[0] < 3:
-    import MySQLdb
-else:
-    import pymysql as MySQLdb
+import pymysql
 
 from jardin.tools import retry
 from jardin.database.base import BaseConnection
@@ -31,7 +27,7 @@ class Lexicon(BaseLexicon):
 
 class DatabaseConnection(BaseConnection):
 
-    DRIVER = MySQLdb
+    DRIVER = pymysql
     LEXICON = Lexicon
 
     @retry(DRIVER.OperationalError, tries=3)
