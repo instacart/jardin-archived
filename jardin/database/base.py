@@ -8,14 +8,13 @@ class BaseConnection(object):
     DRIVER = None
     LEXICON = None
 
-    _connection = None
+    _cache = threading.local()
 
-    def __init__(self, db_config, name, pool_config=None):
+    def __init__(self, db_config, name):
         self.db_config = db_config
         self.autocommit = True
         self.name = name
         self.lexicon = self.LEXICON()
-        self.pool_config = pool_config
 
     @contextmanager
     def connection(self):
@@ -25,25 +24,20 @@ class BaseConnection(object):
             if self.autocommit:
                 conn.commit()
         except self.DRIVER.InterfaceError:
-            self._connection = None
+            # TODO [kl] verify that 'conn' on '_cache' will always exist
+            self._cache.conn = None
             raise
         except Exception as e:
+            # TODO [kl] old code has potential infinite loop b/c rollback() calls back to this function
             self.rollback()
-        finally:
-            if self.pool is not None and self.autocommit:
-                key = threading.current_thread().ident
-                self.pool.putconn(conn, key=key)
+            # TODO [kl] old code was not raising here, but that seemed wrong to swallow the exception
+            raise
 
     def commit(self):
-        conn = self.get_connection()
-        conn.commit()
-        if self.pool:
-            key = threading.current_thread().ident
-            self.pool.putconn(conn, key=key)
+        self.get_connection().commit()
 
     def rollback(self):
-        conn = self.get_connection()
-        conn.rollback()
+        self.get_connection().rollback()
 
     @memoized_property
     def connect_kwargs(self):
@@ -60,17 +54,13 @@ class BaseConnection(object):
     def connect_args(self):
         return []
 
-    @memoized_property
-    def pool(self):
-        return None
-
     def get_connection(self):
-        if self.pool is None:
-            if self._connection is None:
-                self._connection = self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
-            return self._connection
-        key = threading.current_thread().ident
-        return self.pool.getconn(key=key)
+        # TODO [kl] cleanup the does 'conn' property exist-or-not junk (also see TODO on line 27)
+        conn = self._cache.conn if hasattr(self._cache, 'conn') else None
+        if conn is None:
+            conn = self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
+            self._cache.conn = conn
+        return conn
 
     @memoized_property
     def cursor_kwargs(self):
