@@ -1,11 +1,3 @@
-from future.standard_library import install_aliases
-install_aliases()
-
-import sys
-if sys.version_info[0] >= 3:
-    unicode = str
-
-
 from urllib.parse import urlparse
 
 
@@ -17,7 +9,7 @@ class DatabaseConfig(object):
     lowercase_columns = False
 
     def __init__(self, config):
-        if isinstance(config, str) or isinstance(config, unicode):
+        if isinstance(config, str):
             db = urlparse(config)
             self.scheme = db.scheme
             self.username = db.username

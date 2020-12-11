@@ -277,9 +277,7 @@ class WriteQueryBuilder(PGQueryBuilder):
                     v = bool(v)
                 if isinstance(v, np.datetime64) and np.isnat(v):
                     v = None
-                # Foul hack for pymysql
-                if isinstance(v, pd.Timestamp) and ((self.scheme == 'mysql' \
-                    and sys.version_info[0] == 3) or self.scheme == 'sqlite'):
+                if isinstance(v, pd.Timestamp) and self.scheme in ['mysql', 'sqlite']:
                     v = v.strftime('%Y-%m-%d %H:%M:%S')
                 if isinstance(v, type(pd.NaT)):
                     v = None
