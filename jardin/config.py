@@ -8,12 +8,11 @@ def init():
     if INITIALIZED:
         return
     
-    global DATABASES, CONNECTION_POOLS, WATERMARK, LOG_LEVEL, logger
+    global DATABASES, WATERMARK, LOG_LEVEL, logger
     
     config_file = imp.load_source('jardin_conf', os.environ.get('JARDIN_CONF', 'jardin_conf.py'))
     
     DATABASES = config_file.DATABASES
-    CONNECTION_POOLS = config_file.CONNECTION_POOLS if getattr(config_file, 'CONNECTION_POOLS', None) else {}
     
     this = sys.modules[__name__]
     

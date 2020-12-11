@@ -8,14 +8,13 @@ class BaseConnection(object):
     DRIVER = None
     LEXICON = None
 
-    _connection = None
-
-    def __init__(self, db_config, name, pool_config=None):
+    def __init__(self, db_config, name):
         self.db_config = db_config
+        # TODO [kl] either move autocommit into thread-local or use PEP 249 autocommit on the underlying conn object
         self.autocommit = True
         self.name = name
         self.lexicon = self.LEXICON()
-        self.pool_config = pool_config
+        self._thread_local = threading.local()
 
     @contextmanager
     def connection(self):
@@ -25,26 +24,17 @@ class BaseConnection(object):
             if self.autocommit:
                 conn.commit()
         except self.DRIVER.InterfaceError:
-            self._connection = None
+            self._thread_local.conn = None
             raise
         except Exception:
             self.rollback()
             raise
-        finally:
-            if self.pool is not None and self.autocommit:
-                key = threading.current_thread().ident
-                self.pool.putconn(conn, key=key)
 
     def commit(self):
-        conn = self.get_connection()
-        conn.commit()
-        if self.pool:
-            key = threading.current_thread().ident
-            self.pool.putconn(conn, key=key)
+        self.get_connection().commit()
 
     def rollback(self):
-        conn = self.get_connection()
-        conn.rollback()
+        self.get_connection().rollback()
 
     @memoized_property
     def connect_kwargs(self):
@@ -61,17 +51,12 @@ class BaseConnection(object):
     def connect_args(self):
         return []
 
-    @memoized_property
-    def pool(self):
-        return None
-
     def get_connection(self):
-        if self.pool is None:
-            if self._connection is None:
-                self._connection = self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
-            return self._connection
-        key = threading.current_thread().ident
-        return self.pool.getconn(key=key)
+        conn = getattr(self._thread_local, 'conn', None)
+        if conn is None:
+            conn = self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
+            self._thread_local.conn = conn
+        return conn
 
     @memoized_property
     def cursor_kwargs(self):
