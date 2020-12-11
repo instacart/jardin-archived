@@ -8,13 +8,13 @@ class BaseConnection(object):
     DRIVER = None
     LEXICON = None
 
-    _cache = threading.local()
-
     def __init__(self, db_config, name):
         self.db_config = db_config
+        # TODO [kl] either move autocommit into thread-local or use PEP 249 autocommit on the underlying conn object
         self.autocommit = True
         self.name = name
         self.lexicon = self.LEXICON()
+        self._thread_local = threading.local()
 
     @contextmanager
     def connection(self):
@@ -24,13 +24,10 @@ class BaseConnection(object):
             if self.autocommit:
                 conn.commit()
         except self.DRIVER.InterfaceError:
-            # TODO [kl] verify that 'conn' on '_cache' will always exist
-            self._cache.conn = None
+            self._thread_local.conn = None
             raise
-        except Exception as e:
-            # TODO [kl] old code has potential infinite loop b/c rollback() calls back to this function
+        except Exception:
             self.rollback()
-            # TODO [kl] old code was not raising here, but that seemed wrong to swallow the exception
             raise
 
     def commit(self):
@@ -55,11 +52,10 @@ class BaseConnection(object):
         return []
 
     def get_connection(self):
-        # TODO [kl] cleanup the does 'conn' property exist-or-not junk (also see TODO on line 27)
-        conn = self._cache.conn if hasattr(self._cache, 'conn') else None
+        conn = getattr(self._thread_local, 'conn', None)
         if conn is None:
             conn = self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
-            self._cache.conn = conn
+            self._thread_local.conn = conn
         return conn
 
     @memoized_property
