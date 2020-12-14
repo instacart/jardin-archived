@@ -1,5 +1,4 @@
 from memoized_property import memoized_property
-from contextlib import contextmanager
 import threading
 
 
@@ -13,14 +12,6 @@ class BaseConnection(object):
         self.name = name
         self.lexicon = self.LEXICON()
         self._thread_local = threading.local()
-
-    @contextmanager
-    def connection(self):
-        try:
-            yield self.get_connection()
-        except self.DRIVER.InterfaceError:
-            self._thread_local.conn = None
-            raise
 
     @memoized_property
     def connect_kwargs(self):
@@ -38,11 +29,7 @@ class BaseConnection(object):
         return []
 
     def get_connection(self):
-        conn = getattr(self._thread_local, 'conn', None)
-        if conn is None:
-            conn = self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
-            self._thread_local.conn = conn
-        return conn
+        return self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
 
     @memoized_property
     def cursor_kwargs(self):
@@ -58,11 +45,22 @@ class BaseConnection(object):
         return columns
 
     def execute(self, *query, write=False, **kwargs):
-        with self.connection() as connection:
-            cursor = connection.cursor(**self.cursor_kwargs)
+        # try to reuse an existing connection or open a new one
+        conn = getattr(self._thread_local, 'conn', None)
+        if conn is None:
+            conn = self.get_connection()
+            self._thread_local.conn = conn
+
+        try:
+            cursor = conn.cursor(**self.cursor_kwargs)
             cursor.execute(*query)
-            if write:
-                return self.lexicon.row_ids(cursor, kwargs['primary_key'])
-            if cursor.description:
-                return cursor.fetchall(), self.columns(cursor)
-            return None, None
+        except self.DRIVER.InterfaceError:
+            # the connection is probably closed
+            self._thread_local.conn = None
+            raise
+
+        if write:
+            return self.lexicon.row_ids(cursor, kwargs['primary_key'])
+        if cursor.description:
+            return cursor.fetchall(), self.columns(cursor)
+        return None, None
