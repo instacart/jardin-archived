@@ -12,10 +12,6 @@ class Lexicon(BaseLexicon):
         return "pragma table_info(%s);" % table_name
 
     @staticmethod
-    def transaction_begin_query():
-        return 'BEGIN;'
-
-    @staticmethod
     def column_info(row):
         return row['name'], row['dflt_value'], row['type']
 
