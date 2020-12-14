@@ -50,6 +50,7 @@ class DatabaseConnection(BaseConnection):
     def get_connection(self):
         connection = super(DatabaseConnection, self).get_connection()
         connection.initialize(config.logger)
+        connection.autocommit = True
         return connection
 
     @memoized_property
@@ -62,6 +63,6 @@ class DatabaseConnection(BaseConnection):
     def cursor_kwargs(self):
         return dict(cursor_factory=pg.extras.RealDictCursor)
 
-    @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError, pg.extensions.QueryCanceledError), tries=3)
+    @retry((pg.InterfaceError, pg.extensions.QueryCanceledError), tries=3)
     def execute(self, *query, write=False, **kwargs):
         return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)
