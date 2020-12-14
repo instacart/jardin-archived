@@ -6,7 +6,6 @@ import json
 import jardin.config as config
 from jardin.database import DatabaseAdapter, DatabaseConnections
 from jardin.tools import soft_del, classorinstancemethod, stack_marker
-from jardin.transaction import Transaction
 from jardin.query import query
 
 
@@ -526,13 +525,6 @@ class Model(object):
                 ).squeeze()
         except:
             return 0
-
-    @classmethod
-    def transaction(self):
-        """
-        Enables multiple statements to be ran within a single transaction, see :doc:`features`.
-        """
-        return Transaction(self.db(role='master').name)
 
     @classmethod
     def table_schema(self):

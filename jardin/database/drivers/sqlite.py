@@ -12,10 +12,6 @@ class Lexicon(BaseLexicon):
         return "pragma table_info(%s);" % table_name
 
     @staticmethod
-    def transaction_begin_query():
-        return 'BEGIN;'
-
-    @staticmethod
     def column_info(row):
         return row['name'], row['dflt_value'], row['type']
 
@@ -39,7 +35,7 @@ class DatabaseConnection(BaseConnection):
 
     @memoized_property
     def connect_kwargs(self):
-        return {'isolation_level': 'DEFERRED'}
+        return {'isolation_level': None}  # autocommit is enabled by setting isolation_level to None
 
     def execute(self, *query, write=False, **kwargs):
         return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)

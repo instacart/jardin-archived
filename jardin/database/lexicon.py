@@ -4,10 +4,6 @@ import re
 class BaseLexicon(object):
 
     @staticmethod
-    def transaction_begin_query():
-        return 'BEGIN;'
-
-    @staticmethod
     def table_schema_query(table_name): pass
 
     @staticmethod
