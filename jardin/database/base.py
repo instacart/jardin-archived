@@ -27,8 +27,9 @@ class BaseConnection(object):
         except self.DRIVER.InterfaceError:
             self._connection = None
             raise
-        except Exception as e:
+        except Exception:
             self.rollback()
+            raise
         finally:
             if self.pool is not None and self.autocommit:
                 key = threading.current_thread().ident
