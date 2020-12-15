@@ -32,8 +32,8 @@ class DatabaseConnection(BaseConnection):
     LEXICON = Lexicon
 
     @retry(DRIVER.OperationalError, tries=3)
-    def get_connection(self):
-        return super(DatabaseConnection, self).get_connection()
+    def connect(self):
+        return super(DatabaseConnection, self).connect()
 
     @memoized_property
     def connect_kwargs(self):
