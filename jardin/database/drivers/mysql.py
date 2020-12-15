@@ -33,15 +33,15 @@ class DatabaseConnection(BaseConnection):
 
     @retry(DRIVER.OperationalError, tries=3)
     def connect(self):
-        return super(DatabaseConnection, self).connect()
+        return super().connect()
 
     @memoized_property
     def connect_kwargs(self):
-        kwargs = super(DatabaseConnection, self).connect_kwargs
+        kwargs = super().connect_kwargs
         kwargs.update(autocommit=True)
         return kwargs
 
     @retry(DRIVER.InterfaceError, tries=3)
     def execute(self, *query, write=False, **kwargs):
-        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)
+        return super().execute(*query, write=write, **kwargs)
 
