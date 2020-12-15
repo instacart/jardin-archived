@@ -48,14 +48,14 @@ class DatabaseConnection(BaseConnection):
 
     @retry(pg.OperationalError, tries=3)
     def connect(self):
-        connection = super(DatabaseConnection, self).connect()
+        connection = super().connect()
         connection.initialize(config.logger)
         connection.autocommit = True
         return connection
 
     @memoized_property
     def connect_kwargs(self):
-        kwargs = super(DatabaseConnection, self).connect_kwargs
+        kwargs = super().connect_kwargs
         kwargs.update(connection_factory=extras.MinTimeLoggingConnection)
         return kwargs
 
@@ -65,4 +65,4 @@ class DatabaseConnection(BaseConnection):
 
     @retry((pg.InterfaceError, pg.extensions.QueryCanceledError), tries=3)
     def execute(self, *query, write=False, **kwargs):
-        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)
+        return super().execute(*query, write=write, **kwargs)

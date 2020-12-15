@@ -38,4 +38,4 @@ class DatabaseConnection(BaseConnection):
         return {'isolation_level': None}  # autocommit is enabled by setting isolation_level to None
 
     def execute(self, *query, write=False, **kwargs):
-        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)
+        return super().execute(*query, write=write, **kwargs)
