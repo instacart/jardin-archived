@@ -47,8 +47,8 @@ class DatabaseConnection(BaseConnection):
     LEXICON = Lexicon
 
     @retry(pg.OperationalError, tries=3)
-    def get_connection(self):
-        connection = super(DatabaseConnection, self).get_connection()
+    def connect(self):
+        connection = super(DatabaseConnection, self).connect()
         connection.initialize(config.logger)
         connection.autocommit = True
         return connection

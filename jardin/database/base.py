@@ -28,7 +28,7 @@ class BaseConnection(object):
     def connect_args(self):
         return []
 
-    def get_connection(self):
+    def connect(self):
         return self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
 
     @memoized_property
@@ -48,7 +48,7 @@ class BaseConnection(object):
         # try to reuse an existing connection or open a new one
         conn = getattr(self._thread_local, 'conn', None)
         if conn is None:
-            conn = self.get_connection()
+            conn = self.connect()
             self._thread_local.conn = conn
 
         try:
