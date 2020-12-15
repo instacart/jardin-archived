@@ -1,5 +1,4 @@
 import re
-from memoized_property import memoized_property
 
 import snowflake.connector as sf
 
@@ -32,11 +31,10 @@ class Lexicon(PGLexicon):
 
 class DatabaseClient(BaseClient):
 
-    DRIVER = sf
-    LEXICON = Lexicon
+    lexicon = Lexicon
 
-    @memoized_property
-    def connect_kwargs(self):
+    @retry(sf.OperationalError, tries=3)
+    def connect_impl(self, **default_kwargs):
         kwargs = dict(
             user=self.db_config.username,
             password=self.db_config.password,
@@ -51,13 +49,11 @@ class DatabaseClient(BaseClient):
             kwargs['authenticator'] = self.db_config.authenticator
         if 'client_session_keep_alive' in dir(self.db_config):
             kwargs['client_session_keep_alive'] = self.db_config.client_session_keep_alive
-        return kwargs
 
-    @retry(sf.OperationalError, tries=3)
-    def connect(self):
-        return super().connect()
+        return sf.connect(**kwargs)
 
     @retry(sf.InterfaceError, tries=3)
-    def execute(self, *query, write=False, **kwargs):
-        return super().execute(*query, write=False, **kwargs)
-
+    def execute_impl(self, conn, *query):
+        cursor = conn.cursor()
+        cursor.execute(*query)
+        return cursor
