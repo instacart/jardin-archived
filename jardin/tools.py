@@ -1,7 +1,7 @@
 import itertools
 from operator import is_not
 from functools import partial, wraps
-from jardin.database import DatabaseConnections
+from jardin.database import Datasources
 import time
 
 
@@ -111,4 +111,4 @@ def retry(ExceptionToCheck, tries=4, delay=3, backoff=2, logger=None):
     return deco_retry
 
 def reset_session():
-    DatabaseConnections.shuffle_connections()
+    Datasources.shuffle_clients()
