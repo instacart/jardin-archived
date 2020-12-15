@@ -2,7 +2,6 @@ import re
 
 import snowflake.connector as sf
 
-from jardin.tools import retry
 from jardin.database.clients.pg import Lexicon as PGLexicon
 from jardin.database.base import BaseClient
 
@@ -32,8 +31,8 @@ class Lexicon(PGLexicon):
 class DatabaseClient(BaseClient):
 
     lexicon = Lexicon
+    retryable_exceptions = (sf.InterfaceError, sf.OperationalError)
 
-    @retry(sf.OperationalError, tries=3)
     def connect_impl(self, **default_kwargs):
         kwargs = dict(
             user=self.db_config.username,
@@ -52,7 +51,6 @@ class DatabaseClient(BaseClient):
 
         return sf.connect(**kwargs)
 
-    @retry(sf.InterfaceError, tries=3)
     def execute_impl(self, conn, *query):
         cursor = conn.cursor()
         cursor.execute(*query)
