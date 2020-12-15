@@ -1,7 +1,7 @@
 import sqlite3
 from memoized_property import memoized_property
 
-from jardin.database.base import BaseConnection
+from jardin.database.base import BaseClient
 from jardin.database.lexicon import BaseLexicon
 
 
@@ -24,7 +24,7 @@ class Lexicon(BaseLexicon):
         return [cursor.lastrowid]
 
 
-class DatabaseConnection(BaseConnection):
+class DatabaseClient(BaseClient):
 
     DRIVER = sqlite3
     LEXICON = Lexicon

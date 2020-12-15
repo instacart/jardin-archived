@@ -4,7 +4,7 @@ import re, inspect
 import json
 
 import jardin.config as config
-from jardin.database import DatabaseAdapter, DatabaseConnections
+from jardin.database import DatabaseAdapter, Datasources
 from jardin.tools import soft_del, classorinstancemethod, stack_marker
 from jardin.query import query
 
@@ -249,7 +249,7 @@ class Model(object):
 
         kwargs['stack'] = self.stack_mark(
             inspect.stack(),
-            db_conn=db_adapter.db
+            db_conn=db_adapter.db_client
             )
 
         return self.collection_instance(db_adapter.select(**kwargs))
@@ -492,7 +492,7 @@ class Model(object):
     @classmethod
     def db(self, role='replica', db_name=None):
         name = db_name or self.db_names.get(role)
-        return DatabaseConnections.connection(name)
+        return Datasources.active_client(name)
 
     @classmethod
     def _use_replica(self, **kwargs):
@@ -556,7 +556,7 @@ class Model(object):
             self.model_metadata(include_schema=False)
             )
         return db_adapter.raw_query(
-            sql=db_adapter.db.lexicon.table_schema_query(self._table_name()),
+            sql=db_adapter.db_client.lexicon.table_schema_query(self._table_name()),
             where={'table_name': self._table_name()}
             ).to_dict(orient='records')
 

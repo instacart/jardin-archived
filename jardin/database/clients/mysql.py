@@ -2,7 +2,7 @@ import pymysql
 from memoized_property import memoized_property
 
 from jardin.tools import retry
-from jardin.database.base import BaseConnection
+from jardin.database.base import BaseClient
 from jardin.database.lexicon import BaseLexicon
 
 
@@ -26,12 +26,12 @@ class Lexicon(BaseLexicon):
         return ' '.join([watermark, query])
 
 
-class DatabaseConnection(BaseConnection):
+class DatabaseClient(BaseClient):
 
     DRIVER = pymysql
     LEXICON = Lexicon
 
-    @retry(DRIVER.OperationalError, tries=3)
+    @retry(pymysql.OperationalError, tries=3)
     def connect(self):
         return super().connect()
 
@@ -41,7 +41,7 @@ class DatabaseConnection(BaseConnection):
         kwargs.update(autocommit=True)
         return kwargs
 
-    @retry(DRIVER.InterfaceError, tries=3)
+    @retry(pymysql.InterfaceError, tries=3)
     def execute(self, *query, write=False, **kwargs):
         return super().execute(*query, write=write, **kwargs)
 

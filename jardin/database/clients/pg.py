@@ -3,7 +3,7 @@ from psycopg2 import extras
 from memoized_property import memoized_property
 
 from jardin.tools import retry
-from jardin.database.base import BaseConnection
+from jardin.database.base import BaseClient
 from jardin.database.lexicon import BaseLexicon
 import jardin.config as config
 
@@ -41,7 +41,7 @@ class Lexicon(BaseLexicon):
         return [r[primary_key] for r in row_ids]
 
 
-class DatabaseConnection(BaseConnection):
+class DatabaseClient(BaseClient):
 
     DRIVER = pg
     LEXICON = Lexicon
