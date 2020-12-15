@@ -1,21 +1,15 @@
-from memoized_property import memoized_property
+from abc import ABC, abstractmethod
+
 import threading
 
 
-class BaseClient(object):
-
-    DRIVER = None
-    LEXICON = None
+class BaseClient(ABC):
 
     def __init__(self, db_config, name):
         self.db_config = db_config
         self.name = name
-        self.lexicon = self.LEXICON()
         self._thread_local = threading.local()
-
-    @memoized_property
-    def connect_kwargs(self):
-        return dict(
+        self.default_connect_kwargs = dict(
             database=self.db_config.database,
             user=self.db_config.username,
             password=self.db_config.password,
@@ -24,37 +18,30 @@ class BaseClient(object):
             connect_timeout=5
         )
 
-    @memoized_property
-    def connect_args(self):
-        return []
+    @property
+    @abstractmethod
+    def lexicon(self):
+        """Provide an object which normalizes a SQL dialect"""
 
-    def connect(self):
-        return self.DRIVER.connect(*self.connect_args, **self.connect_kwargs)
+    @abstractmethod
+    def connect_impl(self, **kwargs):
+        """Connect to a SQL database."""
 
-    @memoized_property
-    def cursor_kwargs(self):
-        return {}
-
-    def columns(self, cursor):
-        cursor_desc = cursor.description
-        columns = []
-        if cursor_desc:
-            columns = [col_desc[0] for col_desc in cursor_desc]
-            if self.db_config.lowercase_columns:
-                columns = [col.lower() for col in columns]
-        return columns
+    @abstractmethod
+    def execute_impl(self, conn, *query):
+        """Execute a SQL query and return the cursor."""
 
     def execute(self, *query, write=False, **kwargs):
-        # try to reuse an existing connection or open a new one
+        """Connect to the database (if necessary) and execute a query."""
+
         conn = getattr(self._thread_local, 'conn', None)
         if conn is None:
-            conn = self.connect()
+            conn = self.connect_impl(**self.default_connect_kwargs)
             self._thread_local.conn = conn
 
         try:
-            cursor = conn.cursor(**self.cursor_kwargs)
-            cursor.execute(*query)
-        except self.DRIVER.InterfaceError:
+            cursor = self.execute_impl(conn, *query)
+        except conn.InterfaceError:
             # the connection is probably closed
             self._thread_local.conn = None
             raise
@@ -64,3 +51,12 @@ class BaseClient(object):
         if cursor.description:
             return cursor.fetchall(), self.columns(cursor)
         return None, None
+
+    def columns(self, cursor):
+        cursor_desc = cursor.description
+        columns = []
+        if cursor_desc:
+            columns = [col_desc[0] for col_desc in cursor_desc]
+            if self.db_config.lowercase_columns:
+                columns = [col.lower() for col in columns]
+        return columns

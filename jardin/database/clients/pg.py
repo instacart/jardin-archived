@@ -1,6 +1,5 @@
 import psycopg2 as pg
 from psycopg2 import extras
-from memoized_property import memoized_property
 
 from jardin.tools import retry
 from jardin.database.base import BaseClient
@@ -43,26 +42,19 @@ class Lexicon(BaseLexicon):
 
 class DatabaseClient(BaseClient):
 
-    DRIVER = pg
-    LEXICON = Lexicon
+    lexicon = Lexicon
 
     @retry(pg.OperationalError, tries=3)
-    def connect(self):
-        connection = super().connect()
-        connection.initialize(config.logger)
-        connection.autocommit = True
-        return connection
-
-    @memoized_property
-    def connect_kwargs(self):
-        kwargs = super().connect_kwargs
+    def connect_impl(self, **default_kwargs):
+        kwargs = default_kwargs.copy()
         kwargs.update(connection_factory=extras.MinTimeLoggingConnection)
-        return kwargs
-
-    @memoized_property
-    def cursor_kwargs(self):
-        return dict(cursor_factory=pg.extras.RealDictCursor)
+        conn = pg.connect(**kwargs)
+        conn.initialize(config.logger)
+        conn.autocommit = True
+        return conn
 
     @retry((pg.InterfaceError, pg.extensions.QueryCanceledError), tries=3)
-    def execute(self, *query, write=False, **kwargs):
-        return super().execute(*query, write=write, **kwargs)
+    def execute_impl(self, conn, *query):
+        cursor = conn.cursor(cursor_factory=pg.extras.RealDictCursor)
+        cursor.execute(*query)
+        return cursor
