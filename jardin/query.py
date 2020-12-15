@@ -2,7 +2,7 @@ import argparse
 import os
 import inspect
 
-from jardin.database import DatabaseAdapter, DatabaseConnections
+from jardin.database import DatabaseAdapter, Datasources
 from jardin.tools import stack_marker
 
 def query(sql=None, filename=None, extract=None, db=None, **kwargs):
@@ -20,7 +20,7 @@ def query(sql=None, filename=None, extract=None, db=None, **kwargs):
         kwargs['where'] = kwargs['params']
 
     return DatabaseAdapter(
-        DatabaseConnections.connection(db),
+        Datasources.active_client(db),
         None
         ).raw_query(
             sql=sql, filename=filename, **kwargs

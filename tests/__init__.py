@@ -8,7 +8,7 @@ class TestTransaction(object):
         self.tables = extra_tables
         if self._model:
             self._model.clear_caches()
-        self._connection = DatabaseConnections.connection('jardin_test')
+        self._connection = Datasources.active_client('jardin_test')
         self.create_table = create_table
 
     def setup(self):
@@ -59,14 +59,14 @@ def transaction(model=None, create_table=True, extra_tables=[]):
     return decorator
 
 
-from jardin.database import DatabaseConnections
+from jardin.database import Datasources
 
 def only_schemes(*schemes):
 
     def decorator(func):
 
         def wrapper(*args, **kwargs):
-            if DatabaseConnections.connection('jardin_test').db_config.scheme in schemes:
+            if Datasources.active_client('jardin_test').db_config.scheme in schemes:
                 return func(*args, **kwargs)
 
         return wrapper

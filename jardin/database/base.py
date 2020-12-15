@@ -2,7 +2,7 @@ from memoized_property import memoized_property
 import threading
 
 
-class BaseConnection(object):
+class BaseClient(object):
 
     DRIVER = None
     LEXICON = None

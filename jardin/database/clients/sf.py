@@ -4,8 +4,8 @@ from memoized_property import memoized_property
 import snowflake.connector as sf
 
 from jardin.tools import retry
-from jardin.database.drivers.pg import Lexicon as PGLexicon
-from jardin.database.base import BaseConnection
+from jardin.database.clients.pg import Lexicon as PGLexicon
+from jardin.database.base import BaseClient
 
 
 class Lexicon(PGLexicon):
@@ -30,7 +30,7 @@ class Lexicon(PGLexicon):
         return sql, params
 
 
-class DatabaseConnection(BaseConnection):
+class DatabaseClient(BaseClient):
 
     DRIVER = sf
     LEXICON = Lexicon
