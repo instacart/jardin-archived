@@ -1,7 +1,6 @@
 import psycopg2 as pg
 from psycopg2 import extras
 
-from jardin.tools import retry
 from jardin.database.base import BaseClient
 from jardin.database.lexicon import BaseLexicon
 import jardin.config as config
@@ -43,8 +42,8 @@ class Lexicon(BaseLexicon):
 class DatabaseClient(BaseClient):
 
     lexicon = Lexicon
+    retryable_exceptions = (pg.OperationalError, pg.InterfaceError, pg.extensions.QueryCanceledError)
 
-    @retry(pg.OperationalError, tries=3)
     def connect_impl(self, **default_kwargs):
         kwargs = default_kwargs.copy()
         kwargs.update(connection_factory=extras.MinTimeLoggingConnection)
@@ -53,7 +52,6 @@ class DatabaseClient(BaseClient):
         conn.autocommit = True
         return conn
 
-    @retry((pg.InterfaceError, pg.extensions.QueryCanceledError), tries=3)
     def execute_impl(self, conn, *query):
         cursor = conn.cursor(cursor_factory=pg.extras.RealDictCursor)
         cursor.execute(*query)

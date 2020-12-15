@@ -1,6 +1,5 @@
 import pymysql
 
-from jardin.tools import retry
 from jardin.database.base import BaseClient
 from jardin.database.lexicon import BaseLexicon
 
@@ -28,14 +27,13 @@ class Lexicon(BaseLexicon):
 class DatabaseClient(BaseClient):
 
     lexicon = Lexicon
+    retryable_exceptions = (pymysql.InterfaceError, pymysql.OperationalError)
 
-    @retry(pymysql.OperationalError, tries=3)
     def connect_impl(self, **default_kwargs):
         kwargs = default_kwargs.copy()
         kwargs.update(autocommit=True)
         return pymysql.connect(**kwargs)
 
-    @retry(pymysql.InterfaceError, tries=3)
     def execute_impl(self, conn, *query):
         cursor = conn.cursor()
         cursor.execute(*query)
