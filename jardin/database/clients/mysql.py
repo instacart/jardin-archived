@@ -1,5 +1,4 @@
 import pymysql
-from memoized_property import memoized_property
 
 from jardin.tools import retry
 from jardin.database.base import BaseClient
@@ -28,20 +27,16 @@ class Lexicon(BaseLexicon):
 
 class DatabaseClient(BaseClient):
 
-    DRIVER = pymysql
-    LEXICON = Lexicon
+    lexicon = Lexicon
 
     @retry(pymysql.OperationalError, tries=3)
-    def connect(self):
-        return super().connect()
-
-    @memoized_property
-    def connect_kwargs(self):
-        kwargs = super().connect_kwargs
+    def connect_impl(self, **default_kwargs):
+        kwargs = default_kwargs.copy()
         kwargs.update(autocommit=True)
-        return kwargs
+        return pymysql.connect(**kwargs)
 
     @retry(pymysql.InterfaceError, tries=3)
-    def execute(self, *query, write=False, **kwargs):
-        return super().execute(*query, write=write, **kwargs)
-
+    def execute_impl(self, conn, *query):
+        cursor = conn.cursor()
+        cursor.execute(*query)
+        return cursor

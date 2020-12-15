@@ -1,5 +1,4 @@
 import sqlite3
-from memoized_property import memoized_property
 
 from jardin.database.base import BaseClient
 from jardin.database.lexicon import BaseLexicon
@@ -26,16 +25,13 @@ class Lexicon(BaseLexicon):
 
 class DatabaseClient(BaseClient):
 
-    DRIVER = sqlite3
-    LEXICON = Lexicon
+    lexicon = Lexicon
 
-    @memoized_property
-    def connect_args(self):
-        return [self.db_config.database]
+    def connect_impl(self, **default_kwargs):
+        # autocommit is enabled by setting isolation_level to None
+        return sqlite3.connect(self.db_config.database, isolation_level=None)
 
-    @memoized_property
-    def connect_kwargs(self):
-        return {'isolation_level': None}  # autocommit is enabled by setting isolation_level to None
-
-    def execute(self, *query, write=False, **kwargs):
-        return super().execute(*query, write=write, **kwargs)
+    def execute_impl(self, conn, *query):
+        cursor = conn.cursor()
+        cursor.execute(*query)
+        return cursor
