@@ -1,7 +1,10 @@
+import threading
+
 import pandas
 import random
 import re
 
+from jardin.database.base import BaseClient
 from jardin.query_builders import \
     SelectQueryBuilder, \
     InsertQueryBuilder, \
@@ -17,27 +20,37 @@ class UnsupportedDatabase(Exception): pass
 
 class Datasources(object):
 
-    _db_configs = {}       # For each db_name, it caches connection info of one or many DB instances
+    class IsolatedDbClients(threading.local):
+        def __init__(self) -> None:
+            # All clients indexed by db_name.
+            self.all = {}  # type: dict[str, list[BaseClient]]
 
-    _clients = {}          # For each db_name, it caches one or many clients
+            # Active clients indexed by db_name. An active client is a sticky connection for the
+            # life of a session. The application can reset a session by calling `self.shuffle_clients()`
+            # at an appropriate moment in the app lifecycle (e.g. the beginning of a job or request).
+            self.active = {}  # type: dict[str, BaseClient]
 
-    _active_clients = {}   # For each db_name, it caches only ONE actively used client. Active client
-                           # can only be changed by a call to self.shuffle_clients(). The idea is to provide
-                           # connection stickiness during the lifetime of a session/task/job, etc.
+    # Each thread will have its own cache of active database clients/connections
+    _clients = IsolatedDbClients()
+
+    # Mapping from db_name to a list of config info. The list will typically contain one element,
+    # but in the case of a DB with many replicas, there will be one config object for each replica.
+    # Read-only and shared across threads.
+    _db_configs = {}  # type: dict[str, list[DatabaseConfig]]
 
     SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake', 'redshift')
 
     @classmethod
     def active_client(self, db_name):
-        if db_name not in self._active_clients:
-            clients = self._clients.get(db_name)
+        if db_name not in self._clients.active:
+            clients = self._clients.all.get(db_name)
             if clients is None:
                 clients = self._build_clients(db_name)
-                self._clients[db_name] = clients
+                self._clients.all[db_name] = clients
             c = clients[0] if len(clients) == 1 else random.choice(clients)
             self.log_datasource(db_name, c.db_config)
-            self._active_clients[db_name] = c
-        return self._active_clients[db_name]
+            self._clients.active[db_name] = c
+        return self._clients.active[db_name]
 
     @classmethod
     def _build_clients(self, name):
@@ -71,16 +84,16 @@ class Datasources(object):
 
     @classmethod
     def shuffle_clients(self):
-        for name, clients in self._clients.items():
+        for name, clients in self._clients.all.items():
             c = None
             if len(clients) == 1:
                 c = clients[0]
             else:
-                active = self._active_clients[name]
+                active = self._clients.active[name]
                 filtered = list(filter(lambda x: x is not active, clients))
                 c = filtered[0] if len(filtered) == 1 else random.choice(filtered)
             self.log_datasource(name, c.db_config)
-            self._active_clients[name] = c
+            self._clients.active[name] = c
 
     @classmethod
     def log_datasource(self, name, db_config):
