@@ -1,4 +1,6 @@
 import unittest
+from threading import Thread
+from time import sleep
 
 import jardin
 from jardin.database import Datasources
@@ -19,6 +21,15 @@ class TestResetSession(unittest.TestCase):
         jardin.reset_session()
         client2 = Datasources.active_client('multi_url_test')
         self.assertNotEqual(client, client2)
+
+    def test_reset_session_is_isolated_by_thread(self):
+        # calling `jardin.reset_session()` in a different thread should not affect this thread's session
+        before = Datasources.active_client('multi_url_test')
+        thread = Thread(target=jardin.reset_session)
+        thread.start()
+        thread.join()
+        after = Datasources.active_client('multi_url_test')
+        self.assertEqual(before, after)
 
 
 if __name__ == '__main__':

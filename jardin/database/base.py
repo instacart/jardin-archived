@@ -1,4 +1,3 @@
-import threading
 import time
 from abc import ABC, abstractmethod
 
@@ -10,7 +9,7 @@ class BaseClient(ABC):
     def __init__(self, db_config, name):
         self.db_config = db_config
         self.name = name
-        self._thread_local = threading.local()
+        self._conn = None
         self.default_connect_kwargs = dict(
             database=self.db_config.database,
             user=self.db_config.username,
@@ -56,16 +55,14 @@ class BaseClient(ABC):
 
     def execute_once(self, *query, write=False, **kwargs):
         """Connect to the database (if necessary) and execute a query."""
-        conn = getattr(self._thread_local, 'conn', None)
-        if conn is None:
-            conn = self.connect_impl(**self.default_connect_kwargs)
-            self._thread_local.conn = conn
+        if self._conn is None:
+            self._conn = self.connect_impl(**self.default_connect_kwargs)
 
         try:
-            cursor = self.execute_impl(conn, *query)
-        except conn.InterfaceError:
-            # the connection is probably closed
-            self._thread_local.conn = None
+            cursor = self.execute_impl(self._conn, *query)
+        except self._conn.InterfaceError:
+            # the connection is probably closed; stop re-using the connection
+            self._conn = None
             raise
 
         if write:
