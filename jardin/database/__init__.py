@@ -38,6 +38,9 @@ class Datasources(object):
     # Read-only and shared across threads.
     _db_configs = {}  # type: dict[str, list[DatabaseConfig]]
 
+    # Guards lazy initializers
+    _lock = threading.Lock()
+
     SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake', 'redshift')
 
     @classmethod
@@ -72,15 +75,21 @@ class Datasources(object):
 
     @classmethod
     def db_configs(self, name):
-        if len(self._db_configs) == 0:
-            config.init()
-            for (nme, urls) in config.DATABASES.items():
-                if not urls:
-                    continue
-                # we don't support multi-configs of dictionary format yet; the "else [urls]" is for a dictionary
-                url_list = re.split(r'\s+', urls) if isinstance(urls, str) else [urls]
-                self._db_configs[nme] = list(map(lambda x: DatabaseConfig(x), url_list))
+        if not self._db_configs:
+            with self._lock:
+                if not self._db_configs:
+                    self._db_configs = self._build_db_configs()
         return self._db_configs[name]
+
+    @classmethod
+    def _build_db_configs(self):
+        config.init()
+        d = dict()
+        for (db_name, val) in config.DATABASES.items():
+            # we don't support multi-configs of dictionary format yet; the "else [urls]" is for a dictionary
+            url_list = re.split(r'\s+', val) if isinstance(val, str) else [val]
+            d[db_name] = [DatabaseConfig(x) for x in url_list]
+        return d
 
     @classmethod
     def shuffle_clients(self):
