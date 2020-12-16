@@ -32,7 +32,7 @@ class Datasources(object):
         if db_name not in self._active_clients:
             clients = self._clients.get(db_name)
             if clients is None:
-                clients = self.build_clients(db_name)
+                clients = self._build_clients(db_name)
                 self._clients[db_name] = clients
             c = clients[0] if len(clients) == 1 else random.choice(clients)
             self.log_datasource(db_name, c.db_config)
@@ -40,7 +40,7 @@ class Datasources(object):
         return self._active_clients[db_name]
 
     @classmethod
-    def build_clients(self, name):
+    def _build_clients(self, name):
         clients = []
         configs = self.db_configs(name)
         for db in configs:
