@@ -54,8 +54,7 @@ class DatabaseConnections(object):
                 import jardin.database.drivers.sqlite as driver
             elif db.scheme == 'snowflake':
                 import jardin.database.drivers.sf as driver
-            pool_config = config.CONNECTION_POOLS.get(name, None)
-            connections.append(driver.DatabaseConnection(db, name, pool_config=pool_config))
+            connections.append(driver.DatabaseConnection(db, name))
         return connections
 
     @classmethod

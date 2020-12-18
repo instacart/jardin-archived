@@ -1,6 +1,4 @@
-import sys
 import psycopg2 as pg
-from psycopg2.pool import SimpleConnectionPool, ThreadedConnectionPool
 from psycopg2 import extras
 from memoized_property import memoized_property
 
@@ -63,18 +61,6 @@ class DatabaseConnection(BaseConnection):
     @memoized_property
     def cursor_kwargs(self):
         return dict(cursor_factory=pg.extras.RealDictCursor)
-
-    @memoized_property
-    def pool(self):
-        if self.pool_config is None:
-            return None
-        pool_name = self.pool_config.get("pool", None)
-        if pool_name is None:
-            return None
-        pool = getattr(sys.modules[__name__], pool_name)
-        min_connections = self.pool_config.get("min_connections", 2)
-        max_connections = self.pool_config.get("max_connections", min_connections * 2)
-        return pool(min_connections, max_connections, **self.connect_kwargs)
 
     @retry((pg.InterfaceError, pg.extensions.TransactionRollbackError, pg.extensions.QueryCanceledError), tries=3)
     def execute(self, *query, write=False, **kwargs):
