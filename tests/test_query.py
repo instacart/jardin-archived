@@ -57,7 +57,7 @@ class TestQuery(unittest.TestCase):
         self.assertEqual(df.name.iloc[0], 'jardin')
 
     def test_snowflake_lexicon(self):
-        from jardin.database.drivers.sf import Lexicon
+        from jardin.database.clients.sf import Lexicon
         sql, params = Lexicon.standardize_interpolators(
             'SELECT * FROM users WHERE a = %(abc)s AND b = %(def)s',
             {'def': 2, 'abc': 1}

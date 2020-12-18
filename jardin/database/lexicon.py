@@ -21,7 +21,7 @@ class BaseLexicon(object):
         return ', '.join(values)
 
     @staticmethod
-    def row_ids(db): pass
+    def row_ids(cursor, primary_key): pass
 
     @staticmethod
     def apply_watermark(query, watermark):
