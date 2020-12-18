@@ -37,10 +37,6 @@ class TestTransaction(object):
         if self._connection.db_config.scheme == 'mysql':
             query(sql="SET sql_mode = '';", db='jardin_test')
         self.teardown()
-        query(
-            sql=self._connection.lexicon.transaction_begin_query(),
-            db='jardin_test'
-            )
         self.setup()
 
     def __exit__(self, exc_type, exc_value, traceback):

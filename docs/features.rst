@@ -81,25 +81,6 @@ To customize the database column used to store the deletion timestamp, do::
     soft_delete = 'my_custom_db_column'
 
 
-Transactions
-------------
-
-Multiple statements can be issued within a single transaction
-
-.. code-block:: python
-
-  with User.transaction():
-    User.insert(...)
-    Project.update(...)
-
-which will generate the following statements::
-
-  BEGIN;
-  INSERT INTO users;
-  UPDATE projects;
-  COMMIT;
-
-Note that the ``transaction()`` method can be called on any model regardless of the models used inside the transaction.
 
 Multiple databases and master/replica split
 -------------------------------------------
@@ -140,4 +121,4 @@ You can measure the current replica lag in seconds using any class inheriting fr
 Connection drops recovery
 -------------------------
 
-The exceptions ``psycopg2.InterfaceError``, ``psycopg2.extensions.TransactionRollbackError``, and ``psycopg2.OperationalError`` are rescued and a new connection is initiated. Three attemps with exponential decay are made before bubbling up the exception.
+The exceptions ``psycopg2.InterfaceError`` and ``psycopg2.OperationalError`` are rescued and a new connection is initiated. Three attempts with exponential decay are made before bubbling up the exception.

@@ -1,4 +1,5 @@
 import pymysql
+from memoized_property import memoized_property
 
 from jardin.tools import retry
 from jardin.database.base import BaseConnection
@@ -33,6 +34,12 @@ class DatabaseConnection(BaseConnection):
     @retry(DRIVER.OperationalError, tries=3)
     def get_connection(self):
         return super(DatabaseConnection, self).get_connection()
+
+    @memoized_property
+    def connect_kwargs(self):
+        kwargs = super(DatabaseConnection, self).connect_kwargs
+        kwargs.update(autocommit=True)
+        return kwargs
 
     @retry(DRIVER.InterfaceError, tries=3)
     def execute(self, *query, write=False, **kwargs):
