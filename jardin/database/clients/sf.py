@@ -1,11 +1,9 @@
 import re
-from memoized_property import memoized_property
 
 import snowflake.connector as sf
 
-from jardin.tools import retry
-from jardin.database.drivers.pg import Lexicon as PGLexicon
-from jardin.database.base import BaseConnection
+from jardin.database.clients.pg import Lexicon as PGLexicon
+from jardin.database.base import BaseClient
 
 
 class Lexicon(PGLexicon):
@@ -30,13 +28,12 @@ class Lexicon(PGLexicon):
         return sql, params
 
 
-class DatabaseConnection(BaseConnection):
+class DatabaseClient(BaseClient):
 
-    DRIVER = sf
-    LEXICON = Lexicon
+    lexicon = Lexicon
+    retryable_exceptions = (sf.InterfaceError, sf.OperationalError)
 
-    @memoized_property
-    def connect_kwargs(self):
+    def connect_impl(self, **default_kwargs):
         kwargs = dict(
             user=self.db_config.username,
             password=self.db_config.password,
@@ -51,13 +48,10 @@ class DatabaseConnection(BaseConnection):
             kwargs['authenticator'] = self.db_config.authenticator
         if 'client_session_keep_alive' in dir(self.db_config):
             kwargs['client_session_keep_alive'] = self.db_config.client_session_keep_alive
-        return kwargs
 
-    @retry(sf.OperationalError, tries=3)
-    def get_connection(self):
-        return super(DatabaseConnection, self).get_connection()
+        return sf.connect(**kwargs)
 
-    @retry(sf.InterfaceError, tries=3)
-    def execute(self, *query, write=False, **kwargs):
-        return super(DatabaseConnection, self).execute(*query, write=False, **kwargs)
-
+    def execute_impl(self, conn, *query):
+        cursor = conn.cursor()
+        cursor.execute(*query)
+        return cursor

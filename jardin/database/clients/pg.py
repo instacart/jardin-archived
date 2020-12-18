@@ -1,9 +1,7 @@
 import psycopg2 as pg
 from psycopg2 import extras
-from memoized_property import memoized_property
 
-from jardin.tools import retry
-from jardin.database.base import BaseConnection
+from jardin.database.base import BaseClient
 from jardin.database.lexicon import BaseLexicon
 import jardin.config as config
 
@@ -41,28 +39,20 @@ class Lexicon(BaseLexicon):
         return [r[primary_key] for r in row_ids]
 
 
-class DatabaseConnection(BaseConnection):
+class DatabaseClient(BaseClient):
 
-    DRIVER = pg
-    LEXICON = Lexicon
+    lexicon = Lexicon
+    retryable_exceptions = (pg.OperationalError, pg.InterfaceError, pg.extensions.QueryCanceledError)
 
-    @retry(pg.OperationalError, tries=3)
-    def get_connection(self):
-        connection = super(DatabaseConnection, self).get_connection()
-        connection.initialize(config.logger)
-        connection.autocommit = True
-        return connection
-
-    @memoized_property
-    def connect_kwargs(self):
-        kwargs = super(DatabaseConnection, self).connect_kwargs
+    def connect_impl(self, **default_kwargs):
+        kwargs = default_kwargs.copy()
         kwargs.update(connection_factory=extras.MinTimeLoggingConnection)
-        return kwargs
+        conn = pg.connect(**kwargs)
+        conn.initialize(config.logger)
+        conn.autocommit = True
+        return conn
 
-    @memoized_property
-    def cursor_kwargs(self):
-        return dict(cursor_factory=pg.extras.RealDictCursor)
-
-    @retry((pg.InterfaceError, pg.extensions.QueryCanceledError), tries=3)
-    def execute(self, *query, write=False, **kwargs):
-        return super(DatabaseConnection, self).execute(*query, write=write, **kwargs)
+    def execute_impl(self, conn, *query):
+        cursor = conn.cursor(cursor_factory=pg.extras.RealDictCursor)
+        cursor.execute(*query)
+        return cursor
