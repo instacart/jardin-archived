@@ -10,8 +10,6 @@ class BaseConnection(object):
 
     def __init__(self, db_config, name):
         self.db_config = db_config
-        # TODO [kl] either move autocommit into thread-local or use PEP 249 autocommit on the underlying conn object
-        self.autocommit = True
         self.name = name
         self.lexicon = self.LEXICON()
         self._thread_local = threading.local()
@@ -19,22 +17,10 @@ class BaseConnection(object):
     @contextmanager
     def connection(self):
         try:
-            conn = self.get_connection()
-            yield conn
-            if self.autocommit:
-                conn.commit()
+            yield self.get_connection()
         except self.DRIVER.InterfaceError:
             self._thread_local.conn = None
             raise
-        except Exception:
-            self.rollback()
-            raise
-
-    def commit(self):
-        self.get_connection().commit()
-
-    def rollback(self):
-        self.get_connection().rollback()
 
     @memoized_property
     def connect_kwargs(self):

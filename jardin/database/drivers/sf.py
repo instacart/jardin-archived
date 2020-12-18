@@ -42,7 +42,8 @@ class DatabaseConnection(BaseConnection):
             password=self.db_config.password,
             account=self.db_config.account,
             database=self.db_config.database,
-            schema=self.db_config.schema
+            schema=self.db_config.schema,
+            autocommit=True
         )
         if 'warehouse' in dir(self.db_config):
             kwargs['warehouse'] = self.db_config.warehouse
