@@ -4,7 +4,7 @@ import re, inspect
 import json
 
 import jardin.config as config
-from jardin.database import DatabaseAdapter
+from jardin.database.database_adapter import DatabaseAdapter
 from jardin.database.datasources import Datasources
 from jardin.tools import soft_del, classorinstancemethod, stack_marker
 from jardin.query import query

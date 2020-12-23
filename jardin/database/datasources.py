@@ -3,7 +3,7 @@ import re
 import threading
 
 from jardin import config as config
-from jardin.database import UnsupportedDatabase, DatabaseConfig
+from jardin.database.database_config import DatabaseConfig
 
 
 class Datasources(object):
@@ -99,3 +99,6 @@ class Datasources(object):
         user = getattr(db_config, 'username', None) or '_'
         database = getattr(db_config, 'database', None) or '_'
         config.logger.debug("[{}]: datasource {}@{}:{}/{}".format(name, user, host, port, database))
+
+
+class UnsupportedDatabase(Exception): pass
