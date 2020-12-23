@@ -2,7 +2,7 @@ import psycopg2 as pg
 from psycopg2 import extras
 
 from jardin.database.base_client import BaseClient
-from jardin.database.lexicon import BaseLexicon
+from jardin.database.base_lexicon import BaseLexicon
 import jardin.config as config
 
 
