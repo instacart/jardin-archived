@@ -1,7 +1,7 @@
 import itertools
 from operator import is_not
 from functools import partial, wraps
-from jardin.database import Datasources
+from jardin.database.datasources import Datasources
 import time
 
 
