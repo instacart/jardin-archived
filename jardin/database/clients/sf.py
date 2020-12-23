@@ -3,7 +3,7 @@ import re
 import snowflake.connector as sf
 
 from jardin.database.clients.pg import Lexicon as PGLexicon
-from jardin.database.base import BaseClient
+from jardin.database.base_client import BaseClient
 
 
 class Lexicon(PGLexicon):
