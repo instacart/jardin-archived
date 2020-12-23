@@ -63,6 +63,9 @@ class Model(object):
     """
       Base class from which your models should inherit.
     """
+
+    # These class variables are shared by all threads. They are intended to be set
+    # during subclass creation. After initialization they should not be changed.
     table_name = None
     table_alias = None
     db_names = {}
