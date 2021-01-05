@@ -3,7 +3,7 @@ from threading import Thread
 from time import sleep
 
 import jardin
-from jardin.database import Datasources
+from jardin.database.datasources import Datasources
 
 
 class TestResetSession(unittest.TestCase):

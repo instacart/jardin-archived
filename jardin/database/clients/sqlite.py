@@ -1,7 +1,7 @@
 import sqlite3
 
-from jardin.database.base import BaseClient
-from jardin.database.lexicon import BaseLexicon
+from jardin.database.base_client import BaseClient
+from jardin.database.base_lexicon import BaseLexicon
 
 
 class Lexicon(BaseLexicon):

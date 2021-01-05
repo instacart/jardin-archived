@@ -59,7 +59,8 @@ def transaction(model=None, create_table=True, extra_tables=[]):
     return decorator
 
 
-from jardin.database import Datasources
+from jardin.database.datasources import Datasources
+
 
 def only_schemes(*schemes):
 

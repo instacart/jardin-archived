@@ -4,7 +4,8 @@ import re, inspect
 import json
 
 import jardin.config as config
-from jardin.database import DatabaseAdapter, Datasources
+from jardin.database.database_adapter import DatabaseAdapter
+from jardin.database.datasources import Datasources
 from jardin.tools import soft_del, classorinstancemethod, stack_marker
 from jardin.query import query
 
@@ -62,6 +63,9 @@ class Model(object):
     """
       Base class from which your models should inherit.
     """
+
+    # These class variables are shared by all threads. They are intended to be set
+    # during subclass creation. After initialization they should not be changed.
     table_name = None
     table_alias = None
     db_names = {}
