@@ -57,7 +57,6 @@ class Datasources(object):
             elif db.scheme == 'sqlite':
                 import jardin.database.clients.sqlite as impl
             elif db.scheme == 'snowflake':
-                print(db)
                 import jardin.database.clients.sf as impl
             clients.append(impl.DatabaseClient(db, name))
         return clients
