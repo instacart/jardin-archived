@@ -44,8 +44,8 @@ class DatabaseClient(BaseClient):
     lexicon = Lexicon
     retryable_exceptions = (pg.OperationalError, pg.InterfaceError, pg.extensions.QueryCanceledError)
 
-    def connect_impl(self, **default_kwargs):
-        kwargs = default_kwargs.copy()
+    def connect_impl(self):
+        kwargs = self.default_connect_kwargs.copy()
         kwargs.update(connection_factory=extras.MinTimeLoggingConnection)
         conn = pg.connect(**kwargs)
         conn.initialize(config.logger)
