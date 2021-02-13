@@ -1,6 +1,10 @@
 import imp, os, logging, sys
 
-DEFAULTS = {'WATERMARK': '', 'LOG_LEVEL': logging.INFO}
+DEFAULTS = {
+    'WATERMARK': '',
+    'LOG_LEVEL': logging.INFO,
+    'CACHE_CONFIG': {}
+    }
 
 INITIALIZED = False
 
@@ -8,7 +12,7 @@ def init():
     if INITIALIZED:
         return
     
-    global DATABASES, WATERMARK, LOG_LEVEL, logger
+    global DATABASES, CACHE_CONFIG, WATERMARK, LOG_LEVEL, logger
     
     config_file = imp.load_source('jardin_conf', os.environ.get('JARDIN_CONF', 'jardin_conf.py'))
     
