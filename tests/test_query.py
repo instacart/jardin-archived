@@ -2,11 +2,13 @@ import os
 import unittest
 from unittest.mock import patch
 import jardin
+import time
 import pandas as pd
 from pandas._testing import assert_frame_equal
 from tests import transaction
 from tests.models import JardinTestModel
 from jardin.database.base_client import BaseClient
+
 class User(JardinTestModel):
     pass
 
@@ -67,15 +69,14 @@ class TestQuery(unittest.TestCase):
             )
         self.assertEqual([1, 2], params)
     
-    @transaction(model=User)
     def test_query_cached(self):
         cache = jardin.cache_stores.cache_store
         for key in cache.keys():
             del cache[key]
-        results, columns = [{"a": 1}], ["a"] 
+        results, columns = [{"a": 1}], ["a"]
         with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
-            df1 = jardin.query("select * from users", db="jardin_test", cache=True)
-            df2 = jardin.query("select * from users", db="jardin_test", cache=True)
+            df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True)
+            df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True)
             assert_frame_equal(df1, df2, check_like=True)
             self.assertEqual(mock_method.call_count, 1)
 

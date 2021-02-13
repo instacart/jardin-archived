@@ -55,3 +55,5 @@ class TestDisk(unittest.TestCase):
         cache['a'] = test_df
         time.sleep(2)
         self.assertFalse('a' in cache)
+        
+        cache.ttl = None

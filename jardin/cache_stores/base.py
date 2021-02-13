@@ -39,6 +39,7 @@ class Base(object):
         stack = inspect.stack()
         caller = kwargs.pop('caller', stack[-2])
         instance = kwargs.pop('instance', self)
+        kwargs.pop('stack')
 
         return '.'.join((
             instance.__module__,
