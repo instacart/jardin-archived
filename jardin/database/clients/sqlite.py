@@ -28,7 +28,7 @@ class DatabaseClient(BaseClient):
     lexicon = Lexicon
     retryable_exceptions = tuple()
 
-    def connect_impl(self, **default_kwargs):
+    def connect_impl(self):
         # autocommit is enabled by setting isolation_level to None
         return sqlite3.connect(self.db_config.database, isolation_level=None)
 

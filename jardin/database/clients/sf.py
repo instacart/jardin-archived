@@ -33,7 +33,7 @@ class DatabaseClient(BaseClient):
     lexicon = Lexicon
     retryable_exceptions = (sf.InterfaceError, sf.OperationalError)
 
-    def connect_impl(self, **default_kwargs):
+    def connect_impl(self):
         kwargs = dict(
             user=self.db_config.username,
             password=self.db_config.password,

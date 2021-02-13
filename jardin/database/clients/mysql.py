@@ -29,8 +29,8 @@ class DatabaseClient(BaseClient):
     lexicon = Lexicon
     retryable_exceptions = (pymysql.InterfaceError, pymysql.OperationalError)
 
-    def connect_impl(self, **default_kwargs):
-        kwargs = default_kwargs.copy()
+    def connect_impl(self):
+        kwargs = self.default_connect_kwargs.copy()
         kwargs.update(autocommit=True)
         return pymysql.connect(**kwargs)
 

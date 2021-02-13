@@ -10,7 +10,10 @@ class BaseClient(ABC):
         self.db_config = db_config
         self.name = name
         self._conn = None
-        self.default_connect_kwargs = dict(
+        
+    @property
+    def default_connect_kwargs(self):
+        return dict(
             database=self.db_config.database,
             user=self.db_config.username,
             password=self.db_config.password,
@@ -30,7 +33,7 @@ class BaseClient(ABC):
         """Provide exceptions which may be retried."""
 
     @abstractmethod
-    def connect_impl(self, **kwargs):
+    def connect_impl(self):
         """Connect to a SQL database."""
 
     @abstractmethod
@@ -56,7 +59,7 @@ class BaseClient(ABC):
     def execute_once(self, *query, write=False, **kwargs):
         """Connect to the database (if necessary) and execute a query."""
         if self._conn is None:
-            self._conn = self.connect_impl(**self.default_connect_kwargs)
+            self._conn = self.connect_impl()
 
         try:
             cursor = self.execute_impl(self._conn, *query)
