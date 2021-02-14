@@ -49,11 +49,3 @@ class TestDisk(unittest.TestCase):
         self.assertEqual(cache.lru(), None)
         self.assertFalse('a' in cache)
         self.assertEqual(cache.keys(), [])
-        
-        cache.ttl = 1
-        cache.limit = None
-        cache['a'] = test_df
-        time.sleep(2)
-        self.assertFalse('a' in cache)
-        
-        cache.ttl = None

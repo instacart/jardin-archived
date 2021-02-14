@@ -10,7 +10,7 @@ class Disk(Base):
     
     EXTENSION = '.feather'
 
-    def __init__(self, dir, limit=None, ttl=None):
+    def __init__(self, dir, limit=None):
         
         """
             dir: path of directory to use for cached files
@@ -20,7 +20,6 @@ class Disk(Base):
         
         self.dir = dir
         self.limit = limit
-        self.ttl = ttl
         if not os.path.exists(self.dir):
             try:
                 os.makedirs(self.dir)
@@ -49,12 +48,7 @@ class Disk(Base):
             os.remove(self._path(key))
 
     def __contains__(self, key):
-        f = self._path(key)
-        if not os.path.isfile(f):
-            return False
-        if self.ttl is None:
-            return True
-        return int(time.time() - os.stat(f).st_mtime) < self.ttl
+        return os.path.isfile(self._path(key))
 
     def __len__(self):
         return len(self.keys())
@@ -73,6 +67,13 @@ class Disk(Base):
         if not files:
             return None
         return self._key(files[0])
+    
+    def expired(self, key, ttl=None):
+        if ttl is None:
+            return False
+        if key in self:
+            return int(time.time() - os.stat(self._path(key)).st_mtime) > ttl
+        return True
 
     def _path(self, key):
         return os.path.join(self.dir, key + self.EXTENSION)

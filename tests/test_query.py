@@ -78,7 +78,9 @@ class TestQuery(unittest.TestCase):
             df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True)
             df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True)
             assert_frame_equal(df1, df2, check_like=True)
-            self.assertEqual(mock_method.call_count, 1)
+            time.sleep(2)
+            df3 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, ttl=1)
+            self.assertEqual(mock_method.call_count, 2)
 
 if __name__ == "__main__":
     unittest.main()
