@@ -1,10 +1,16 @@
 import os
+import gc
 import pyarrow.feather as feather
 import pandas as pd
 import time
 from datetime import datetime
 
 from jardin.cache_stores.base import Base
+
+try:
+    FileExistsError
+except NameError:
+    FileExistsError = OSError
 
 class Disk(Base):
     
@@ -42,6 +48,7 @@ class Disk(Base):
                 raise MemoryError(f"disk cache limit exceeded by single key {key}")
             while self.size() > self.limit:
                 del self[self.lru()]
+            gc.collect()
 
     def __delitem__(self, key):
         if os.path.exists(self._path(key)):
@@ -69,11 +76,15 @@ class Disk(Base):
         return self._key(files[0])
     
     def expired(self, key, ttl=None):
+        if key not in self:
+            return False
         if ttl is None:
             return False
-        if key in self:
-            return int(time.time() - os.stat(self._path(key)).st_mtime) > ttl
-        return True
+        expired = int(time.time() - os.stat(self._path(key)).st_mtime) > ttl
+        if expired:
+            del self[key]
+            return True
+        return False
 
     def _path(self, key):
         return os.path.join(self.dir, key + self.EXTENSION)
