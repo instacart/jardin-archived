@@ -4,7 +4,7 @@ import os
 import time
 import jardin
 import pandas as pd
-from pandas._testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 from jardin.cache_stores.disk import Disk
 from jardin.cache_stores import cache_store
 

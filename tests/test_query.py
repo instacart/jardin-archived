@@ -4,7 +4,7 @@ from unittest.mock import patch
 import jardin
 import time
 import pandas as pd
-from pandas._testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 from tests import transaction
 from tests.models import JardinTestModel
 from jardin.database.base_client import BaseClient
