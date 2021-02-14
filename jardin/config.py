@@ -3,7 +3,7 @@ import imp, os, logging, sys
 DEFAULTS = {
     'WATERMARK': '',
     'LOG_LEVEL': logging.INFO,
-    'CACHE': {'method': 'disk', 'options': {}}
+    'CACHE': {'method': None, 'options': {}}
     }
 
 INITIALIZED = False

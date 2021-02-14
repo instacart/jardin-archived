@@ -4,9 +4,14 @@ from jardin.cache_stores.disk import Disk
 
 config.init()
 
-cahe_options = config.CACHE.get("options", {})
-cache_store = Disk(dir=cahe_options.get("dir", "/tmp/jardin_cache"),
-                   limit=cahe_options.get("limit", None))
+cache_method = config.CACHE.get("method", None)
+
+if cache_method == "disk":
+    cahe_options = config.CACHE.get("options", {})
+    cache_store = Disk(dir=cahe_options.get("dir", "/tmp/jardin_cache"),
+                    limit=cahe_options.get("limit", None))
+else:
+    cache_store = None
     
 
 def cached(func):
@@ -15,6 +20,9 @@ def cached(func):
 
 def _cached(func, store):
     def wrapper(self, *args, **kwargs):
+        if store is None:
+            return func(self, *args, **kwargs)
+        
         cache = kwargs.pop('cache', False)
         if not cache:
             return func(self, *args, **kwargs)
