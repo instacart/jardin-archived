@@ -7,4 +7,12 @@ DATABASES = {
     'multi_url_test': 'mysql://root:@localhost:3306/jardin_test mysql://root:@localhost:3333/jardin_test',
 }
 
+CACHE = {
+    'method': 'disk',
+    'options': {
+        'dir': '/tmp/jardin_cache',
+        'size': 10000
+    }
+}
+
 LOG_LEVEL = logging.INFO
