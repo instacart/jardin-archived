@@ -232,18 +232,12 @@ Misc
 Caching
 ~~~~~~~~~~~~~~~~~~
 
-Jardin implements a LRU caching mechanism (only works for `jardin.query` method).
+Jardin implements a LRU caching mechanism for the ``jardin.query`` method.
 
-Cache stores supported:
-- Feather files stores on disk
+Setup
+^^^^^^^^^
 
-Comming soon:
-- S3
-- Memcached
-
-To configure cache:
-
-Add in `jardin_conf.py`:
+To confgure, add in ``jardin_conf.py``:
 
 .. code:: python
 
@@ -256,6 +250,16 @@ Add in `jardin_conf.py`:
             'size': 100000 # maximum size in bytes of cached files. when size is below limit, files are deleted based on LRU # default to None
         }
     }
+
+Methods supported
+^^^^^^^^^
+
+-  disk (files saved in ``feather`` format)
+-  S3 (coming soon)
+-  memcached (coming soon)
+
+Usage
+^^^^^^^^^
 
 Then, you can use it with:
 
