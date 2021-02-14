@@ -30,6 +30,8 @@ class TestDisk(unittest.TestCase):
         assert_frame_equal(cache['a'], test_df)
         self.assertEqual(cache.keys(), ['a'])
         
+        time.sleep(1)
+        
         cache['b'] = test_df
         self.assertEqual(len(cache), 2)
         self.assertEqual(cache.lru(), 'a')
