@@ -17,4 +17,12 @@ DATABASES = {
     'multi_url_test': f'postgres://postgres:@localhost:{PGPORT}/jardin_test postgres://postgres:@localhost:{PGPORT+1}/jardin_test',
 }
 
+CACHE = {
+    'method': 'disk',
+    'options': {
+        'dir': '/tmp/jardin_cache',
+        'size': 10000
+    }
+}
+
 LOG_LEVEL = logging.INFO

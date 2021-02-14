@@ -229,6 +229,41 @@ Use them as such:
 Misc
 ----
 
+Caching
+~~~~~~~~~~~~~~~~~~
+
+Jardin implements a LRU caching mechanism (only works for `jardin.query` method).
+
+Cache stores supported:
+- Feather files stores on disk
+
+Comming soon:
+- S3
+- Memcached
+
+To configure cache:
+
+Add in `jardin_conf.py`:
+
+.. code:: python
+
+    # jardin_conf.py
+
+    CACHE = {
+        'method': 'disk',
+        'options': {
+            'dir': <path to cache directory> # default to `/tmp/jardin_cache` 
+            'size': 100000 # maximum size in bytes of cached files. when size is below limit, files are deleted based on LRU # default to None
+        }
+    }
+
+Then, you can use it with:
+
+.. code:: python
+
+    >>> df = jardin.query(sql, params, db="jardin_db", cache=True, ttl=10) # ttl in seconds
+
+
 Watermark and trace
 ~~~~~~~~~~~~~~~~~~~
 
