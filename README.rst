@@ -247,7 +247,7 @@ To confgure, add in ``jardin_conf.py``:
         'method': 'disk',
         'options': {
             'dir': <path to cache directory> # default to `/tmp/jardin_cache` 
-            'size': 100000 # maximum size in bytes of cached files. when size is below limit, files are deleted based on LRU # default to None
+            'limit': 100000 # maximum size in bytes of cached files. when size of cache is above limit, files are deleted based on LRU # default to None
         }
     }
 
