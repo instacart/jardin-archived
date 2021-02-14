@@ -47,3 +47,4 @@ class Base(object):
             caller.__code__.co_name,
             hashlib.sha1(str(args).encode('utf-8') + str(kwargs).encode('utf-8')).hexdigest()
         ))
+
