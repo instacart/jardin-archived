@@ -10,9 +10,9 @@ class S3(Base):
 
     EXTENSION = '.feather'
     
-    def __init__(self, bucket_name, path):
+    def __init__(self, bucket_name, path=""):
         self.bucket_name = bucket_name
-        self.path = path
+        self.path = f"{path}/jardin_cache"
         self.s3 = boto3.resource('s3')
         
     def __getitem__(self, key):

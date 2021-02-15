@@ -24,7 +24,7 @@ class Disk(Base):
             ttl: cache expiry in seconds
         """
         
-        self.dir = dir
+        self.dir = f"{dir}/jardin_cache"
         self.limit = limit
         if not os.path.exists(self.dir):
             try:
