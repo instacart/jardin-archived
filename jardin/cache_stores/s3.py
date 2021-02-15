@@ -1,3 +1,4 @@
+from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 import pandas as pd
@@ -41,25 +42,36 @@ class S3(Base):
                 return False
         else:
             return True
+    
+    def __delitem__(self, key):
+        print("delete key")
+        pass
 
     def __len__(self):
         return len(self.keys())
 
     def keys(self):
-        return boto3.client('s3').list_objects(Bucket=self.bucket_name, Prefix=self.path, Delimiter='/')
+        s3_client = boto3.client('s3')
+        return s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=self.path)['Contents']
     
     def expired(self, key, ttl=None):
-        s3_key_object = self.s3.Bucket(self.bucket_name).get_key(self._s3_key(key))
-        if s3_key_object is None:
+        if key not in self:
             return False
-        return s3_key_object.date
-    
+        if ttl is None:
+            return False
+        s3_object = self._get_s3_object_from_key(key)
+        if isinstance(s3_object.get("LastModified", None), datetime):
+            last_modified_time = s3_object["LastModified"].replace(tzinfo=None)
+            if (datetime.utcnow() - last_modified_time).seconds > ttl:
+                del self[key]
+                return True
+        return False
+        
     def _get_s3_object_from_key(self, key):
         try:
-            return self.s3.Object(self.bucket_name, self._s3_key(key)).get()["Body"]
+            return self.s3.Object(self.bucket_name, self._s3_key(key)).get()
         except ClientError as ex:
-            print(ex)
             return None
   
     def _s3_key(self, key):
-        return f"{self.path}/{key}.{self.EXTENSION}"
+        return f"{self.path}/{key}{self.EXTENSION}"
