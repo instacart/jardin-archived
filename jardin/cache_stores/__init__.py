@@ -7,24 +7,25 @@ config.init()
 
 default_cache_method = config.CACHE.get("method", None)
 
-global cache_stores
-cache_stores = {}
+STORES = {}
 for method, cache_config in config.CACHE.get("methods", {}).values():
     if method == "disk":
-        _store = Disk(dir=cache_config.get("dir", "/tmp/jardin_cache"),
+        _store = Disk(dir=cache_config.get("dir", None),
                     limit=cache_config.get("limit", None))
-        cache_stores[method] = _store
+        STORES[method] = _store
     elif method == "s3":
-        _store = S3(bucket_name=cache_config.get("bucket_name", None),
-                    path=cache_config.get("path", ""))
-        cache_stores[method] = _store
+        bucket_name = cache_config.get("bucket_name", None)
+        if bucket_name is not None:
+            _store = S3(bucket_name=bucket_name,
+                        path=cache_config.get("path", ""))
+            STORES[method] = _store
 
 def cached(func):
     
     def wrapper(self, *args, **kwargs):
         cache = kwargs.pop('cache', False)
         cache_method = kwargs.pop('cache_method', default_cache_method)
-        store = cache_stores.get(cache_method, None)
+        store = STORES.get(cache_method, None)
         
         if store is None:
             if cache:

@@ -18,40 +18,44 @@ class S3(Base):
     def __getitem__(self, key):
         if key in self:
             try:
-                return pd.read_feather(BytesIO(self._get_s3_object_from_key(key).read()))
-            except BaseException:
-                return None
+                return pd.read_feather(BytesIO(self._get_s3_object_from_key(key)["Body"].read()))
+            except:
+                None
         return None
 
     def __setitem__(self, key, value):
         if isinstance(value, pd.DataFrame):
             with BytesIO() as _f:
                 value.to_feather(_f)
-                self.s3.Bucket(self.bucket_name).put_object(Key=self._s3_key(key),
+                self.s3.Bucket(self.bucket_name).put_object(Key=self._s3_path(key),
                                                             Body=_f.getvalue(),
                                                             ServerSideEncryption='AES256')
 
     def __contains__(self, key):
         try:
-            self.s3.Object(self.bucket_name, self._s3_key(key)).load()
+            self.s3.Object(self.bucket_name, self._s3_path(key)).load()
         except ClientError as ex:
             if ex.response['Error']['Code'] == "404":
                 return False
             else:
                 print("something got wrong")
-                return False
+                return False # not raising exception for now
         else:
             return True
     
     def __delitem__(self, key):
-        self.s3.Object(self.bucket_name, self._s3_key(key).delete()
+        self.s3.Object(self.bucket_name, self._s3_path(key)).delete()
 
     def __len__(self):
         return len(self.keys())
 
     def keys(self):
         s3_client = boto3.client('s3')
-        return s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=self.path)['Contents']
+        try:
+            s3_objects = s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=self.path)['Contents']
+            return list(map(lambda x: self._key(x['Key']), s3_objects))
+        except BaseException as ex:
+            return []
     
     def expired(self, key, ttl=None):
         if key not in self:
@@ -68,9 +72,13 @@ class S3(Base):
         
     def _get_s3_object_from_key(self, key):
         try:
-            return self.s3.Object(self.bucket_name, self._s3_key(key)).get()
+            return self.s3.Object(self.bucket_name, self._s3_path(key)).get()
         except ClientError as ex:
+            print(ex)
             return None
   
-    def _s3_key(self, key):
+    def _s3_path(self, key):
         return f"{self.path}/{key}{self.EXTENSION}"
+        
+    def _key(self, s3_path):
+        return s3_path.split(f"{self.path}/")[1][0:-len(self.EXTENSION)]

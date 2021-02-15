@@ -3,9 +3,9 @@ python:
   - 3.7.8
   - 3.8.6
 script:
-  - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_pg.py python setup.py test
-  - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_mysql.py python setup.py test
-  - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_sqlite.py python setup.py test
+  - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_pg.py python -m pytest tests
+  - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_mysql.py python -m pytest tests
+  - JARDIN_CONF=/home/travis/build/instacart/jardin/tests/jardin_conf_sqlite.py python -m pytest tests
 services:
   - postgresql
   - mysql

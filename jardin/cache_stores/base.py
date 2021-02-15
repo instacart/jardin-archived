@@ -50,4 +50,8 @@ class Base(object):
             instance.__class__.__name__,
             hashlib.sha1(str(args).encode('utf-8') + str(kwargs).encode('utf-8')).hexdigest()
         ))
+        
+    def clear(self):
+        for key in self.keys():
+            del self[key]
 

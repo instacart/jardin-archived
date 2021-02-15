@@ -16,7 +16,7 @@ class Disk(Base):
     
     EXTENSION = '.feather'
 
-    def __init__(self, dir, limit=None):
+    def __init__(self, dir="/tmp", limit=None):
         
         """
             dir: path of directory to use for cached files
