@@ -1,29 +1,36 @@
 import os
 from jardin import config as config
 from jardin.cache_stores.disk import Disk
+from jardin.cache_stores.s3 import S3
 
 config.init()
 
-cache_method = config.CACHE.get("method", None)
+default_cache_method = config.CACHE.get("method", None)
 
-if cache_method == "disk":
-    cahe_options = config.CACHE.get("options", {})
-    cache_store = Disk(dir=cahe_options.get("dir", "/tmp/jardin_cache"),
-                    limit=cahe_options.get("limit", None))
-else:
-    cache_store = None
-    
+global cache_stores
+cache_stores = {}
+for method, cache_config in config.CACHE.get("methods", {}).values():
+    if method == "disk":
+        _store = Disk(dir=cache_config.get("dir", "/tmp/jardin_cache"),
+                    limit=cache_config.get("limit", None))
+        cache_stores[method] = _store
+    elif method == "s3":
+        _store = S3(bucket_name=cache_config.get("bucket_name", None),
+                    path=cache_config.get("path", ""))
+        cache_stores[method] = _store
 
 def cached(func):
-    global cached
-    return _cached(func, cache_store)
-
-def _cached(func, store):
+    
     def wrapper(self, *args, **kwargs):
+        cache = kwargs.pop('cache', False)
+        cache_method = kwargs.pop('cache_method', default_cache_method)
+        store = cache_stores.get(cache_method, None)
+        
         if store is None:
+            if cache:
+                config.logging.warning("Cache store is not configured!")
             return func(self, *args, **kwargs)
         
-        cache = kwargs.pop('cache', False)
         if not cache:
             return func(self, *args, **kwargs)
         

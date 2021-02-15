@@ -3,8 +3,20 @@ import imp, os, logging, sys
 DEFAULTS = {
     'WATERMARK': '',
     'LOG_LEVEL': logging.INFO,
-    'CACHE': {'method': None, 'options': {}}
+    'CACHE': {
+        'method': None,
+        'methods': {
+            's3': {
+                'bucket_name': None,
+                'path': ''
+            },
+            'disk': {
+                'dir': None,
+                'limit': None
+            }
+        }
     }
+}
 
 INITIALIZED = False
 

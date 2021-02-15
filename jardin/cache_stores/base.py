@@ -34,17 +34,20 @@ class Base(object):
     @abstractmethod
     def values(self):
         pass
+    
+    @abstractmethod
+    def expired(self, key, ttl=None):
+        pass
 
     def key(self, *args, **kwargs):
         stack = inspect.stack()
         caller = kwargs.pop('caller', stack[-2])
         instance = kwargs.pop('instance', self)
-        kwargs.pop('stack')
+        kwargs.pop('stack', None)
 
         return '.'.join((
             instance.__module__,
             instance.__class__.__name__,
-            caller.__code__.co_name,
             hashlib.sha1(str(args).encode('utf-8') + str(kwargs).encode('utf-8')).hexdigest()
         ))
 

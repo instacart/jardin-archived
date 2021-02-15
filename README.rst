@@ -237,25 +237,34 @@ Jardin implements a LRU caching mechanism for the ``jardin.query`` method.
 Setup
 ^^^^^^^^^
 
-To confgure, add in ``jardin_conf.py``:
+To confgure, add in ``jardin_conf.py``.
 
 .. code:: python
 
-    # jardin_conf.py
+# jardin_conf.py
 
-    CACHE = {
-        'method': 'disk',
-        'options': {
+# to configure cache methods:
+
+CACHE = {
+    'methods' : {
+        'disk': {
             'dir': <path to cache directory> # default to `/tmp/jardin_cache` 
             'limit': 100000 # maximum size in bytes of cached files. when size of cache is above limit, files are deleted based on LRU # default to None
+            }
+        's3': {
+            'bucket_name': <bucket name>
+            'path': <path> # subfolder path where all cached files will be placed
+
         }
-    }
+    },
+    'method': <default method> # default to None
+}
 
 Methods supported
 ^^^^^^^^^
 
 -  disk (files saved in ``feather`` format)
--  S3 (coming soon)
+-  S3
 -  memcached (coming soon)
 
 Usage
@@ -265,7 +274,7 @@ Then, you can use it with:
 
 .. code:: python
 
-    >>> df = jardin.query(sql, params, db="jardin_db", cache=True, ttl=10) # ttl in seconds
+    >>> df = jardin.query(sql, params, db="jardin_db", cache=True, ttl=10, cache_method="s3")
 
 
 Watermark and trace
