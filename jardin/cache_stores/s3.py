@@ -44,8 +44,7 @@ class S3(Base):
             return True
     
     def __delitem__(self, key):
-        print("delete key")
-        pass
+        self.s3.Object(self.bucket_name, self._s3_key(key).delete()
 
     def __len__(self):
         return len(self.keys())
