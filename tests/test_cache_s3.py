@@ -84,4 +84,3 @@ def test_query_cache_with_s3(s3):
             df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3", ttl=1)
             assert_frame_equal(df1, df2, check_like=True)
             assert mock_method.call_count == 2
-        
