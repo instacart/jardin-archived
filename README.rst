@@ -241,24 +241,24 @@ To confgure, add in ``jardin_conf.py``.
 
 .. code:: python
 
-# jardin_conf.py
+    # jardin_conf.py
 
-# to configure cache methods:
+    # to configure cache methods:
 
-CACHE = {
-    'methods' : {
-        'disk': {
-            'dir': <path to cache directory> # default to `/tmp/jardin_cache` 
-            'limit': 100000 # maximum size in bytes of cached files. when size of cache is above limit, files are deleted based on LRU # default to None
+    CACHE = {
+        'methods' : {
+            'disk': {
+                'dir': <path to cache directory> # default to `/tmp/jardin_cache` 
+                'limit': 100000 # maximum size in bytes of cached files. when size of cache is above limit, files are deleted based on LRU # default to None
+                }
+            's3': {
+                'bucket_name': <bucket name>
+                'path': <path> # subfolder path where all cached files will be placed
+
             }
-        's3': {
-            'bucket_name': <bucket name>
-            'path': <path> # subfolder path where all cached files will be placed
-
-        }
-    },
-    'method': <default method> # default to None
-}
+        },
+        'method': <default method> # default to None
+    }
 
 Methods supported
 ^^^^^^^^^
