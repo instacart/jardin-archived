@@ -12,7 +12,7 @@ from jardin.cache_stores.s3 import S3
 from moto import mock_s3
 from contextlib import contextmanager
 from tests.models import JardinTestModel
-
+from tests import TestTransaction   
 class User(JardinTestModel):
     pass
 
@@ -50,37 +50,38 @@ def test_s3_cache(s3):
         assert_frame_equal(cache["A"], test_df, check_like=True)
         
         cache.clear()
-        
+
 def test_query_cache_with_s3(s3):
-    User.insert(values={'name': 'jardin_s3'})
-    with setup_s3(s3, "JARDIN_BUCKET"):
-        cache = S3(bucket_name="JARDIN_BUCKET", path="cache")
-        cache.clear() # clear the cache
+    with TestTransaction(User):
+        User.insert(values={'name': 'jardin_s3'})
+        with setup_s3(s3, "JARDIN_BUCKET"):
+            cache = S3(bucket_name="JARDIN_BUCKET", path="cache")
+            cache.clear() # clear the cache
+            
+            results, columns = [{"a": 1}], ["a"]
+            
+            # when caching is not configured
+            jardin.cache_stores.STORES["s3"] = None
+            with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
+                df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
+                df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
+                assert_frame_equal(df1, df2, check_like=True)
+                assert mock_method.call_count == 2
         
-        results, columns = [{"a": 1}], ["a"]
-        
-        # when caching is not configured
-        jardin.cache_stores.STORES["s3"] = None
-        with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
-            df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
-            df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
-            assert_frame_equal(df1, df2, check_like=True)
-            assert mock_method.call_count == 2
-    
-        # when caching is configured
-        jardin.cache_stores.STORES["s3"] = cache
-        with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
-            df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
-            df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
-            assert_frame_equal(df1, df2, check_like=True)
-            assert mock_method.call_count == 1
-        cache.clear()
-        
-        # with ttl
-        jardin.cache_stores.STORES["s3"] = cache
-        with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
-            df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
-            time.sleep(2)
-            df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3", ttl=1)
-            assert_frame_equal(df1, df2, check_like=True)
-            assert mock_method.call_count == 2
+            # when caching is configured
+            jardin.cache_stores.STORES["s3"] = cache
+            with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
+                df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
+                df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
+                assert_frame_equal(df1, df2, check_like=True)
+                assert mock_method.call_count == 1
+            cache.clear()
+            
+            # with ttl
+            jardin.cache_stores.STORES["s3"] = cache
+            with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
+                df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3")
+                time.sleep(2)
+                df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="s3", ttl=1)
+                assert_frame_equal(df1, df2, check_like=True)
+                assert mock_method.call_count == 2

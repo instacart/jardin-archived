@@ -9,6 +9,11 @@ import pandas as pd
 from pandas.testing import assert_frame_equal
 from jardin.database.base_client import BaseClient
 from jardin.cache_stores.disk import Disk
+from tests.models import JardinTestModel
+from tests import TestTransaction   
+
+class User(JardinTestModel):
+    pass
 
 class TestDisk(unittest.TestCase):
     
@@ -53,40 +58,41 @@ class TestDisk(unittest.TestCase):
         self.assertEqual(cache.keys(), [])
         
         cache.clear() # clear the cache
-        
+    
     def test_cache_query_with_disk(self):
-        
-        results, columns = [{"a": 1}], ["a"]
-        
-        # when caching is not configured
-        jardin.cache_stores.STORES["disk"] = None
-        with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
-            df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
-            df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
-            assert_frame_equal(df1, df2, check_like=True)
-            self.assertEqual(mock_method.call_count, 2)
-        
-        # when caching is badly configured
-        with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
-            df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
-            df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
-            assert_frame_equal(df1, df2, check_like=True)
-            self.assertEqual(mock_method.call_count, 2)
+        with TestTransaction(User):
+            User.insert(values={'name': 'jardin_disk'})
+            results, columns = [{"a": 1}], ["a"]
+            
+            # when caching is not configured
+            jardin.cache_stores.STORES["disk"] = None
+            with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
+                df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
+                df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
+                assert_frame_equal(df1, df2, check_like=True)
+                self.assertEqual(mock_method.call_count, 2)
+            
+            # when caching is badly configured
+            with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
+                df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
+                df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
+                assert_frame_equal(df1, df2, check_like=True)
+                self.assertEqual(mock_method.call_count, 2)
 
-        # when caching is configured
-        jardin.cache_stores.STORES["disk"] = Disk(dir="/tmp/jardin_cache")
-        jardin.cache_stores.STORES["disk"].clear()
-        with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
-            df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
-            df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
-            assert_frame_equal(df1, df2, check_like=True)
-            self.assertEqual(mock_method.call_count, 1)
-        jardin.cache_stores.STORES["disk"].clear()
+            # when caching is configured
+            jardin.cache_stores.STORES["disk"] = Disk(dir="/tmp/jardin_cache")
+            jardin.cache_stores.STORES["disk"].clear()
+            with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
+                df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
+                df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
+                assert_frame_equal(df1, df2, check_like=True)
+                self.assertEqual(mock_method.call_count, 1)
+            jardin.cache_stores.STORES["disk"].clear()
 
-        # with ttl
-        with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
-            df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
-            time.sleep(2)
-            df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk", ttl=1)
-            assert_frame_equal(df1, df2, check_like=True)
-            self.assertEqual(mock_method.call_count, 2)
+            # with ttl
+            with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
+                df1 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
+                time.sleep(2)
+                df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk", ttl=1)
+                assert_frame_equal(df1, df2, check_like=True)
+                self.assertEqual(mock_method.call_count, 2)
