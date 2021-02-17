@@ -55,7 +55,7 @@ def test_query_cache_with_s3(s3):
     with TestTransaction(User):
         User.insert(values={'name': 'jardin_s3'})
         with setup_s3(s3, "JARDIN_BUCKET"):
-            cache = S3(bucket_name="JARDIN_BUCKET", path="cache")
+            cache = S3(bucket_name="JARDIN_BUCKET", path="cache", delete_expired_files=True)
             cache.clear() # clear the cache
             
             results, columns = [{"a": 1}], ["a"]

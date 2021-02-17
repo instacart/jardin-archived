@@ -253,7 +253,8 @@ To confgure, add in ``jardin_conf.py``.
                 }
             's3': {
                 'bucket_name': <bucket name>
-                'path': <path> # subfolder path where all cached files will be placed
+                'path': <path> # subfolder path where all cached files will be placed,
+                'delete_expired_files': False # default is False
 
             }
         },
