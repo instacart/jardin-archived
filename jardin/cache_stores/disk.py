@@ -5,6 +5,7 @@ import pandas as pd
 import time
 from datetime import datetime
 
+from jardin import config as config
 from jardin.cache_stores.base import Base
 
 try:
@@ -30,7 +31,7 @@ class Disk(Base):
             try:
                 os.makedirs(self.dir)
             except FileExistsError as ex:
-                pass
+                raise ex
 
     def __getitem__(self, key):
         if key in self:

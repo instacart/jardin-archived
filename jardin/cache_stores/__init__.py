@@ -8,18 +8,19 @@ config.init()
 default_cache_method = config.CACHE.get("method", None)
 
 STORES = {}
-for method, cache_config in config.CACHE.get("methods", {}).values():
+for method, cache_config in config.CACHE.get("methods", {}).items():
+    klass = None
     if method == "disk":
-        _store = Disk(dir=cache_config.get("dir", None),
-                    limit=cache_config.get("limit", None))
-        STORES[method] = _store
+        klass = Disk
     elif method == "s3":
-        bucket_name = cache_config.get("bucket_name", None)
-        if bucket_name is not None:
-            _store = S3(bucket_name=bucket_name,
-                        path=cache_config.get("path", ""))
-            STORES[method] = _store
-
+        klass = S3
+    if klass is not None:
+        try:
+            STORES[method] = klass(**cache_config)
+        except Exception as ex:
+            config.logging.warning(f"Could not initialize {method} cache.")
+            config.logging.warning(ex)
+                
 def cached(func):
     
     def wrapper(self, *args, **kwargs):
@@ -27,9 +28,8 @@ def cached(func):
         cache_method = kwargs.pop('cache_method', default_cache_method)
         store = STORES.get(cache_method, None)
         
-        if store is None:
-            if cache:
-                config.logging.warning("Cache store is not configured!")
+        if (store is None or not store.valid) & (cache):
+            config.logging.warning("Cache store is not correctly configured!")
             return func(self, *args, **kwargs)
         
         if not cache:

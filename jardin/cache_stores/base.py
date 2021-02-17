@@ -38,6 +38,11 @@ class Base(object):
     @abstractmethod
     def expired(self, key, ttl=None):
         pass
+    
+    @property
+    @abstractmethod
+    def valid(self):
+        return True
 
     def key(self, *args, **kwargs):
         stack = inspect.stack()
