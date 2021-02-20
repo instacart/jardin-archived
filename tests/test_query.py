@@ -1,15 +1,13 @@
 import os
 import unittest
-
-from tests import transaction
-
 import jardin
-
+import time
+import pandas as pd
+from tests import transaction
 from tests.models import JardinTestModel
 
-
-class User(JardinTestModel): pass
-
+class User(JardinTestModel):
+    pass
 
 class TestQuery(unittest.TestCase):
 
@@ -67,6 +65,6 @@ class TestQuery(unittest.TestCase):
             sql
             )
         self.assertEqual([1, 2], params)
-
+    
 if __name__ == "__main__":
     unittest.main()

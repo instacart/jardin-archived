@@ -45,7 +45,7 @@ class TestTransaction(object):
 
 def transaction(model=None, create_table=True, extra_tables=[]):
 
-    def decorator(func):
+    def decorator(func, *args, **kwargs):
 
         def wrapper(*args, **kwargs):
             with TestTransaction(

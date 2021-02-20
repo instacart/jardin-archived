@@ -7,6 +7,7 @@ from jardin.query_builders import \
     UpdateQueryBuilder, \
     DeleteQueryBuilder, \
     RawQueryBuilder
+from jardin.cache_stores import cached
 
 
 def set_defaults(func):
@@ -57,6 +58,7 @@ class DatabaseAdapter(object):
         self.db_client.execute(*query, write=False)
 
     @set_defaults
+    @cached
     def raw_query(self, **kwargs):
         query = RawQueryBuilder(**kwargs).query
         config.logger.debug(query)

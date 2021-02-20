@@ -31,7 +31,7 @@ setup(
       'inflect',
       'future'
       ],
-      python_requires='>=3.6, <4',
+      python_requires='>=3.7, <4',
       test_suite='tests',
       classifiers = [
       'Intended Audience :: Developers',
