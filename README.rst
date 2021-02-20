@@ -262,7 +262,7 @@ To confgure, add in ``jardin_conf.py``.
     }
 
 Methods supported
-^^^^^^^^^
+^^^^^^^^^^^^^^^^^^
 
 -  disk (files saved in ``feather`` format)
 -  S3
