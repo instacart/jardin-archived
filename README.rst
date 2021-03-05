@@ -248,12 +248,12 @@ To confgure, add in ``jardin_conf.py``.
     CACHE = {
         'methods' : {
             'disk': {
-                'dir': <path to cache directory> # default to `/tmp/jardin_cache` 
-                'limit': 100000 # maximum size in bytes of cached files. when size of cache is above limit, files are deleted based on LRU # default to None
-                }
+                'dir': <path to cache directory>, # default to `/tmp/jardin_cache` 
+                'limit': 100000, # maximum size in bytes of cached files. when size of cache is above limit, files are deleted based on LRU # default to None
+                },
             's3': {
-                'bucket_name': <bucket name>
-                'path': <path> # subfolder path where all cached files will be placed,
+                'bucket_name': <bucket name>,
+                'path': <path>, # subfolder path where all cached files will be placed
                 'delete_expired_files': False # default is False
 
             }
