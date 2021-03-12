@@ -35,7 +35,11 @@ class Disk(Base):
 
     def __getitem__(self, key):
         if key in self:
-            return feather.read_feather(self._path(key))
+            try:
+                return feather.read_feather(self._path(key))
+            except Exception as ex:
+                config.logging.warning(ex)
+                del self[key]
         return None
 
     def __setitem__(self, key, value):
