@@ -37,8 +37,16 @@ def cached(func):
         
         ttl = kwargs.pop('ttl', None)
         key = store.key(instance=self, caller=func, *args, **kwargs)
-        if key not in store or store.expired(key, ttl):
-            store[key] = func(self, *args, **kwargs)
-        return store[key]
-    
+        
+        # if key in cache and not expired
+        if key in store and not store.expired(key, ttl):
+            cached_value = store[key]
+            if cached_value is not None:
+                return cached_value
+        
+        # get results from func
+        results = func(self, *args, **kwargs)
+        store[key] = results
+        return results
+        
     return wrapper
