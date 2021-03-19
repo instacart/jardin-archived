@@ -6,6 +6,7 @@ import os
 import time
 import jardin
 import pandas as pd
+from concurrent import futures
 from pandas.testing import assert_frame_equal
 from jardin.database.base_client import BaseClient
 from jardin.cache_stores.disk import Disk
@@ -96,3 +97,21 @@ class TestDisk(unittest.TestCase):
                 df2 = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk", ttl=1)
                 assert_frame_equal(df1, df2, check_like=True)
                 self.assertEqual(mock_method.call_count, 2)
+                
+                
+    def test_multi_threading_cache_query_with_disk(self):
+        with TestTransaction(User):
+            User.insert(values={'name': 'jardin_disk'})
+            results, columns = [{"a": 1}], ["a"]
+            
+            jardin.cache_stores.STORES["disk"] = Disk(dir="/tmp/jardin_cache")
+            jardin.cache_stores.STORES["disk"].clear()
+            with patch.object(BaseClient, 'execute', return_value=(results, columns)) as mock_method:
+                def run_query():
+                    df = jardin.query("select * from users limit 10", db="jardin_test", cache=True, cache_method="disk")
+                with futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    tasks = [pool.submit(run_query) for _ in range(10)]
+                    for task in tasks:
+                        task.result()
+            self.assertEqual(mock_method.call_count, 1)
+            jardin.cache_stores.STORES["disk"].clear()

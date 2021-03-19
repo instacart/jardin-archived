@@ -4,6 +4,7 @@ import pyarrow.feather as feather
 import pandas as pd
 import time
 from datetime import datetime
+import threading
 
 from jardin import config as config
 from jardin.cache_stores.base import Base
@@ -27,6 +28,7 @@ class Disk(Base):
         
         self.dir = f"{dir}/jardin_cache"
         self.limit = limit
+        self._lock = threading.Lock()
         if not os.path.exists(self.dir):
             try:
                 os.makedirs(self.dir)
@@ -34,26 +36,28 @@ class Disk(Base):
                 raise ex
 
     def __getitem__(self, key):
-        if key in self:
-            try:
-                return feather.read_feather(self._path(key))
-            except Exception as ex:
-                config.logging.warning(ex)
-                del self[key]
+        with self._lock:
+            if key in self:
+                try:
+                    return feather.read_feather(self._path(key))
+                except Exception as ex:
+                    config.logging.warning(ex)
+                    del self[key]
         return None
 
     def __setitem__(self, key, value):
         if not isinstance(value, pd.DataFrame):
             return None
-        
-        feather.write_feather(value, self._path(key))
+    
+        with self._lock:
+            feather.write_feather(value, self._path(key))
 
-        if self.limit is not None:
-            if os.path.getsize(self._path(key)) > self.limit:
-                raise MemoryError(f"disk cache limit exceeded by single key {key}")
-            while self.size() > self.limit:
-                del self[self.lru()]
-            gc.collect()
+            if self.limit is not None:
+                if os.path.exists(self._path(key)) and os.path.getsize(self._path(key)) > self.limit:
+                    raise MemoryError(f"disk cache limit exceeded by single key {key}")
+                while self.size() > self.limit:
+                    del self[self.lru()]
+                gc.collect()
 
     def __delitem__(self, key):
         if os.path.exists(self._path(key)):
@@ -81,15 +85,16 @@ class Disk(Base):
         return self._key(files[0])
     
     def expired(self, key, ttl=None):
-        if key not in self:
+        with self._lock:
+            if key not in self:
+                return False
+            if ttl is None:
+                return False
+            expired = int(time.time() - os.stat(self._path(key)).st_mtime) > ttl
+            if expired:
+                del self[key]
+                return True
             return False
-        if ttl is None:
-            return False
-        expired = int(time.time() - os.stat(self._path(key)).st_mtime) > ttl
-        if expired:
-            del self[key]
-            return True
-        return False
 
     def _path(self, key):
         return os.path.join(self.dir, key + self.EXTENSION)
