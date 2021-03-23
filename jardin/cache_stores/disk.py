@@ -60,8 +60,10 @@ class Disk(Base):
                 gc.collect()
 
     def __delitem__(self, key):
-        if os.path.exists(self._path(key)):
+        try:
             os.remove(self._path(key))
+        except OSError:
+            pass
 
     def __contains__(self, key):
         return os.path.isfile(self._path(key))
