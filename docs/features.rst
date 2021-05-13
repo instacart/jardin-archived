@@ -4,7 +4,7 @@ Features
 Associations
 ------------
 
-Belongs-to and has-many relationships can be declared as such:
+Belongs-to and has-many relationships can be declared as such::
 
   class Posts(jardin.Model):
     belongs_to = {
@@ -14,12 +14,12 @@ Belongs-to and has-many relationships can be declared as such:
   class Users(jardin.Model):
     has_many = [Posts]
 
-And then used as such:
+And then used as such::
 
   users = Users.select()
   posts = users.posts()
 
-Or:
+Or::
 
   Posts.select(
     inner_join=[Users],
@@ -52,7 +52,7 @@ Then used as such::
 
   User.select(scopes = ['active', 'recent'])
 
-Which will issue this statement
+Which will issue this statement::
 
   SELECT * FROM users u WHERE u.active IS TRUE AND u.last_sign_up_at > ...;
 
