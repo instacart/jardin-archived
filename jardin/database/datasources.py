@@ -75,8 +75,8 @@ class Datasources(object):
         d = dict()
         for (db_name, val) in config.DATABASES.items():
             # we don't support multi-configs of dictionary format yet; the "else [urls]" is for a dictionary
-            url_list = re.split(r'\s+', val) if isinstance(val, str) else [val]
-            d[db_name] = [DatabaseConfig(x) for x in url_list]
+            url_list = re.split(r'\s+', val.strip()) if isinstance(val, str) else [val]
+            d[db_name] = [DatabaseConfig(x, db_name) for x in url_list]
         return d
 
     @classmethod
