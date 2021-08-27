@@ -8,7 +8,10 @@ class DatabaseConfig(object):
 
     lowercase_columns = False
 
-    def __init__(self, config):
+    def __init__(self, config, db_name):
+        if not config:
+            raise RuntimeError(f"Missing config url for DB '{db_name}'")
+
         if isinstance(config, str):
             db = urlparse(config)
             self.scheme = db.scheme
@@ -21,4 +24,4 @@ class DatabaseConfig(object):
             for (k, v) in config.items():
                 setattr(self, k, v)
         else:
-            raise UnknownConfigFormat(type(config), config)
+            raise UnknownConfigFormat(type(config), config, f"db='{db_name}'")

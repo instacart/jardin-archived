@@ -93,3 +93,6 @@ ENV/
 *.sql
 test.py
 deploy.sh
+
+# PyCharm
+.idea/
