@@ -14,10 +14,11 @@ class S3(Base):
     EXTENSION = '.feather'
     
     def __init__(self, bucket_name, path="", delete_expired_files=False):
+        if not bucket_name:
+            raise RuntimeError("Bucket name cannot be empty")
         self.bucket_name = bucket_name
         self.path = f"{path}/jardin_cache"
         self.delete_expired_files = delete_expired_files
-        self.check_valid_bucket()
 
     @memoized_property
     def s3(self):
