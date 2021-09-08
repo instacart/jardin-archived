@@ -3,6 +3,8 @@ import boto3
 from botocore.exceptions import ClientError
 import pandas as pd
 from io import BytesIO
+
+from memoized_property import memoized_property
 from pyarrow.feather import write_feather
 
 from jardin import config as config
@@ -15,9 +17,15 @@ class S3(Base):
         self.bucket_name = bucket_name
         self.path = f"{path}/jardin_cache"
         self.delete_expired_files = delete_expired_files
-        self.s3 = boto3.resource('s3')
         self.check_valid_bucket()
-        
+
+    @memoized_property
+    def s3(self):
+        # Instantiate the S3 resource lazily to provide greater flexibility when mocking with 'moto'.
+        # Typically you wouldn't need to do this, but Jardin's cache system instantiates this class
+        # at import-time which can cause initialization problems for 'moto'. We side-step the problem
+        # by deferring the creation of the S3 resource to first usage instead of instance init.
+        return boto3.resource('s3')
 
     def check_valid_bucket(self):
         s3_client = boto3.client('s3')
