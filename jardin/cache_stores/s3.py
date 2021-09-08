@@ -28,9 +28,8 @@ class S3(Base):
         return boto3.resource('s3')
 
     def check_valid_bucket(self):
-        s3_client = boto3.client('s3')
         try:
-            s3_client.head_bucket(Bucket=self.bucket_name)
+            self.s3.meta.client.head_bucket(Bucket=self.bucket_name)
         except ClientError as ex:
             config.logging.warning(f"Bucket {self.bucket_name} does not exist")
             raise ex
@@ -77,9 +76,8 @@ class S3(Base):
         return len(self.keys())
 
     def keys(self):
-        s3_client = boto3.client('s3')
         try:
-            s3_objects = s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=self.path)['Contents']
+            s3_objects = self.s3.meta.client.list_objects_v2(Bucket=self.bucket_name, Prefix=self.path)['Contents']
             return list(map(lambda x: self._key(x['Key']), s3_objects))
         except Exception as ex:
             config.logging.warning(ex)
