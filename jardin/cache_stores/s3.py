@@ -3,6 +3,8 @@ import boto3
 from botocore.exceptions import ClientError
 import pandas as pd
 from io import BytesIO
+
+from memoized_property import memoized_property
 from pyarrow.feather import write_feather
 
 from jardin import config as config
@@ -12,17 +14,23 @@ class S3(Base):
     EXTENSION = '.feather'
     
     def __init__(self, bucket_name, path="", delete_expired_files=False):
+        if not bucket_name:
+            raise RuntimeError("Bucket name cannot be empty")
         self.bucket_name = bucket_name
         self.path = f"{path}/jardin_cache"
         self.delete_expired_files = delete_expired_files
-        self.s3 = boto3.resource('s3')
-        self.check_valid_bucket()
-        
+
+    @memoized_property
+    def s3(self):
+        # Instantiate the S3 resource lazily to provide greater flexibility when mocking with 'moto'.
+        # Typically you wouldn't need to do this, but Jardin's cache system instantiates this class
+        # at import-time which can cause initialization problems for 'moto'. We side-step the problem
+        # by deferring the creation of the S3 resource to first usage instead of instance init.
+        return boto3.resource('s3')
 
     def check_valid_bucket(self):
-        s3_client = boto3.client('s3')
         try:
-            s3_client.head_bucket(Bucket=self.bucket_name)
+            self.s3.meta.client.head_bucket(Bucket=self.bucket_name)
         except ClientError as ex:
             config.logging.warning(f"Bucket {self.bucket_name} does not exist")
             raise ex
@@ -69,9 +77,8 @@ class S3(Base):
         return len(self.keys())
 
     def keys(self):
-        s3_client = boto3.client('s3')
         try:
-            s3_objects = s3_client.list_objects_v2(Bucket=self.bucket_name, Prefix=self.path)['Contents']
+            s3_objects = self.s3.meta.client.list_objects_v2(Bucket=self.bucket_name, Prefix=self.path)['Contents']
             return list(map(lambda x: self._key(x['Key']), s3_objects))
         except Exception as ex:
             config.logging.warning(ex)
