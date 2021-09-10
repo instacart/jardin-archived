@@ -35,13 +35,6 @@ class S3(Base):
                     self._s3 = boto3.client('s3')
         return self._s3
 
-    def check_valid_bucket(self):
-        try:
-            self.s3.head_bucket(Bucket=self.bucket_name)
-        except ClientError as ex:
-            config.logging.warning(f"Bucket {self.bucket_name} does not exist")
-            raise ex
-            
     def __getitem__(self, key):
         if key in self:
             try:
