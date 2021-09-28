@@ -29,7 +29,8 @@ setup(
       'psycopg2',
       'memoized_property',
       'inflect',
-      'future'
+      'future',
+      'pyarrow'
       ],
       python_requires='>=3.7, <4',
       test_suite='tests',
