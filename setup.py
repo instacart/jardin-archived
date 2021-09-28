@@ -31,7 +31,8 @@ setup(
       'inflect',
       'future',
       'pyarrow',
-      'boto3'
+      'boto3',
+      'snowflake-connector-python'
       ],
       python_requires='>=3.7, <4',
       test_suite='tests',
