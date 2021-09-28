@@ -30,7 +30,8 @@ setup(
       'memoized_property',
       'inflect',
       'future',
-      'pyarrow'
+      'pyarrow',
+      'boto3'
       ],
       python_requires='>=3.7, <4',
       test_suite='tests',

@@ -10,3 +10,4 @@ inflect==5.0.0
 pytest==6.2.2
 moto==1.3.6
 pyarrow>=3.0.0
+boto3~=1.18.29
