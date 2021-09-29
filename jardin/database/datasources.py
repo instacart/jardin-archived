@@ -38,10 +38,14 @@ class Datasources(object):
             if clients is None:
                 clients = self._build_clients(db_name)
                 self._clients.all[db_name] = clients
-            c = clients[0] if len(clients) == 1 else random.choice(clients)
-            self.log_datasource(db_name, c.db_config)
-            self._clients.active[db_name] = c
-        return self._clients.active[db_name]
+
+            while True: # yield connections forever
+              memoized_client = self._clients.active.get(db_name, None)
+              if memoized_client is None or memoized_client.is_banned():
+                potential_clients = self.non_banned_clients()
+                if len(potential_clients) == 0:
+                  self._clients.active[db_name] = None
+                yield self._clients.active[db_name]
 
     @classmethod
     def _build_clients(self, name):
@@ -91,6 +95,10 @@ class Datasources(object):
                 c = filtered[0] if len(filtered) == 1 else random.choice(filtered)
             self.log_datasource(name, c.db_config)
             self._clients.active[name] = c
+
+    @classmethod
+    def non_banned_clients(self, name):
+      return list(filter(lambda client: client.is_banned(), self._clients.all.get(name, []))
 
     @classmethod
     def log_datasource(self, name, db_config):

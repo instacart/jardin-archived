@@ -3,14 +3,14 @@ from abc import ABC, abstractmethod
 
 MAX_RETRIES = 3
 
-
 class BaseClient(ABC):
 
     def __init__(self, db_config, name):
         self.db_config = db_config
         self.name = name
         self._conn = None
-        
+        self._banned_until = None
+
     @property
     def default_connect_kwargs(self):
         return dict(
@@ -32,6 +32,12 @@ class BaseClient(ABC):
     def retryable_exceptions(self):
         """Provide exceptions which may be retried."""
 
+    @property
+    @abstractmethod
+    def connectivity_exceptions(self):
+        """Provide exceptions which should trigger temporary connection banning."""
+
+
     @abstractmethod
     def connect_impl(self):
         """Connect to a SQL database."""
@@ -39,6 +45,25 @@ class BaseClient(ABC):
     @abstractmethod
     def execute_impl(self, conn, *query):
         """Execute a SQL query and return the cursor."""
+
+    def ban(self, seconds=1):
+      self._banned_until = time.time()
+      try:
+        # assumes all implementation have close methods
+        self._conn.close()
+      except:
+        pass
+      finally:
+        self._conn = None
+
+    def is_banned(self):
+      if self._banned_until is None:
+        return False
+
+      if self._banned_until < time.time():
+        return False
+
+      return True
 
     def execute(self, *query, **kwargs):
         last_exception = None
@@ -63,8 +88,7 @@ class BaseClient(ABC):
 
         try:
             cursor = self.execute_impl(self._conn, *query)
-        except self._conn.InterfaceError:
-            # the connection is probably closed; stop re-using the connection
+        except self.connectivity_exceptions as e:
             self._conn = None
             raise
 

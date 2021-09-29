@@ -9,6 +9,8 @@ from jardin.query_builders import \
     RawQueryBuilder
 from jardin.cache_stores import cached
 
+MAX_RETRIES = 3
+
 
 def set_defaults(func):
     def wrapper(self, *args, **kwargs):
@@ -23,15 +25,15 @@ def set_defaults(func):
 
 class DatabaseAdapter(object):
 
-    def __init__(self, db_client, model_metadata):
-        self.db_client = db_client
+    def __init__(self, db_client_provider, model_metadata):
+        self.db_client_provider = db_client_provider
         self.model_metadata = model_metadata
 
     @set_defaults
     def select(self, **kwargs):
         query = SelectQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        results, columns = self.db_client.execute(*query, write=False)
+        results, columns = self._execute(*query, write=False)
         if results is None and columns is None:
             return None
         return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
@@ -40,7 +42,7 @@ class DatabaseAdapter(object):
     def write(self, query_builder, **kwargs):
         query = query_builder(**kwargs).query
         config.logger.debug(query)
-        returning_ids = self.db_client.execute(*query, write=True, **kwargs)
+        returning_ids = self._execute(*query, write=True, **kwargs)
         if len(returning_ids) > 0:
             return self.select(where={kwargs['primary_key']: returning_ids})
         return None
@@ -55,14 +57,25 @@ class DatabaseAdapter(object):
     def delete(self, **kwargs):
         query = DeleteQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        self.db_client.execute(*query, write=False)
+        self._execute(*query, write=False)
 
     @set_defaults
     @cached
     def raw_query(self, **kwargs):
         query = RawQueryBuilder(**kwargs).query
         config.logger.debug(query)
-        results, columns = self.db_client.execute(*query, write=False)
+        results, columns = self._execute(*query, write=False)
         if results is None and columns is None:
             return None
         return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
+
+    def _execute(self, *query, **kwargs):
+      while True:
+        current_client = next(self.db_client_provider)
+        if current_client is None:
+          raise
+
+        try:
+          current_client.execute(*query, **kwargs)
+        except current_client.connectivity_exceptions as e:
+          current_client.ban()
