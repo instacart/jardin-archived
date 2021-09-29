@@ -12,10 +12,11 @@ from jardin.cache_stores import cached
 
 def set_defaults(func):
     def wrapper(self, *args, **kwargs):
+        client = next(self.db_client_provider)
         kwargs.update(
             model_metadata=self.model_metadata,
-            scheme=self.db_client.db_config.scheme,
-            lexicon=self.db_client.lexicon
+            scheme=client.db_config.scheme,
+            lexicon=client.lexicon
             )
         return func(self, *args, **kwargs)
     return wrapper
@@ -68,12 +69,14 @@ class DatabaseAdapter(object):
         return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
 
     def _execute(self, *query, **kwargs):
+      last_exception = None
       while True:
         current_client = next(self.db_client_provider)
         if current_client is None:
-          raise
+          raise last_exception
 
         try:
-          current_client.execute(*query, **kwargs)
+          return current_client.execute(*query, **kwargs)
         except current_client.connectivity_exceptions as e:
-          current_client.ban()
+          last_exception = e
+          current_client.ban(20)

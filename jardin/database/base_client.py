@@ -46,6 +46,9 @@ class BaseClient(ABC):
     def execute_impl(self, conn, *query):
         """Execute a SQL query and return the cursor."""
 
+    def unban(self):
+      self._banned_until = None
+
     def ban(self, seconds=1):
       self._banned_until = time.time() + seconds
       try:
@@ -68,9 +71,10 @@ class BaseClient(ABC):
 
     def execute(self, *query, **kwargs):
         last_exception = None
-        delay = 3
+        delay = 0
         for _ in range(MAX_RETRIES):
             try:
+                print(self.retryable_exceptions)
                 return self.execute_once(*query, **kwargs)
             except self.retryable_exceptions as e:
                 # TODO [kl] comment this out?

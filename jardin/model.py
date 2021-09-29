@@ -219,7 +219,7 @@ class Model(object):
     @classmethod
     @soft_del
     def select(self, **kwargs):
-        #select='*', where=None, inner_joins=None, left_joins=None, 
+        #select='*', where=None, inner_joins=None, left_joins=None,
         #group=None, order=None, limit=None, db=None, role='replica'):
         """
         Perform a SELECT statement on the model's table in the replica database.
@@ -246,14 +246,14 @@ class Model(object):
         :type role: string
         :returns: ``jardin.Collection`` instance, which is a ``pandas.DataFrame``.
         """
-        db_adapter = self.db_adapter(
+        db_adapter = self.db(
             db_name=kwargs.get('db'),
             role=kwargs.get('role', 'replica')
             )
 
         kwargs['stack'] = self.stack_mark(
             inspect.stack(),
-            db_conn=db_adapter.db_client
+            db_conn=None
             )
 
         return self.collection_instance(db_adapter.select(**kwargs))
@@ -305,7 +305,7 @@ class Model(object):
         else:
             kwargs['select'] = {'cnt': 'COUNT(*)'}
 
-        res = self.db_adapter(
+        res = self.db(
             db_name=kwargs.get('db'),
             role=kwargs.get('role', 'replica')
             ).select(**kwargs)
@@ -329,7 +329,7 @@ class Model(object):
             for (k, v) in list(values.items()):
                 if v is None:
                     del kwargs['values'][k]
-            
+
         kwargs['stack'] = self.stack_mark(inspect.stack())
         kwargs['primary_key'] = self.primary_key
 
@@ -340,7 +340,7 @@ class Model(object):
                 kwargs['values'][field] = kwargs['values'].get(field, now)
             else:
                 kwargs['values'][field] = now
-        results = self.db_adapter(role='master').insert(**kwargs)
+        results = self.db(role='master').insert(**kwargs)
         return self.record_or_model(results)
 
     @classmethod
@@ -370,7 +370,7 @@ class Model(object):
         if 'updated_at' in column_names:
             if 'updated_at' not in kwargs['values']:
                 kwargs['values']['updated_at'] = now
-        results = self.db_adapter(role='master').update(**kwargs)
+        results = self.db(role='master').update(**kwargs)
         return self.record_or_model(results)
 
     @classorinstancemethod
@@ -393,8 +393,8 @@ class Model(object):
         :type where: string, dict, array
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
-        
-        return self.db_adapter(role='master').delete(**kwargs)
+
+        return self.db(role='master').delete(**kwargs)
 
     @classmethod
     def last(self, limit=1, **kwargs):
@@ -402,7 +402,7 @@ class Model(object):
         Returns the last `limit` records inserted in the model's table in the replica database. Rows are sorted by ``created_at``.
         """
         return self.collection_instance(
-            self.db_adapter(
+            self.db(
                 db_name=kwargs.get('db'),
                 role=kwargs.get('role', 'replica')
                 ).select(
@@ -441,7 +441,7 @@ class Model(object):
         return self.find_by(values={self.primary_key: id}, **kwargs)
 
     @classmethod
-    def db_adapter(self, role='replica', db_name=None):
+    def db(self, role='replica', db_name=None):
         if not hasattr(self, '_db_metadata'):
             self._db_metadata = {}
         db_name = db_name or self.db_names.get(role)
@@ -449,7 +449,7 @@ class Model(object):
         if key not in self._db_metadata:
             self._db_metadata[key] = self.model_metadata()
         return DatabaseAdapter(
-            self.db(role=role, db_name=db_name),
+            self.client_provider(role=role, db_name=db_name),
             self._db_metadata[key]
             )
 
@@ -494,9 +494,9 @@ class Model(object):
         return '_'.join(s1)
 
     @classmethod
-    def db(self, role='replica', db_name=None):
+    def client_provider(self, role='replica', db_name=None):
         name = db_name or self.db_names.get(role)
-        return Datasources.active_client(name)
+        return Datasources.client_provider(name)
 
     @classmethod
     def _use_replica(self, **kwargs):
@@ -504,7 +504,7 @@ class Model(object):
             kwargs['stack'] = self.stack_mark(inspect.stack())
             sql = "select setting FROM pg_settings WHERE name = 'hot_standby'"
             r = self.collection_instance(
-                self.db_adapter().raw_query(sql=sql, **kwargs)
+                self.db().raw_query(sql=sql, **kwargs)
                 ).squeeze()
             return r == "on"
         except:
@@ -523,7 +523,7 @@ class Model(object):
             kwargs['stack'] = self.stack_mark(inspect.stack())
             sql = "select EXTRACT(EPOCH FROM NOW() - pg_last_xact_replay_timestamp()) AS replication_lag"
             return self.collection_instance(
-                self.db_adapter().raw_query(
+                self.db().raw_query(
                     sql=sql, **kwargs
                     )
                 ).squeeze()
@@ -540,8 +540,9 @@ class Model(object):
         if self.__dict__.get('_table_schema') is None:
             self._table_schema = None
             table_schema = {}
+            connection = next(self.client_provider())
             for row in self.query_schema():
-                name, default, dtype = self.db().lexicon.column_info(row)
+                name, default, dtype = connection.lexicon.column_info(row)
                 if isinstance(default, str):
                     json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
                     if len(json_matches) > 0:
@@ -556,11 +557,12 @@ class Model(object):
     @classmethod
     def query_schema(self):
         db_adapter = DatabaseAdapter(
-            self.db(role='replica', db_name=self.db_names.get('replica')),
+            self.client_provider(role='replica', db_name=self.db_names.get('replica')),
             self.model_metadata(include_schema=False)
             )
+        lexicon = Datasources.db_lexicon(self.db_names.get('replica'))
         return db_adapter.raw_query(
-            sql=db_adapter.db_client.lexicon.table_schema_query(self._table_name()),
+            sql=lexicon.table_schema_query(self._table_name()),
             where={'table_name': self._table_name()}
             ).to_dict(orient='records')
 

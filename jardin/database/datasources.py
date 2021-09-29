@@ -32,20 +32,31 @@ class Datasources(object):
     SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake', 'redshift')
 
     @classmethod
-    def active_client(self, db_name):
+    def db_config(self, db_name):
+      return self.db_configs(db_name)
+
+    @classmethod
+    def db_lexicon(self, db_name):
+      client = next(self.client_provider(db_name, yield_banned=True))
+      return client.lexicon()
+
+    @classmethod
+    def client_provider(self, db_name, yield_banned=False):
         if db_name not in self._clients.active:
             clients = self._clients.all.get(db_name)
             if clients is None:
                 clients = self._build_clients(db_name)
                 self._clients.all[db_name] = clients
 
-            while True: # yield connections forever
-              memoized_client = self._clients.active.get(db_name, None)
-              if memoized_client is None or memoized_client.is_banned():
-                potential_clients = self.non_banned_clients()
-                if len(potential_clients) == 0:
-                  self._clients.active[db_name] = None
-                yield self._clients.active[db_name]
+        while True: # yield connections forever
+          memoized_client = self._clients.active.get(db_name, None)
+          if memoized_client is None or memoized_client.is_banned():
+            potential_clients = self.non_banned_clients(db_name)
+            if len(potential_clients) == 0:
+              self._clients.active[db_name] = None
+            else:
+              self._clients.active[db_name] = random.choice(potential_clients)
+          yield self._clients.active[db_name]
 
     @classmethod
     def _build_clients(self, name):
@@ -98,7 +109,13 @@ class Datasources(object):
 
     @classmethod
     def non_banned_clients(self, name):
-      return list(filter(lambda client: client.is_banned(), self._clients.all.get(name, []))
+        return list(filter(lambda client: not client.is_banned(), self._clients.all.get(name, [])))
+
+    @classmethod
+    def unban_all_clients(self, name):
+        clients = self._clients.all.get(name, [])
+        for client in clients:
+          client.unban()
 
     @classmethod
     def log_datasource(self, name, db_config):
