@@ -9,8 +9,6 @@ from jardin.query_builders import \
     RawQueryBuilder
 from jardin.cache_stores import cached
 
-MAX_RETRIES = 3
-
 
 def set_defaults(func):
     def wrapper(self, *args, **kwargs):
