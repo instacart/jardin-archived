@@ -47,11 +47,12 @@ class BaseClient(ABC):
         """Execute a SQL query and return the cursor."""
 
     def ban(self, seconds=1):
-      self._banned_until = time.time()
+      self._banned_until = time.time() + seconds
       try:
         # assumes all implementation have close methods
         self._conn.close()
       except:
+        # failing to close a connection should be okay
         pass
       finally:
         self._conn = None
