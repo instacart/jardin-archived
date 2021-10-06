@@ -37,20 +37,25 @@ class Datasources(object):
 
     @classmethod
     def db_lexicon(self, db_name):
-      client = next(self.client_provider(db_name, yield_banned=True))
-      return client.lexicon()
+      # The lexicon is a helper object, so we can fetch it without needing an actual
+      # db connection, so any client would work, even banned ones
+      self.populate_client_lists_if_needed(db_name)
+      any_client = random.choice(self._clients.all[db_name])
+      return any_client.lexicon()
 
     @classmethod
     def active_client(self, db_name):
-      next(self.client_provider(db_name))
+      return next(self.client_provider(db_name))
 
     @classmethod
-    def client_provider(self, db_name, yield_banned=False):
-        if db_name not in self._clients.active:
-            clients = self._clients.all.get(db_name)
-            if clients is None:
-                clients = self._build_clients(db_name)
-                self._clients.all[db_name] = clients
+    def populate_client_lists_if_needed(self, db_name):
+        if self._clients.all.get(db_name) is None:
+            self._clients.all[db_name] = self._build_clients(db_name)
+
+
+    @classmethod
+    def client_provider(self, db_name):
+        self.populate_client_lists_if_needed(db_name)
 
         while True: # yield connections forever
           memoized_client = self._clients.active.get(db_name, None)
