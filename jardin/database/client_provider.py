@@ -11,5 +11,5 @@ class ClientProvider:
   def lexicon(self):
     return Datasources.db_lexicon(self.datasource_name)
 
-  def current_client(self):
+  def next_client(self):
     return next(self.provider)

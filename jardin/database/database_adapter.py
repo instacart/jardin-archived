@@ -70,12 +70,12 @@ class DatabaseAdapter(object):
     def _execute(self, *query, **kwargs):
       last_exception = None
       while True:
-        current_client = self.client_provider.current_client()
-        if current_client is None:
+        next_client = self.client_provider.next_client()
+        if next_client is None:
           raise last_exception
 
         try:
-          return current_client.execute(*query, **kwargs)
-        except current_client.connectivity_exceptions as e:
+          return next_client.execute(*query, **kwargs)
+        except next_client.connectivity_exceptions as e:
           last_exception = e
-          current_client.ban(20)
+          next_client.ban(1) # ban connection for one second

@@ -10,7 +10,7 @@ class TestTransaction(object):
         if self._model:
             self._model.clear_caches()
         self._db_config = Datasources.db_config('jardin_test')
-        self._connection = ClientProvider('jardin_test').current_client()
+        self._connection = ClientProvider('jardin_test').next_client()
         self.create_table = create_table
 
     def setup(self):
