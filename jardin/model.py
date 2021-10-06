@@ -246,7 +246,7 @@ class Model(object):
         :type role: string
         :returns: ``jardin.Collection`` instance, which is a ``pandas.DataFrame``.
         """
-        db_adapter = self.db(
+        db_adapter = self.db_adapter(
             db_name=kwargs.get('db'),
             role=kwargs.get('role', 'replica')
             )
@@ -305,7 +305,7 @@ class Model(object):
         else:
             kwargs['select'] = {'cnt': 'COUNT(*)'}
 
-        res = self.db(
+        res = self.db_adapter(
             db_name=kwargs.get('db'),
             role=kwargs.get('role', 'replica')
             ).select(**kwargs)
@@ -340,7 +340,7 @@ class Model(object):
                 kwargs['values'][field] = kwargs['values'].get(field, now)
             else:
                 kwargs['values'][field] = now
-        results = self.db(role='master').insert(**kwargs)
+        results = self.db_adapter(role='master').insert(**kwargs)
         return self.record_or_model(results)
 
     @classmethod
@@ -370,7 +370,7 @@ class Model(object):
         if 'updated_at' in column_names:
             if 'updated_at' not in kwargs['values']:
                 kwargs['values']['updated_at'] = now
-        results = self.db(role='master').update(**kwargs)
+        results = self.db_adapter(role='master').update(**kwargs)
         return self.record_or_model(results)
 
     @classorinstancemethod
@@ -394,7 +394,7 @@ class Model(object):
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
 
-        return self.db(role='master').delete(**kwargs)
+        return self.db_adapter(role='master').delete(**kwargs)
 
     @classmethod
     def last(self, limit=1, **kwargs):
@@ -402,7 +402,7 @@ class Model(object):
         Returns the last `limit` records inserted in the model's table in the replica database. Rows are sorted by ``created_at``.
         """
         return self.collection_instance(
-            self.db(
+            self.db_adapter(
                 db_name=kwargs.get('db'),
                 role=kwargs.get('role', 'replica')
                 ).select(
@@ -441,7 +441,7 @@ class Model(object):
         return self.find_by(values={self.primary_key: id}, **kwargs)
 
     @classmethod
-    def db(self, role='replica', db_name=None):
+    def db_adapter(self, role='replica', db_name=None):
         if not hasattr(self, '_db_metadata'):
             self._db_metadata = {}
         db_name = db_name or self.db_names.get(role)
@@ -504,7 +504,7 @@ class Model(object):
             kwargs['stack'] = self.stack_mark(inspect.stack())
             sql = "select setting FROM pg_settings WHERE name = 'hot_standby'"
             r = self.collection_instance(
-                self.db().raw_query(sql=sql, **kwargs)
+                self.db_adapter().raw_query(sql=sql, **kwargs)
                 ).squeeze()
             return r == "on"
         except:
@@ -523,7 +523,7 @@ class Model(object):
             kwargs['stack'] = self.stack_mark(inspect.stack())
             sql = "select EXTRACT(EPOCH FROM NOW() - pg_last_xact_replay_timestamp()) AS replication_lag"
             return self.collection_instance(
-                self.db().raw_query(
+                self.db_adapter().raw_query(
                     sql=sql, **kwargs
                     )
                 ).squeeze()

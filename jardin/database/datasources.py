@@ -41,6 +41,10 @@ class Datasources(object):
       return client.lexicon()
 
     @classmethod
+    def active_client(self, db_name):
+      next(self.client_provider(db_name))
+
+    @classmethod
     def client_provider(self, db_name, yield_banned=False):
         if db_name not in self._clients.active:
             clients = self._clients.all.get(db_name)

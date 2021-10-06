@@ -74,7 +74,6 @@ class BaseClient(ABC):
         delay = 0
         for _ in range(MAX_RETRIES):
             try:
-                print(self.retryable_exceptions)
                 return self.execute_once(*query, **kwargs)
             except self.retryable_exceptions as e:
                 # TODO [kl] comment this out?
