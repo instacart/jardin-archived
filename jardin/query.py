@@ -1,6 +1,7 @@
 import argparse
 import os
 import inspect
+from jardin.database.client_provider import ClientProvider
 
 from jardin.database.database_adapter import DatabaseAdapter
 from jardin.database.datasources import Datasources
@@ -21,7 +22,7 @@ def query(sql=None, filename=None, extract=None, db=None, **kwargs):
         kwargs['where'] = kwargs['params']
 
     return DatabaseAdapter(
-        Datasources.client_provider(db),
+        ClientProvider(db),
         None
         ).raw_query(
             sql=sql, filename=filename, **kwargs

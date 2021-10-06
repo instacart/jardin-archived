@@ -4,6 +4,7 @@ import re, inspect
 import json
 
 import jardin.config as config
+from jardin.database.client_provider import ClientProvider
 from jardin.database.database_adapter import DatabaseAdapter
 from jardin.database.datasources import Datasources
 from jardin.tools import soft_del, classorinstancemethod, stack_marker
@@ -449,7 +450,7 @@ class Model(object):
         if key not in self._db_metadata:
             self._db_metadata[key] = self.model_metadata()
         return DatabaseAdapter(
-            self.client_provider(role=role, db_name=db_name),
+            self.db(role=role, db_name=db_name),
             self._db_metadata[key]
             )
 
@@ -494,9 +495,9 @@ class Model(object):
         return '_'.join(s1)
 
     @classmethod
-    def client_provider(self, role='replica', db_name=None):
+    def db(self, role='replica', db_name=None):
         name = db_name or self.db_names.get(role)
-        return Datasources.client_provider(name)
+        return ClientProvider(name)
 
     @classmethod
     def _use_replica(self, **kwargs):
@@ -540,9 +541,9 @@ class Model(object):
         if self.__dict__.get('_table_schema') is None:
             self._table_schema = None
             table_schema = {}
-            connection = next(self.client_provider())
+            lexicon = self.db().lexicon()
             for row in self.query_schema():
-                name, default, dtype = connection.lexicon.column_info(row)
+                name, default, dtype = lexicon.column_info(row)
                 if isinstance(default, str):
                     json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
                     if len(json_matches) > 0:
@@ -556,13 +557,13 @@ class Model(object):
 
     @classmethod
     def query_schema(self):
+        client_provider = self.db(role='replica', db_name=self.db_names.get('replica'))
         db_adapter = DatabaseAdapter(
-            self.client_provider(role='replica', db_name=self.db_names.get('replica')),
+            client_provider,
             self.model_metadata(include_schema=False)
             )
-        lexicon = Datasources.db_lexicon(self.db_names.get('replica'))
         return db_adapter.raw_query(
-            sql=lexicon.table_schema_query(self._table_name()),
+            sql=client_provider.lexicon().table_schema_query(self._table_name()),
             where={'table_name': self._table_name()}
             ).to_dict(orient='records')
 

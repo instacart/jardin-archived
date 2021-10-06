@@ -12,11 +12,10 @@ from jardin.cache_stores import cached
 
 def set_defaults(func):
     def wrapper(self, *args, **kwargs):
-        client = next(self.db_client_provider)
         kwargs.update(
             model_metadata=self.model_metadata,
-            scheme=client.db_config.scheme,
-            lexicon=client.lexicon
+            scheme=self.client_provider.config().scheme,
+            lexicon=self.client_provider.lexicon()
             )
         return func(self, *args, **kwargs)
     return wrapper
@@ -24,8 +23,8 @@ def set_defaults(func):
 
 class DatabaseAdapter(object):
 
-    def __init__(self, db_client_provider, model_metadata):
-        self.db_client_provider = db_client_provider
+    def __init__(self, client_provider, model_metadata):
+        self.client_provider = client_provider
         self.model_metadata = model_metadata
 
     @set_defaults
@@ -71,7 +70,7 @@ class DatabaseAdapter(object):
     def _execute(self, *query, **kwargs):
       last_exception = None
       while True:
-        current_client = next(self.db_client_provider)
+        current_client = self.client_provider.current_client()
         if current_client is None:
           raise last_exception
 

@@ -7,7 +7,6 @@ from jardin.database.database_config import DatabaseConfig
 
 
 class Datasources(object):
-
     class IsolatedDbClients(threading.local):
         def __init__(self) -> None:
             # All clients indexed by db_name.
@@ -33,7 +32,7 @@ class Datasources(object):
 
     @classmethod
     def db_config(self, db_name):
-      return self.db_configs(db_name)
+      return self.db_configs(db_name)[0]
 
     @classmethod
     def db_lexicon(self, db_name):
@@ -41,7 +40,7 @@ class Datasources(object):
       # db connection, so any client would work, even banned ones
       self.populate_client_lists_if_needed(db_name)
       any_client = random.choice(self._clients.all[db_name])
-      return any_client.lexicon()
+      return any_client.__class__.lexicon
 
     @classmethod
     def active_client(self, db_name):
