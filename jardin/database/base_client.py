@@ -71,7 +71,7 @@ class BaseClient(ABC):
 
     def execute(self, *query, **kwargs):
         last_exception = None
-        delay = 0
+        delay = 3
         for _ in range(MAX_RETRIES):
             try:
                 return self.execute_once(*query, **kwargs)
