@@ -1,3 +1,4 @@
+from jardin.database.client_provider import ClientProvider
 from jardin.query import query
 
 
@@ -9,7 +10,7 @@ class TestTransaction(object):
         if self._model:
             self._model.clear_caches()
         self._db_config = Datasources.db_config('jardin_test')
-        self._connection = Datasources.active_client('jardin_test')
+        self._connection = ClientProvider('jardin_test').current_client()
         self.create_table = create_table
 
     def setup(self):

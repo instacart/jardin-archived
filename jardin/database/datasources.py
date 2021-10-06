@@ -43,10 +43,6 @@ class Datasources(object):
       return any_client.__class__.lexicon
 
     @classmethod
-    def active_client(self, db_name):
-      return next(self.client_provider(db_name))
-
-    @classmethod
     def populate_client_lists_if_needed(self, db_name):
         if self._clients.all.get(db_name) is None:
             self._clients.all[db_name] = self._build_clients(db_name)
