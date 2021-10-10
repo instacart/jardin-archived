@@ -3,7 +3,6 @@ import time
 import os
 
 from jardin import config as config
-from jardin.database.base_client import BaseClient
 from jardin.query_builders import \
     SelectQueryBuilder, \
     InsertQueryBuilder, \

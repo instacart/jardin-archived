@@ -2,7 +2,7 @@ import time
 import unittest
 import psycopg2
 from jardin.database.client_provider import ClientProvider
-from jardin.database.database_adapter import MAX_RETRIES, DatabaseAdapter
+from jardin.database.database_adapter import DatabaseAdapter
 from tests.query_tracer import QueryTracer
 
 class TestBanning(unittest.TestCase):

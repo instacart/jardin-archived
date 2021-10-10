@@ -81,11 +81,16 @@ class BaseClient(ABC):
         if self._conn is None:
             self._conn = self.connect_impl()
 
+        exception = None
         try:
             cursor = self.execute_impl(self._conn, *query)
         except self.connectivity_exceptions as e:
+            self._conn.close()
+            exception = e
+        finally:
             self._conn = None
-            raise
+            if exception is not None:
+                raise exception
 
         if write:
             return self.lexicon.row_ids(cursor, kwargs['primary_key'])
