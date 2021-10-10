@@ -9,7 +9,7 @@ class BaseClient(ABC):
         self.name = name
         self._conn = None
         self._banned_until = None
-        self.id = "-".join([self.db_config.host, self.db_config.database, "({})".format(self.name)])
+        self.id = ":".join([self.db_config.host, self.db_config.database])
 
     def connection_identifier(self):
       return self.id
@@ -56,7 +56,8 @@ class BaseClient(ABC):
       self._banned_until = time.time() + seconds
       try:
         # assumes all implementation have close methods
-        self._conn.close()
+        if self._conn is not None:
+          self._conn.close()
       except:
         # failing to close a connection should be okay
         pass
@@ -68,7 +69,6 @@ class BaseClient(ABC):
         return False
 
       if self._banned_until < time.time():
-        print("No Longer banned {}".format(self.db_config.database))
         return False
 
       return True
