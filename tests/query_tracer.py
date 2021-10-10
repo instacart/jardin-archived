@@ -41,7 +41,7 @@ class QueryTracer:
         "database_id": self.connection_identifier(),
         "duration": duration_seconds
       })
-      original_ban(duration_seconds)
+      return original_ban(duration_seconds)
 
     @staticmethod
     def traced_execute(self, *query, **kwargs):
@@ -51,4 +51,4 @@ class QueryTracer:
         "query": query,
         "kwargs": kwargs
       })
-      original_execute(*query, **kwargs)
+      return original_execute(*query, **kwargs)
