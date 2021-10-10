@@ -1,5 +1,8 @@
 import logging
 import os
+os.environ["JARDIN_BAN_TIME_SECONDS"] = "3"
+os.environ["JARDIN_MAX_RETRIES"] = "3"
+os.environ["JARDIN_BACKOFF_BASE_TIME_SECONDS"] = "0"
 
 PGPORT = int(os.environ.get("PGPORT", 5432))
 base_connection = "postgres://main_user:@localhost:{port}/{db}"

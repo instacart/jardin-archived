@@ -14,7 +14,7 @@ class TestBanning(unittest.TestCase):
       with self.assertRaises(psycopg2.OperationalError):
         adapter.raw_query(sql="SELECT 1")
       self.assertIsNone(provider.next_client()) # all connections are banned
-      time.sleep(1)
+      time.sleep(adapter.__class__.ban_time())
       self.assertIsNotNone(provider.next_client()) # the ban is lifted after 1 second
 
     def test_query_on_some_bad(self):
@@ -31,9 +31,8 @@ class TestBanning(unittest.TestCase):
         with self.assertRaises(psycopg2.OperationalError):
           adapter.raw_query(sql="SELECT 1")
         query_report = QueryTracer.get_report()
-        self.assertEqual(len(query_report["query_list"]),  provider.count() * MAX_RETRIES)
+        self.assertEqual(len(query_report["query_list"]),  provider.count() * adapter.__class__.max_retries())
         self.assertEqual(len(query_report["ban_list"]),  provider.count())
-
 
 
 if __name__ == "__main__":

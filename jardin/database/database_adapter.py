@@ -1,5 +1,6 @@
 import pandas
 import time
+import os
 
 from jardin import config as config
 from jardin.database.base_client import BaseClient
@@ -10,8 +11,6 @@ from jardin.query_builders import \
     DeleteQueryBuilder, \
     RawQueryBuilder
 from jardin.cache_stores import cached
-
-MAX_RETRIES = 3
 
 def set_defaults(func):
     def wrapper(self, *args, **kwargs):
@@ -25,10 +24,27 @@ def set_defaults(func):
 
 
 class DatabaseAdapter(object):
-
     def __init__(self, client_provider, model_metadata):
         self.client_provider = client_provider
         self.model_metadata = model_metadata
+
+    @classmethod
+    def backoff_base_time(self):
+        if getattr(self, "_backoff_base_time", None) is None:
+           self._backoff_base_time = int(os.environ.get("JARDIN_BACKOFF_BASE_TIME_SECONDS", 3))
+        return self._backoff_base_time
+
+    @classmethod
+    def max_retries(self):
+        if getattr(self, "_max_retries", None) is None:
+            self._max_retries = int(os.environ.get("JARDIN_MAX_RETRIES", 3))
+        return self._max_retries
+
+    @classmethod
+    def ban_time(self):
+        if getattr(self, "_ban_time", None) is None:
+            self._ban_time = int(os.environ.get("JARDIN_BAN_TIME_SECONDS", 1))
+        return self._ban_time
 
     @set_defaults
     def select(self, **kwargs):
@@ -77,8 +93,8 @@ class DatabaseAdapter(object):
         if current_client is None:
             raise last_exception
 
-        backoff = 0
-        for _ in range(MAX_RETRIES):
+        backoff = self.__class__.backoff_base_time()
+        for _ in range(self.__class__.max_retries()):
           try:
               return current_client.execute(*query, **kwargs)
           except current_client.retryable_exceptions as e:
@@ -88,4 +104,4 @@ class DatabaseAdapter(object):
               continue
         else:
           if last_exception.__class__ in current_client.connectivity_exceptions:
-              current_client.ban(1) # ban connection for one second and try again with a different connection
+              current_client.ban(self.__class__.ban_time()) # ban connection for a few seconds and try again with a different connection
