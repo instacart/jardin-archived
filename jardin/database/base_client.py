@@ -1,7 +1,6 @@
 import time
+import sys
 from abc import ABC, abstractmethod
-
-MAX_RETRIES = 3
 
 class BaseClient(ABC):
 
@@ -10,6 +9,10 @@ class BaseClient(ABC):
         self.name = name
         self._conn = None
         self._banned_until = None
+        self.id = "-".join([self.db_config.host, self.db_config.database, "({})".format(self.name)])
+
+    def connection_identifier(self):
+      return self.id
 
     @property
     def default_connect_kwargs(self):
@@ -65,25 +68,13 @@ class BaseClient(ABC):
         return False
 
       if self._banned_until < time.time():
+        print("No Longer banned {}".format(self.db_config.database))
         return False
 
       return True
 
     def execute(self, *query, **kwargs):
-        last_exception = None
-        delay = 3
-        for _ in range(MAX_RETRIES):
-            try:
-                return self.execute_once(*query, **kwargs)
-            except self.retryable_exceptions as e:
-                # TODO [kl] comment this out?
-                print(f"{e}, Retrying in {delay} seconds...")
-                time.sleep(delay)
-                delay *= 2
-                last_exception = e
-                continue
-        else:
-            raise last_exception
+      return self.execute_once(*query, **kwargs)
 
     def execute_once(self, *query, write=False, **kwargs):
         """Connect to the database (if necessary) and execute a query."""

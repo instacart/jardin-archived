@@ -1,6 +1,8 @@
 import pandas
+import time
 
 from jardin import config as config
+from jardin.database.base_client import BaseClient
 from jardin.query_builders import \
     SelectQueryBuilder, \
     InsertQueryBuilder, \
@@ -9,6 +11,7 @@ from jardin.query_builders import \
     RawQueryBuilder
 from jardin.cache_stores import cached
 
+MAX_RETRIES = 3
 
 def set_defaults(func):
     def wrapper(self, *args, **kwargs):
@@ -70,12 +73,19 @@ class DatabaseAdapter(object):
     def _execute(self, *query, **kwargs):
       last_exception = None
       while True:
-        next_client = self.client_provider.next_client()
-        if next_client is None:
-          raise last_exception
+        current_client = self.client_provider.next_client()
+        if current_client is None:
+            raise last_exception
 
-        try:
-          return next_client.execute(*query, **kwargs)
-        except next_client.connectivity_exceptions as e:
-          last_exception = e
-          next_client.ban(1) # ban connection for one second
+        backoff = 0
+        for _ in range(MAX_RETRIES):
+          try:
+              return current_client.execute(*query, **kwargs)
+          except current_client.retryable_exceptions as e:
+              time.sleep(backoff)
+              backoff *= 2
+              last_exception = e
+              continue
+        else:
+          if last_exception.__class__ in current_client.connectivity_exceptions:
+              current_client.ban(1) # ban connection for one second and try again with a different connection
