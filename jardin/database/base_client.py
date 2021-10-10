@@ -54,15 +54,7 @@ class BaseClient(ABC):
 
     def ban(self, seconds=1):
       self._banned_until = time.time() + seconds
-      try:
-        # assumes all implementation have close methods
-        if self._conn is not None:
-          self._conn.close()
-      except:
-        # failing to close a connection should be okay
-        pass
-      finally:
-        self._conn = None
+      self.safely_disconnect()
 
     def is_banned(self):
       if self._banned_until is None:
@@ -73,30 +65,34 @@ class BaseClient(ABC):
 
       return True
 
-    def execute(self, *query, **kwargs):
-      return self.execute_once(*query, **kwargs)
-
-    def execute_once(self, *query, write=False, **kwargs):
+    def execute(self, *query, write=False, **kwargs):
         """Connect to the database (if necessary) and execute a query."""
-        if self._conn is None:
-            self._conn = self.connect_impl()
-
-        exception = None
+        cursor = None
         try:
+            if self._conn is None:
+              self._conn = self.connect_impl()
             cursor = self.execute_impl(self._conn, *query)
         except self.connectivity_exceptions as e:
-            self._conn.close()
-            exception = e
-        finally:
-            self._conn = None
-            if exception is not None:
-                raise exception
+            self.safely_disconnect()
+            raise
 
         if write:
             return self.lexicon.row_ids(cursor, kwargs['primary_key'])
         if cursor.description:
             return cursor.fetchall(), self.columns(cursor)
         return None, None
+
+    def safely_disconnect(self):
+      try:
+          # assumes all implementation have close methods
+          if self._conn is not None:
+              self._conn.close()
+      except:
+          # failing to close a connection should be okay
+          pass
+      finally:
+          # This will prompt execute to reconnect the next time it is called
+          self._conn = None
 
     def columns(self, cursor):
         cursor_desc = cursor.description
