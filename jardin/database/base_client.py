@@ -84,11 +84,13 @@ class BaseClient(ABC):
 
     def safely_disconnect(self):
       try:
-          # assumes all implementation have close methods
+          # this assumes all implementations have a close method
           if self._conn is not None:
               self._conn.close()
+      except AttributeError:
+        raise # _conn does not have .close() method, let's raise
       except:
-          # failing to close a connection should be okay
+          # Failing to close a connection should be okay
           pass
       finally:
           # This will prompt execute to reconnect the next time it is called
