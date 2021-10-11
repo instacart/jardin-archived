@@ -47,7 +47,7 @@ jobs:
 
     - name: Run Postgresql Tests
       env:
-        POSTGRES_PASSWORD: postgres
+        PGPASSWORD: postgres
       run: |
         psql --version
         psql -c 'create database jardin_test;' --host localhost --username postgres
