@@ -46,6 +46,8 @@ jobs:
         JARDIN_CONF=tests/jardin_conf_sqlite.py python -m pytest tests
 
     - name: Run Postgresql Tests
+      env:
+        POSTGRES_PASSWORD: postgres
       run: |
         psql --version
         psql -c 'create database jardin_test;' --host localhost --username postgres
