@@ -16,15 +16,24 @@ jobs:
 
     services:
       postgres:
-        image: postgres
+        image: postgres:13.4
         ports:
-          # Opens tcp port 5432 on the host and the postgres service container
           - 5432:5432
         env:
           POSTGRES_PASSWORD: postgres
-        # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -52,3 +61,12 @@ jobs:
         psql --version
         psql -c 'create database jardin_test;' --host localhost --username postgres
         JARDIN_CONF=tests/jardin_conf_pg.py python -m pytest tests
+
+    - name: Run Mysql Tests
+      env:
+        MYSQL_PWD: password
+      run: |
+        sudo apt-get install -y mysql-client
+        mysql --version
+        mysql -e 'create database jardin_test;' --host localhost --user root
+        JARDIN_CONF=tests/jardin_conf_mysql.py python -m pytest tests
