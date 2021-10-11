@@ -45,5 +45,5 @@ jobs:
     - name: Run Postgresql Tests
       run: |
         psql --version
-        psql -c 'create database jardin_test;' -U postgres
+        psql -c 'create database jardin_test;' --host postgres --username postgres
         JARDIN_CONF=tests/jardin_conf_pg.py python -m pytest tests
