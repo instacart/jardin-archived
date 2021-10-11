@@ -1,0 +1,49 @@
+name: Python package
+
+on:
+  push:
+    branches: [ $default-branch ]
+  pull_request:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.7, 3.8, 3.9]
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run Sqlite Tests
+      run: |
+        JARDIN_CONF=tests/jardin_conf_sqlite.py python -m pytest tests
+
+    - name: Run Postgresql Tests
+      run: |
+        psql --version
+        psql -c 'create database jardin_test;' -U postgres
+        JARDIN_CONF=tests/jardin_conf_pg.py python -m pytest tests
