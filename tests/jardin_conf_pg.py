@@ -1,16 +1,15 @@
 import logging
 import os
 
-PGHOST = os.environ.get("PGHOST", "localhost")
 PGPORT = int(os.environ.get("PGPORT", 5432))
 
 DATABASES = {
-    'jardin_test': f'postgres://postgres:@{PGHOST}:{PGPORT}/jardin_test',
+    'jardin_test': f'postgres://postgres:@localhost:{PGPORT}/jardin_test',
     'other_test_dict_config': {
         'username': 'test',
         'password': 'test',
         'database': 'jardin_test',
-        'host': PGHOST,
+        'host': 'localhost',
         'port': 1234
     },
 

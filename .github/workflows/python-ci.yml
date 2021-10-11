@@ -17,6 +17,9 @@ jobs:
     services:
       postgres:
         image: postgres
+        ports:
+          # Opens tcp port 5432 on the host and the postgres service container
+          - 5432:5432
         env:
           POSTGRES_PASSWORD: postgres
         # Set health checks to wait until postgres has started
@@ -45,5 +48,5 @@ jobs:
     - name: Run Postgresql Tests
       run: |
         psql --version
-        psql -c 'create database jardin_test;' --host postgres --username postgres
+        psql -c 'create database jardin_test;' --username postgres
         JARDIN_CONF=tests/jardin_conf_pg.py python -m pytest tests
