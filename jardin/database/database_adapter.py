@@ -11,13 +11,14 @@ from jardin.query_builders import \
     RawQueryBuilder
 from jardin.cache_stores import cached
 
+
 def set_defaults(func):
     def wrapper(self, *args, **kwargs):
         kwargs.update(
             model_metadata=self.model_metadata,
             scheme=self.client_provider.config().scheme,
             lexicon=self.client_provider.lexicon()
-            )
+        )
         return func(self, *args, **kwargs)
     return wrapper
 
@@ -30,7 +31,8 @@ class DatabaseAdapter(object):
     @classmethod
     def backoff_base_time(self):
         if getattr(self, "_backoff_base_time", None) is None:
-           self._backoff_base_time = int(os.environ.get("JARDIN_BACKOFF_BASE_TIME_SECONDS", 3))
+            self._backoff_base_time = int(os.environ.get(
+                "JARDIN_BACKOFF_BASE_TIME_SECONDS", 3))
         return self._backoff_base_time
 
     @classmethod
@@ -86,21 +88,25 @@ class DatabaseAdapter(object):
         return pandas.DataFrame.from_records(results, columns=columns, coerce_float=True)
 
     def _execute(self, *query, **kwargs):
-      last_exception = None
-      while True:
-        current_client = self.client_provider.next_client()
-        if current_client is None:
-            raise last_exception
+        last_exception = None
+        while True:
+            current_client = self.client_provider.next_client()
+            if current_client is None:
+                if last_exception is None:
+                    raise RuntimeError("ClinetProivder yielded no connections")
+                else:
+                    raise last_exception
 
-        backoff = self.__class__.backoff_base_time()
-        for _ in range(self.__class__.max_retries()):
-          try:
-              return current_client.execute(*query, **kwargs)
-          except current_client.retryable_exceptions as e:
-              time.sleep(backoff)
-              backoff *= 2
-              last_exception = e
-              continue
-        else:
-          if last_exception.__class__ in current_client.connectivity_exceptions:
-              current_client.ban(self.__class__.ban_time()) # ban connection for a few seconds and try again with a different connection
+            backoff = self.__class__.backoff_base_time()
+            for _ in range(self.__class__.max_retries()):
+                try:
+                    return current_client.execute(*query, **kwargs)
+                except current_client.retryable_exceptions as e:
+                    time.sleep(backoff)
+                    backoff *= 2
+                    last_exception = e
+                    continue
+            else:
+                if last_exception.__class__ in current_client.connectivity_exceptions:
+                    # ban connection for a few seconds and try again with a different connection
+                    current_client.ban(self.__class__.ban_time())

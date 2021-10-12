@@ -1,5 +1,4 @@
 import time
-import sys
 from abc import ABC, abstractmethod
 
 class BaseClient(ABC):
@@ -12,7 +11,7 @@ class BaseClient(ABC):
         self.id = ":".join([self.db_config.host, self.db_config.database])
 
     def connection_identifier(self):
-      return self.id
+        return self.id
 
     @property
     def default_connect_kwargs(self):
@@ -50,27 +49,27 @@ class BaseClient(ABC):
         """Execute a SQL query and return the cursor."""
 
     def unban(self):
-      self._banned_until = None
+        self._banned_until = None
 
     def ban(self, seconds=1):
-      self._banned_until = time.time() + seconds
-      self.safely_disconnect()
+        self._banned_until = time.time() + seconds
+        self.safely_disconnect()
 
     def is_banned(self):
-      if self._banned_until is None:
-        return False
+        if self._banned_until is None:
+            return False
 
-      if self._banned_until < time.time():
-        return False
+        if self._banned_until < time.time():
+            return False
 
-      return True
+        return True
 
     def execute(self, *query, write=False, **kwargs):
         """Connect to the database (if necessary) and execute a query."""
         cursor = None
         try:
             if self._conn is None:
-              self._conn = self.connect_impl()
+                self._conn = self.connect_impl()
             cursor = self.execute_impl(self._conn, *query)
         except self.connectivity_exceptions as e:
             self.safely_disconnect()
@@ -83,18 +82,15 @@ class BaseClient(ABC):
         return None, None
 
     def safely_disconnect(self):
-      try:
-          # this assumes all implementations have a close method
-          if self._conn is not None:
-              self._conn.close()
-      except AttributeError:
-        raise # _conn does not have .close() method, let's raise
-      except:
-          # Failing to close a connection should be okay
-          pass
-      finally:
-          # This will prompt execute to reconnect the next time it is called
-          self._conn = None
+        try:
+            if self._conn is not None:
+                self._conn.close()
+        except:
+            # Failing to close a connection should be okay
+            pass
+        finally:
+            # This will prompt execute to reconnect the next time it is called
+            self._conn = None
 
     def columns(self, cursor):
         cursor_desc = cursor.description

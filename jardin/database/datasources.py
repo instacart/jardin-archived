@@ -28,39 +28,41 @@ class Datasources(object):
     # Guards lazy initializers
     _lock = threading.Lock()
 
-    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake', 'redshift')
+    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite',
+                         'snowflake', 'redshift')
 
     @classmethod
     def db_config(self, db_name):
-      return self.db_configs(db_name)[0]
+        return self.db_configs(db_name)[0]
 
     @classmethod
     def db_lexicon(self, db_name):
-      # The lexicon is a helper object, so we can fetch it without needing an actual
-      # db connection, so any client would work, even banned ones
-      self.populate_client_lists_if_needed(db_name)
-      any_client = random.choice(self._clients.all[db_name])
-      return any_client.__class__.lexicon
+        # The lexicon is a helper object, so we can fetch it without needing an actual
+        # db connection, so any client would work, even banned ones
+        self._populate_client_lists_if_needed(db_name)
+        any_client = self._clients.all[db_name][0]
+        return any_client.__class__.lexicon
 
     @classmethod
-    def populate_client_lists_if_needed(self, db_name):
+    def _populate_client_lists_if_needed(self, db_name):
         if self._clients.all.get(db_name) is None:
             self._clients.all[db_name] = self._build_clients(db_name)
 
-
     @classmethod
-    def client_provider(self, db_name):
-        self.populate_client_lists_if_needed(db_name)
+    def client_generator(self, db_name):
+        self._populate_client_lists_if_needed(db_name)
 
-        while True: # yield connections forever
-          memoized_client = self._clients.active.get(db_name, None)
-          if memoized_client is None or memoized_client.is_banned():
-            potential_clients = self.non_banned_clients(db_name)
-            if len(potential_clients) == 0:
-              self._clients.active[db_name] = None
-            else:
-              self._clients.active[db_name] = random.choice(potential_clients)
-          yield self._clients.active[db_name]
+        while True:  # yield connections forever
+            memoized_client = self._clients.active.get(db_name, None)
+            if memoized_client is None or memoized_client.is_banned():
+                potential_clients = self.non_banned_clients(db_name)
+                if len(potential_clients) == 0:
+                    config.logger.error("Bad")
+                    self._clients.active[db_name] = None
+                else:
+                    self._clients.active[db_name] = random.choice(
+                        potential_clients)
+            yield self._clients.active[db_name]
 
     @classmethod
     def _build_clients(self, name):
@@ -68,7 +70,8 @@ class Datasources(object):
         configs = self.db_configs(name)
         for db in configs:
             if db.scheme not in self.SUPPORTED_SCHEMES:
-                raise UnsupportedDatabase('%s is not a supported database' % db.scheme)
+                raise UnsupportedDatabase(
+                    '%s is not a supported database' % db.scheme)
             elif db.scheme == 'postgres' or db.scheme == 'redshift':
                 import jardin.database.clients.pg as impl
             elif db.scheme == 'mysql':
@@ -94,7 +97,8 @@ class Datasources(object):
         d = dict()
         for (db_name, val) in config.DATABASES.items():
             # we don't support multi-configs of dictionary format yet; the "else [urls]" is for a dictionary
-            url_list = re.split(r'\s+', val.strip()) if isinstance(val, str) else [val]
+            url_list = re.split(r'\s+', val.strip()
+                                ) if isinstance(val, str) else [val]
             d[db_name] = [DatabaseConfig(x, db_name) for x in url_list]
         return d
 
@@ -107,27 +111,31 @@ class Datasources(object):
             else:
                 active = self._clients.active[name]
                 filtered = list(filter(lambda x: x is not active, clients))
-                c = filtered[0] if len(filtered) == 1 else random.choice(filtered)
+                c = filtered[0] if len(
+                    filtered) == 1 else random.choice(filtered)
             self.log_datasource(name, c.db_config)
             self._clients.active[name] = c
 
     @classmethod
     def non_banned_clients(self, name):
-        return list(filter(lambda client: not client.is_banned(), self._clients.all.get(name, [])))
+        return [client for client in self._clients.all.get(name, []) if not client.is_banned()]
 
     @classmethod
     def unban_all_clients(self, name):
         clients = self._clients.all.get(name, [])
         for client in clients:
-          client.unban()
+            client.unban()
 
     @classmethod
     def log_datasource(self, name, db_config):
-        host = getattr(db_config, 'host', None) or '_'  # use "_" for both missing attr or None value cases
+        # use "_" for both missing attr or None value cases
+        host = getattr(db_config, 'host', None) or '_'
         port = getattr(db_config, 'port', None) or '_'
         user = getattr(db_config, 'username', None) or '_'
         database = getattr(db_config, 'database', None) or '_'
-        config.logger.debug("[{}]: datasource {}@{}:{}/{}".format(name, user, host, port, database))
+        config.logger.debug(
+            "[{}]: datasource {}@{}:{}/{}".format(name, user, host, port, database))
 
 
-class UnsupportedDatabase(Exception): pass
+class UnsupportedDatabase(Exception):
+    pass

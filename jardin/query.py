@@ -2,9 +2,7 @@ import argparse
 import os
 import inspect
 from jardin.database.client_provider import ClientProvider
-
 from jardin.database.database_adapter import DatabaseAdapter
-from jardin.database.datasources import Datasources
 from jardin.tools import stack_marker
 
 def query(sql=None, filename=None, extract=None, db=None, **kwargs):
