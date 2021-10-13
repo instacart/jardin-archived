@@ -125,12 +125,11 @@ class Datasources(object):
 
     @classmethod
     def log_datasource(self, name, db_config):
-        host = getattr(db_config, 'host', None) or '_' # use "_" for both missing attr or None value cases
+        host = getattr(db_config, 'host', None) or '_'  # use "_" for both missing attr or None value cases
         port = getattr(db_config, 'port', None) or '_'
         user = getattr(db_config, 'username', None) or '_'
         database = getattr(db_config, 'database', None) or '_'
         config.logger.debug("[{}]: datasource {}@{}:{}/{}".format(name, user, host, port, database))
 
 
-class UnsupportedDatabase(Exception):
-    pass
+class UnsupportedDatabase(Exception): pass
