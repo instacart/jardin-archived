@@ -70,8 +70,7 @@ class Datasources(object):
         configs = self.db_configs(name)
         for db in configs:
             if db.scheme not in self.SUPPORTED_SCHEMES:
-                raise UnsupportedDatabase(
-                    '%s is not a supported database' % db.scheme)
+                raise UnsupportedDatabase('%s is not a supported database' % db.scheme)
             elif db.scheme == 'postgres' or db.scheme == 'redshift':
                 import jardin.database.clients.pg as impl
             elif db.scheme == 'mysql':
@@ -97,8 +96,7 @@ class Datasources(object):
         d = dict()
         for (db_name, val) in config.DATABASES.items():
             # we don't support multi-configs of dictionary format yet; the "else [urls]" is for a dictionary
-            url_list = re.split(r'\s+', val.strip()
-                                ) if isinstance(val, str) else [val]
+            url_list = re.split(r'\s+', val.strip()) if isinstance(val, str) else [val]
             d[db_name] = [DatabaseConfig(x, db_name) for x in url_list]
         return d
 
@@ -111,8 +109,7 @@ class Datasources(object):
             else:
                 active = self._clients.active[name]
                 filtered = list(filter(lambda x: x is not active, clients))
-                c = filtered[0] if len(
-                    filtered) == 1 else random.choice(filtered)
+                c = filtered[0] if len(filtered) == 1 else random.choice(filtered)
             self.log_datasource(name, c.db_config)
             self._clients.active[name] = c
 
@@ -128,13 +125,11 @@ class Datasources(object):
 
     @classmethod
     def log_datasource(self, name, db_config):
-        # use "_" for both missing attr or None value cases
-        host = getattr(db_config, 'host', None) or '_'
+        host = getattr(db_config, 'host', None) or '_' # use "_" for both missing attr or None value cases
         port = getattr(db_config, 'port', None) or '_'
         user = getattr(db_config, 'username', None) or '_'
         database = getattr(db_config, 'database', None) or '_'
-        config.logger.debug(
-            "[{}]: datasource {}@{}:{}/{}".format(name, user, host, port, database))
+        config.logger.debug("[{}]: datasource {}@{}:{}/{}".format(name, user, host, port, database))
 
 
 class UnsupportedDatabase(Exception):

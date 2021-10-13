@@ -16,7 +16,7 @@ class TestBanning(unittest.TestCase):
             adapter.raw_query(sql="SELECT 1")
         self.assertIsNone(provider.next_client())  # all connections are banned
         time.sleep(adapter.ban_time)
-        # the ban is lifted after 1 second
+        # the ban is lifted after ban_time seconds elapse
         self.assertIsNotNone(provider.next_client())
 
     def test_query_on_some_bad(self):

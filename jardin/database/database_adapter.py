@@ -97,6 +97,6 @@ class DatabaseAdapter(object):
                     last_exception = e
                     continue
             else:
-                if last_exception.__class__ in current_client.connectivity_exceptions:
+                if issubclass(type(last_exception), current_client.connectivity_exceptions):
                     # ban connection for a few seconds and try again with a different connection
                     current_client.ban(self.ban_time)
