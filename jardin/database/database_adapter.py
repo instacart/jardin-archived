@@ -23,29 +23,22 @@ def set_defaults(func):
     return wrapper
 
 
+class NoAvailableConnectionsError(Exception):
+    def __init__(self, datasource_name, cause):
+        cause_text = "unknown" if cause is None else str(cause)
+
+        message = "NoAvailableConnections in {} data source (cause: {})".format(datasource_name, cause_text)
+        super().__init__(message)
+
 class DatabaseAdapter(object):
+
+    backoff_base_time = int(os.environ.get("JARDIN_BACKOFF_BASE_TIME_SECONDS", 3))
+    max_retries       = int(os.environ.get("JARDIN_MAX_RETRIES", 3))
+    ban_time          = int(os.environ.get("JARDIN_BAN_TIME_SECONDS", 1))
+
     def __init__(self, client_provider, model_metadata):
         self.client_provider = client_provider
         self.model_metadata = model_metadata
-
-    @classmethod
-    def backoff_base_time(self):
-        if getattr(self, "_backoff_base_time", None) is None:
-            self._backoff_base_time = int(os.environ.get(
-                "JARDIN_BACKOFF_BASE_TIME_SECONDS", 3))
-        return self._backoff_base_time
-
-    @classmethod
-    def max_retries(self):
-        if getattr(self, "_max_retries", None) is None:
-            self._max_retries = int(os.environ.get("JARDIN_MAX_RETRIES", 3))
-        return self._max_retries
-
-    @classmethod
-    def ban_time(self):
-        if getattr(self, "_ban_time", None) is None:
-            self._ban_time = int(os.environ.get("JARDIN_BAN_TIME_SECONDS", 1))
-        return self._ban_time
 
     @set_defaults
     def select(self, **kwargs):
@@ -92,13 +85,10 @@ class DatabaseAdapter(object):
         while True:
             current_client = self.client_provider.next_client()
             if current_client is None:
-                if last_exception is None:
-                    raise RuntimeError("ClinetProivder yielded no connections")
-                else:
-                    raise last_exception
+                raise NoAvailableConnectionsError(self.client_provider.datasource_name, last_exception)
 
-            backoff = self.__class__.backoff_base_time()
-            for _ in range(self.__class__.max_retries()):
+            backoff = self.backoff_base_time
+            for _ in range(self.max_retries):
                 try:
                     return current_client.execute(*query, **kwargs)
                 except current_client.retryable_exceptions as e:
@@ -109,4 +99,4 @@ class DatabaseAdapter(object):
             else:
                 if last_exception.__class__ in current_client.connectivity_exceptions:
                     # ban connection for a few seconds and try again with a different connection
-                    current_client.ban(self.__class__.ban_time())
+                    current_client.ban(self.ban_time)

@@ -2,7 +2,7 @@ import time
 import unittest
 import psycopg2
 from jardin.database.client_provider import ClientProvider
-from jardin.database.database_adapter import DatabaseAdapter
+from jardin.database.database_adapter import DatabaseAdapter, NoAvailableConnectionsError
 from tests.query_tracer import QueryTracer
 
 
@@ -12,10 +12,10 @@ class TestBanning(unittest.TestCase):
         provider = ClientProvider('all_bad')
         adapter = DatabaseAdapter(provider, None)
 
-        with self.assertRaises(psycopg2.OperationalError):
+        with self.assertRaises(NoAvailableConnectionsError):
             adapter.raw_query(sql="SELECT 1")
         self.assertIsNone(provider.next_client())  # all connections are banned
-        time.sleep(adapter.__class__.ban_time())
+        time.sleep(adapter.ban_time)
         # the ban is lifted after 1 second
         self.assertIsNotNone(provider.next_client())
 
@@ -30,13 +30,14 @@ class TestBanning(unittest.TestCase):
         with QueryTracer():
             provider = ClientProvider('all_bad')
             adapter = DatabaseAdapter(provider, None)
-            with self.assertRaises(psycopg2.OperationalError):
+            with self.assertRaises(NoAvailableConnectionsError):
                 adapter.raw_query(sql="SELECT 1")
             query_report = QueryTracer.get_report()
-            self.assertEqual(len(query_report["query_list"]),  provider.connection_count(
-            ) * adapter.__class__.max_retries())
-            self.assertEqual(
-                len(query_report["ban_list"]),  provider.connection_count())
+
+            expected_query_attempts =  provider.connection_count() * adapter.max_retries
+            expected_connection_bans = provider.connection_count()
+            self.assertEqual(len(query_report["query_list"]), expected_query_attempts)
+            self.assertEqual(len(query_report["ban_list"]),  expected_connection_bans)
 
 
 if __name__ == "__main__":
