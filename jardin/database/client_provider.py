@@ -4,6 +4,7 @@ from jardin.database.datasources import Datasources
 class ClientProvider:
     def __init__(self, datasource_name):
         self.datasource_name = datasource_name
+        self.name = self.datasource_name
         self.generator = Datasources.client_generator(self.datasource_name)
 
     def config(self):
