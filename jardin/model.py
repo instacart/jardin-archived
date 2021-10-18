@@ -252,10 +252,7 @@ class Model(object):
             role=kwargs.get('role', 'replica')
             )
 
-        kwargs['stack'] = self.stack_mark(
-            inspect.stack(),
-            db_conn=None
-            )
+        kwargs['stack'] = self.stack_mark(inspect.stack())
 
         return self.collection_instance(db_adapter.select(**kwargs))
 
