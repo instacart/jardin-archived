@@ -1,29 +1,29 @@
 Features
 ========
 
-..Associations
-..------------
+Associations
+------------
 
-..Belongs-to and has-many relationships can be declared as such:
+Belongs-to and has-many relationships can be declared as such::
 
-..  class Posts(jardin.Model):
-..    belongs_to = {
-..      'users': 'user_id'
-..    }
+  class Posts(jardin.Model):
+    belongs_to = {
+      'users': 'user_id'
+    }
 
-..  class Users(jardin.Model):
-..    has_many = [Posts]
+  class Users(jardin.Model):
+    has_many = [Posts]
 
-..And then used as such:
+And then used as such::
 
-..  users = Users.select()
-..  posts = users.posts()
+  users = Users.select()
+  posts = users.posts()
 
-..Or:
+Or::
 
-..  Posts.select(
-..    inner_join=[Users],
-..    where={'u.id': 123})
+  Posts.select(
+    inner_join=[Users],
+    where={'u.id': 123})
 
 Query watermarking
 ------------------
@@ -52,9 +52,7 @@ Then used as such::
 
   User.select(scopes = ['active', 'recent'])
 
-Which will issue this statement
-
-.. code-block:: psql
+Which will issue this statement::
 
   SELECT * FROM users u WHERE u.active IS TRUE AND u.last_sign_up_at > ...;
 
