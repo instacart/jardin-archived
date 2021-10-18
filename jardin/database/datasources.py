@@ -57,7 +57,7 @@ class Datasources(object):
             if memoized_client is None or memoized_client.is_banned():
                 potential_clients = self.non_banned_clients(db_name)
                 if len(potential_clients) == 0:
-                    config.logger.error("Bad")
+                    config.logger.error("[{}] Client Generator yielded no connections".format(db_name))
                     self._clients.active[db_name] = None
                 else:
                     self._clients.active[db_name] = random.choice(
