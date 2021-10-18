@@ -3,12 +3,18 @@ import unittest
 import psycopg2
 from jardin.database.client_provider import ClientProvider
 from jardin.database.database_adapter import DatabaseAdapter, NoAvailableConnectionsError
+from jardin.database.datasources import Datasources
 from tests.query_tracer import QueryTracer
 
 
 class TestBanning(unittest.TestCase):
+    def is_banning_disabled(self):
+        return Datasources.db_config('jardin_test').scheme == "sqlite"
 
     def test_query_on_all_bad(self):
+        if self.is_banning_disabled():
+            return True
+
         provider = ClientProvider('all_bad')
         adapter = DatabaseAdapter(provider, None)
 
@@ -20,12 +26,18 @@ class TestBanning(unittest.TestCase):
         self.assertIsNotNone(provider.next_client())
 
     def test_query_on_some_bad(self):
+        if self.is_banning_disabled():
+            return True
+
         provider = ClientProvider('some_bad')
         adapter = DatabaseAdapter(provider, None)
         adapter.raw_query(sql="SELECT 1")
         self.assertIsNotNone(provider.next_client())
 
     def test_retries(self):
+        if self.is_banning_disabled():
+            return True
+
         query_report = None
         with QueryTracer():
             provider = ClientProvider('all_bad')
