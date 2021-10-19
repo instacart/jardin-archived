@@ -60,8 +60,7 @@ class Datasources(object):
                     config.logger.error("[{}] Client Generator yielded no connections".format(db_name))
                     self._clients.active[db_name] = None
                 else:
-                    self._clients.active[db_name] = random.choice(
-                        potential_clients)
+                    self._clients.active[db_name] = random.choice(potential_clients)
             yield self._clients.active[db_name]
 
     @classmethod

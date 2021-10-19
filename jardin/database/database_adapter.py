@@ -23,12 +23,9 @@ def set_defaults(func):
     return wrapper
 
 
-class NoAvailableConnectionsError(Exception):
-    def __init__(self, datasource_name, cause):
-        cause_text = "unknown" if cause is None else str(cause)
-
-        message = "NoAvailableConnections in {} data source (cause: {})".format(datasource_name, cause_text)
-        super().__init__(message)
+class NoAvailableConnectionsError(RuntimeError):
+    def __init__(self, datasource_name):
+        super().__init__("NoAvailableConnections in {} data source".format(datasource_name))
 
 class DatabaseAdapter(object):
 
@@ -85,7 +82,7 @@ class DatabaseAdapter(object):
         while True:
             current_client = self.client_provider.next_client()
             if current_client is None:
-                raise NoAvailableConnectionsError(self.client_provider.datasource_name, last_exception)
+                raise NoAvailableConnectionsError(self.client_provider.datasource_name) from last_exception
 
             backoff = self.backoff_base_time
             for _ in range(self.max_retries):

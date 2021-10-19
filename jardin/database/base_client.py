@@ -1,6 +1,10 @@
 import time
 from abc import ABC, abstractmethod
 
+from pymysql.err import DatabaseError
+
+from jardin.database.database_config import DatabaseConfig
+
 class BaseClient(ABC):
 
     def __init__(self, db_config, name):
@@ -83,10 +87,11 @@ class BaseClient(ABC):
         return None, None
 
     def safely_disconnect(self):
+        exceptions_to_swallow = self.connectivity_exceptions + [OSError]
         try:
             if self._conn is not None:
                 self._conn.close()
-        except:
+        except exceptions_to_swallow:
             # Failing to close a connection should be okay
             pass
         finally:
