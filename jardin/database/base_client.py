@@ -1,10 +1,6 @@
 import time
 from abc import ABC, abstractmethod
 
-from pymysql.err import DatabaseError
-
-from jardin.database.database_config import DatabaseConfig
-
 class BaseClient(ABC):
 
     def __init__(self, db_config, name):
