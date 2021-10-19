@@ -84,7 +84,7 @@ class BaseClient(ABC):
         return None, None
 
     def safely_disconnect(self):
-        exceptions_to_swallow = self.connectivity_exceptions + [OSError]
+        exceptions_to_swallow = self.connectivity_exceptions + (OSError,)
         try:
             if self._conn is not None:
                 self._conn.close()
