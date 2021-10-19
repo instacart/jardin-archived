@@ -39,7 +39,7 @@ class QueryTracer:
     def traced_ban(self, duration_seconds):
         original_ban = QueryTracer.bound_method(self, QueryTracer.original_ban)
         QueryTracer.ban_list.append({
-            "database_id": self.connection_identifier(),
+            "database_id": self.connection_identifier,
             "duration": duration_seconds
         })
         return original_ban(duration_seconds)
@@ -48,7 +48,7 @@ class QueryTracer:
     def traced_execute(self, *query, **kwargs):
         original_execute = QueryTracer.bound_method(self, QueryTracer.original_execute)
         QueryTracer.query_list.append({
-            "database_id": self.connection_identifier(),
+            "database_id": self.connection_identifier,
             "query": query,
             "kwargs": kwargs
         })

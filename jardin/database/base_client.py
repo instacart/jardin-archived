@@ -8,10 +8,11 @@ class BaseClient(ABC):
         self.name = name
         self._conn = None
         self._banned_until = None
-        self.id = ":".join([self.db_config.host, self.db_config.database])
+        self._id = ":".join([self.db_config.host, self.db_config.database])
 
+    @property
     def connection_identifier(self):
-        return self.id
+        return self._id
 
     @property
     def default_connect_kwargs(self):
