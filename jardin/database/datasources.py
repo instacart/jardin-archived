@@ -54,7 +54,7 @@ class Datasources(object):
 
         while True:  # yield connections forever
             memoized_client = self._clients.active.get(db_name, None)
-            if memoized_client is None or memoized_client.is_banned():
+            if memoized_client is None or memoized_client.is_banned:
                 potential_clients = self.non_banned_clients(db_name)
                 if len(potential_clients) == 0:
                     config.logger.error("[{}] Client Generator yielded no connections".format(db_name))
@@ -115,7 +115,7 @@ class Datasources(object):
 
     @classmethod
     def non_banned_clients(self, name):
-        return [client for client in self._clients.all.get(name, []) if not client.is_banned()]
+        return [client for client in self._clients.all.get(name, []) if not client.is_banned]
 
     @classmethod
     def unban_all_clients(self, name):

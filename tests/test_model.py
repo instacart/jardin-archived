@@ -139,7 +139,7 @@ class TestModel(unittest.TestCase):
 
     @transaction(model=User, extra_tables=['projects'])
     def test_relationships(self):
-        if Project.db().config().scheme == 'sqlite':
+        if Project.db().config.scheme == 'sqlite':
             Project.query(
                 sql="CREATE TABLE projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id integer);"
                 )

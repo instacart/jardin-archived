@@ -539,7 +539,7 @@ class Model(object):
         if self.__dict__.get('_table_schema') is None:
             self._table_schema = None
             table_schema = {}
-            lexicon = self.db().lexicon()
+            lexicon = self.db().lexicon
             for row in self.query_schema():
                 name, default, dtype = lexicon.column_info(row)
                 if isinstance(default, str):
@@ -561,7 +561,7 @@ class Model(object):
             self.model_metadata(include_schema=False)
             )
         return db_adapter.raw_query(
-            sql=client_provider.lexicon().table_schema_query(self._table_name()),
+            sql=client_provider.lexicon.table_schema_query(self._table_name()),
             where={'table_name': self._table_name()}
             ).to_dict(orient='records')
 

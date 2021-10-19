@@ -55,6 +55,7 @@ class BaseClient(ABC):
         self._banned_until = time.time() + seconds
         self.safely_disconnect()
 
+    @property
     def is_banned(self):
         if self._banned_until is None:
             return False

@@ -16,8 +16,8 @@ def set_defaults(func):
     def wrapper(self, *args, **kwargs):
         kwargs.update(
             model_metadata=self.model_metadata,
-            scheme=self.client_provider.config().scheme,
-            lexicon=self.client_provider.lexicon()
+            scheme=self.client_provider.config.scheme,
+            lexicon=self.client_provider.lexicon
         )
         return func(self, *args, **kwargs)
     return wrapper

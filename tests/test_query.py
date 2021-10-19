@@ -23,7 +23,7 @@ class TestQuery(unittest.TestCase):
 
     @transaction(model=User)
     def test_query_params(self):
-        if User.db().config().scheme == 'sqlite':
+        if User.db().config.scheme == 'sqlite':
             return
         User.insert(values={'name': 'jardin'})
         df = jardin.query(

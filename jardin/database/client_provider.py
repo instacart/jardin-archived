@@ -7,9 +7,11 @@ class ClientProvider:
         self.name = self.datasource_name
         self.generator = Datasources.client_generator(self.datasource_name)
 
+    @property
     def config(self):
         return Datasources.db_configs(self.datasource_name)[0]
 
+    @property
     def lexicon(self):
         return Datasources.db_lexicon(self.datasource_name)
 
