@@ -43,6 +43,7 @@ class DatabaseClient(BaseClient):
 
     lexicon = Lexicon
     retryable_exceptions = (pg.OperationalError, pg.InterfaceError, pg.extensions.QueryCanceledError)
+    connectivity_exceptions = (pg.OperationalError, pg.InterfaceError)
 
     def connect_impl(self):
         kwargs = self.default_connect_kwargs.copy()

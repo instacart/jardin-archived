@@ -4,6 +4,7 @@ import re, inspect
 import json
 
 import jardin.config as config
+from jardin.database.client_provider import ClientProvider
 from jardin.database.database_adapter import DatabaseAdapter
 from jardin.database.datasources import Datasources
 from jardin.tools import soft_del, classorinstancemethod, stack_marker
@@ -219,7 +220,7 @@ class Model(object):
     @classmethod
     @soft_del
     def select(self, **kwargs):
-        #select='*', where=None, inner_joins=None, left_joins=None, 
+        #select='*', where=None, inner_joins=None, left_joins=None,
         #group=None, order=None, limit=None, db=None, role='replica'):
         """
         Perform a SELECT statement on the model's table in the replica database.
@@ -251,10 +252,8 @@ class Model(object):
             role=kwargs.get('role', 'replica')
             )
 
-        kwargs['stack'] = self.stack_mark(
-            inspect.stack(),
-            db_conn=db_adapter.db_client
-            )
+        client_provider = db_adapter.client_provider
+        kwargs['stack'] = self.stack_mark(inspect.stack(), db_conn=client_provider)
 
         return self.collection_instance(db_adapter.select(**kwargs))
 
@@ -329,7 +328,7 @@ class Model(object):
             for (k, v) in list(values.items()):
                 if v is None:
                     del kwargs['values'][k]
-            
+
         kwargs['stack'] = self.stack_mark(inspect.stack())
         kwargs['primary_key'] = self.primary_key
 
@@ -393,7 +392,7 @@ class Model(object):
         :type where: string, dict, array
         """
         kwargs['stack'] = self.stack_mark(inspect.stack())
-        
+
         return self.db_adapter(role='master').delete(**kwargs)
 
     @classmethod
@@ -496,7 +495,7 @@ class Model(object):
     @classmethod
     def db(self, role='replica', db_name=None):
         name = db_name or self.db_names.get(role)
-        return Datasources.active_client(name)
+        return ClientProvider(name)
 
     @classmethod
     def _use_replica(self, **kwargs):
@@ -540,8 +539,9 @@ class Model(object):
         if self.__dict__.get('_table_schema') is None:
             self._table_schema = None
             table_schema = {}
+            lexicon = self.db().lexicon
             for row in self.query_schema():
-                name, default, dtype = self.db().lexicon.column_info(row)
+                name, default, dtype = lexicon.column_info(row)
                 if isinstance(default, str):
                     json_matches = re.findall(r"^\'(.*)\'::jsonb$", default)
                     if len(json_matches) > 0:
@@ -555,12 +555,13 @@ class Model(object):
 
     @classmethod
     def query_schema(self):
+        client_provider = self.db(role='replica', db_name=self.db_names.get('replica'))
         db_adapter = DatabaseAdapter(
-            self.db(role='replica', db_name=self.db_names.get('replica')),
+            client_provider,
             self.model_metadata(include_schema=False)
             )
         return db_adapter.raw_query(
-            sql=db_adapter.db_client.lexicon.table_schema_query(self._table_name()),
+            sql=client_provider.lexicon.table_schema_query(self._table_name()),
             where={'table_name': self._table_name()}
             ).to_dict(orient='records')
 

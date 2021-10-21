@@ -1,3 +1,4 @@
+from jardin.database.client_provider import ClientProvider
 from jardin.query import query
 
 
@@ -8,13 +9,14 @@ class TestTransaction(object):
         self.tables = extra_tables
         if self._model:
             self._model.clear_caches()
-        self._connection = Datasources.active_client('jardin_test')
+        self._db_config = Datasources.db_config('jardin_test')
+        self._connection = ClientProvider('jardin_test').next_client()
         self.create_table = create_table
 
     def setup(self):
         if self.create_table and self._model:
             self.teardown()
-            if self._connection.db_config.scheme == 'sqlite':
+            if self._db_config.scheme == 'sqlite':
                 query(
                     sql='CREATE TABLE %s (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256), created_at timestamp NULL, updated_at timestamp NULL, deleted_at timestamp NULL, destroyed_at timestamp NULL, num decimal);' % self._model._table_name(),
                     db='jardin_test'
@@ -26,6 +28,7 @@ class TestTransaction(object):
                     )
 
     def teardown(self):
+        Datasources.unban_all_clients('jardin_test')
         if self._model:
             for table in self.tables + [self._model._table_name()]:
                 self._model.query(
@@ -34,7 +37,7 @@ class TestTransaction(object):
             self._model._columns = None
 
     def __enter__(self):
-        if self._connection.db_config.scheme == 'mysql':
+        if self._db_config.scheme == 'mysql':
             query(sql="SET sql_mode = '';", db='jardin_test')
         self.teardown()
         self.setup()
@@ -67,7 +70,7 @@ def only_schemes(*schemes):
     def decorator(func):
 
         def wrapper(*args, **kwargs):
-            if Datasources.active_client('jardin_test').db_config.scheme in schemes:
+            if Datasources.db_config('jardin_test') in schemes:
                 return func(*args, **kwargs)
 
         return wrapper
