@@ -33,13 +33,13 @@ class TestModel(unittest.TestCase):
     @transaction(model=User)
     def test_update_on_missing_record(self):
         User.update(where={'name': 'unknown'}, values={'name': 'new name'})
-        
+
     @transaction(model=User, create_table=False)
     def test_no_created_at_updated_at(self):
-        if User.db().db_config.scheme == 'sqlite':
+        if User.db().config.scheme == 'sqlite':
             User.query(
                 sql='CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(256));'
-                )            
+                )
         else:
             User.query(
                 sql='CREATE TABLE users (id serial PRIMARY KEY, name varchar(256));'

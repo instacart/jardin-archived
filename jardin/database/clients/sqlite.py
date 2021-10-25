@@ -27,6 +27,7 @@ class DatabaseClient(BaseClient):
 
     lexicon = Lexicon
     retryable_exceptions = tuple()
+    connectivity_exceptions = tuple()
 
     def connect_impl(self):
         # autocommit is enabled by setting isolation_level to None

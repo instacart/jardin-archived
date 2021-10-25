@@ -7,7 +7,6 @@ from jardin.database.database_config import DatabaseConfig
 
 
 class Datasources(object):
-
     class IsolatedDbClients(threading.local):
         def __init__(self) -> None:
             # All clients indexed by db_name.
@@ -29,19 +28,40 @@ class Datasources(object):
     # Guards lazy initializers
     _lock = threading.Lock()
 
-    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite', 'snowflake', 'redshift')
+    SUPPORTED_SCHEMES = ('postgres', 'mysql', 'sqlite',
+                         'snowflake', 'redshift')
 
     @classmethod
-    def active_client(self, db_name):
-        if db_name not in self._clients.active:
-            clients = self._clients.all.get(db_name)
-            if clients is None:
-                clients = self._build_clients(db_name)
-                self._clients.all[db_name] = clients
-            c = clients[0] if len(clients) == 1 else random.choice(clients)
-            self.log_datasource(db_name, c.db_config)
-            self._clients.active[db_name] = c
-        return self._clients.active[db_name]
+    def db_config(self, db_name):
+        return self.db_configs(db_name)[0]
+
+    @classmethod
+    def db_lexicon(self, db_name):
+        # The lexicon is a helper object, so we can fetch it without needing an actual
+        # db connection, so any client would work, even banned ones
+        self._populate_client_lists_if_needed(db_name)
+        any_client = self._clients.all[db_name][0]
+        return any_client.__class__.lexicon
+
+    @classmethod
+    def _populate_client_lists_if_needed(self, db_name):
+        if self._clients.all.get(db_name) is None:
+            self._clients.all[db_name] = self._build_clients(db_name)
+
+    @classmethod
+    def client_generator(self, db_name):
+        self._populate_client_lists_if_needed(db_name)
+
+        while True:  # yield connections forever
+            memoized_client = self._clients.active.get(db_name, None)
+            if memoized_client is None or memoized_client.is_banned:
+                potential_clients = self.non_banned_clients(db_name)
+                if len(potential_clients) == 0:
+                    config.logger.error("[{}] Client Generator yielded no connections".format(db_name))
+                    self._clients.active[db_name] = None
+                else:
+                    self._clients.active[db_name] = random.choice(potential_clients)
+            yield self._clients.active[db_name]
 
     @classmethod
     def _build_clients(self, name):
@@ -91,6 +111,16 @@ class Datasources(object):
                 c = filtered[0] if len(filtered) == 1 else random.choice(filtered)
             self.log_datasource(name, c.db_config)
             self._clients.active[name] = c
+
+    @classmethod
+    def non_banned_clients(self, name):
+        return [client for client in self._clients.all.get(name, []) if not client.is_banned]
+
+    @classmethod
+    def unban_all_clients(self, name):
+        clients = self._clients.all.get(name, [])
+        for client in clients:
+            client.unban()
 
     @classmethod
     def log_datasource(self, name, db_config):
