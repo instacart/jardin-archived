@@ -60,16 +60,11 @@ class TestInstrumentation(unittest.TestCase):
         adapter.raw_query(sql="SELECT 1")
         time.sleep(1) # Allow time for background threads to work through event queue
 
-        found_connection_initiated_event = False
         found_query_event = False
         for event in self.subscriber.published_events:
-            if event[0] == "connection_initiated":
-              found_connection_initiated_event = True
             if event[0] == "query":
               found_query_event = True
-
         self.assertTrue(found_query_event)
-        self.assertTrue(found_connection_initiated_event)
 
 
 if __name__ == "__main__":
