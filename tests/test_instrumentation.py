@@ -13,8 +13,8 @@ class TestSubscriber(BaseSubscriber):
     def __init__(self):
         self.published_events = []
 
-    def report_event(self, event_name, start_time, end_time, duration, tags):
-        self.published_events.append((event_name, start_time, end_time, duration, tags))
+    def report_event(self, event):
+        self.published_events.append(event)
 
 
 class TestInstrumentation(unittest.TestCase):
@@ -38,14 +38,13 @@ class TestInstrumentation(unittest.TestCase):
 
         with self.assertRaises(NoAvailableConnectionsError):
             adapter.raw_query(sql="SELECT 1")
-        time.sleep(1) # Allow time for background threads to work through event queue
 
         found_no_available_connections_raised_event = False
         connection_banned_event_count = 0
         for event in self.subscriber.published_events:
-            if event[0] == "no_available_connections_raised":
+            if event.name == "no_available_connections_raised":
               found_no_available_connections_raised_event = True
-            if event[0] == "connection_banned":
+            if event.name == "connection_banned":
               connection_banned_event_count += 1
 
         self.assertTrue(connection_banned_event_count == provider.connection_count())
@@ -58,11 +57,10 @@ class TestInstrumentation(unittest.TestCase):
         provider = ClientProvider('some_bad')
         adapter = DatabaseAdapter(provider, None)
         adapter.raw_query(sql="SELECT 1")
-        time.sleep(1) # Allow time for background threads to work through event queue
 
         found_query_event = False
         for event in self.subscriber.published_events:
-            if event[0] == "query":
+            if event.name == "query":
               found_query_event = True
         self.assertTrue(found_query_event)
 

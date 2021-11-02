@@ -1,5 +1,6 @@
 import time
 from abc import ABC, abstractmethod
+from jardin.instrumentation.event import Event
 
 from jardin.instrumentation.instrumenter import Instrumenter
 from jardin.instrumentation.notifier import Notifer
@@ -58,7 +59,7 @@ class BaseClient(ABC):
     def ban(self, seconds=1):
         self._banned_until = time.time() + seconds
         self.safely_disconnect()
-        Notifer.report_event("connection_banned", tags=self.tags())
+        Notifer.report_event(Event("connection_banned", tags=self.tags()))
 
     @property
     def is_banned(self):
@@ -77,7 +78,7 @@ class BaseClient(ABC):
             if self._conn is None:
                 with Instrumenter("connection_initiated", tags=self.tags()):
                     self._conn = self.connect_impl()
-            with Instrumenter("query", tags=self.tags(extra_tags={"query": query})):
+            with Instrumenter("query", tags=self.tags({"query": query})):
                 cursor = self.execute_impl(self._conn, *query)
         except self.connectivity_exceptions as e:
             self.safely_disconnect()

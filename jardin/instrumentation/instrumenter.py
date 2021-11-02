@@ -1,4 +1,6 @@
 import time
+
+from jardin.instrumentation.event import Event
 from .notifier import Notifer
 
 
@@ -17,5 +19,6 @@ class Instrumenter:
       start_time = self.start_time
       end_time = time.time()
       duration = time.monotonic() - self.monotonic_start
-      Notifer.report_event(self.event_name, start_time, end_time, duration, self.tags)
+
+      Notifer.report_event(Event(self.event_name, start_time, end_time, duration, self.tags))
 
