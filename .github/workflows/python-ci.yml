@@ -52,7 +52,7 @@ jobs:
 
     - name: Run Sqlite Tests
       run: |
-        JARDIN_CONF=tests/jardin_conf_sqlite.py python -m pytest tests
+        JARDIN_INSTRUMENTATION_ENABLED=true JARDIN_CONF=tests/jardin_conf_sqlite.py python -m pytest tests
 
     - name: Run Postgresql Tests
       env:
@@ -60,7 +60,7 @@ jobs:
       run: |
         psql --version
         psql -c 'create database jardin_test;' --host localhost --username postgres
-        JARDIN_CONF=tests/jardin_conf_pg.py python -m pytest tests
+        JARDIN_INSTRUMENTATION_ENABLED=true JARDIN_CONF=tests/jardin_conf_pg.py python -m pytest tests
 
     - name: Run Mysql Tests
       env:
@@ -69,4 +69,4 @@ jobs:
         sudo apt-get install -y mysql-client
         mysql --version
         mysql -e 'create database jardin_test;' --host 127.0.0.1 --user root
-        JARDIN_CONF=tests/jardin_conf_mysql.py python -m pytest tests
+        JARDIN_INSTRUMENTATION_ENABLED=true JARDIN_CONF=tests/jardin_conf_mysql.py python -m pytest tests
