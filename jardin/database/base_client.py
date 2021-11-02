@@ -1,6 +1,9 @@
 import time
 from abc import ABC, abstractmethod
 
+from jardin.instrumentation.instrumenter import Instrumenter
+from jardin.instrumentation.notifier import Notifer
+
 class BaseClient(ABC):
 
     def __init__(self, db_config, name):
@@ -8,7 +11,7 @@ class BaseClient(ABC):
         self.name = name
         self._conn = None
         self._banned_until = None
-        self._id = ":".join([self.db_config.host, self.db_config.database])
+        self._id = self.db_config.scheme + "://" + ":".join([self.db_config.host, self.db_config.database])
 
     @property
     def connection_identifier(self):
@@ -55,6 +58,7 @@ class BaseClient(ABC):
     def ban(self, seconds=1):
         self._banned_until = time.time() + seconds
         self.safely_disconnect()
+        Notifer.report_event("connection_banned", tags=self.tags())
 
     @property
     def is_banned(self):
@@ -71,8 +75,10 @@ class BaseClient(ABC):
         cursor = None
         try:
             if self._conn is None:
-                self._conn = self.connect_impl()
-            cursor = self.execute_impl(self._conn, *query)
+                with Instrumenter("connection_initiated", tags=self.tags()):
+                    self._conn = self.connect_impl()
+            with Instrumenter("query", tags=self.tags(extra_tags={"query": query})):
+                cursor = self.execute_impl(self._conn, *query)
         except self.connectivity_exceptions as e:
             self.safely_disconnect()
             raise
@@ -87,7 +93,8 @@ class BaseClient(ABC):
         exceptions_to_swallow = self.connectivity_exceptions + (OSError,)
         try:
             if self._conn is not None:
-                self._conn.close()
+                with Instrumenter("connection_closed", tags=self.tags()):
+                    self._conn.close()
         except exceptions_to_swallow:
             # Failing to close a connection should be okay
             pass
@@ -103,3 +110,6 @@ class BaseClient(ABC):
             if self.db_config.lowercase_columns:
                 columns = [col.lower() for col in columns]
         return columns
+
+    def tags(self, extra_tags={}):
+        return {**extra_tags, **{"db_name": self.name, "db_id": self._id}}
