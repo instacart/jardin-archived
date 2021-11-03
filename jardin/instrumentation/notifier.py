@@ -42,4 +42,4 @@ class SimpleNotifier:
                   self.handle_error(ev.name, subscriber, e)
 
   def handle_error(self, event_name, subscriber, exc) -> None:
-      config.logger.error("Failed to report event {} to {} due to {}".format(event_name, str(type(subscriber)), str(exc)))
+      config.logger.error(f"Failed to report event ({event_name}) to ({type(subscriber)}) due to {exc}")

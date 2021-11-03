@@ -1,6 +1,6 @@
 import time
 
-from jardin.instrumentation.event import Event
+from jardin.instrumentation.event import Event, EventExceptionInformation, EventTiming
 import jardin.config as config
 
 class Instrumenter:
@@ -15,8 +15,25 @@ class Instrumenter:
       self.start_time = time.time()
 
   def __exit__(self, exc_type, exc_value, exc_traceback):
-      start_time = self.start_time
-      end_time = time.time()
-      duration = time.monotonic() - self.monotonic_start
+      timing = EventTiming(
+        start_time=self.start_time,
+        end_time=time.time(),
+        duration_seconds=time.monotonic() - self.monotonic_start
+      )
 
-      config.notifier.report_event(Event(self.event_name, start_time, end_time, duration, self.tags))
+      exception_info = None
+      if exc_type is not None:
+          exception_info = EventExceptionInformation(
+            type=exc_type,
+            exception=exc_value,
+            traceback=exc_traceback
+          )
+
+      config.notifier.report_event(
+          Event(
+              name=self.event_name,
+              timing=timing,
+              error=exception_info,
+              tags=self.tags
+          )
+      )
