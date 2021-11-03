@@ -1,6 +1,7 @@
 import os
 import logging
 
+os.environ["JARDIN_INSTRUMENTATION_ENABLED"] = "true"
 os.environ["JARDIN_BAN_TIME_SECONDS"] = "3"
 os.environ["JARDIN_MAX_RETRIES"] = "3"
 os.environ["JARDIN_BACKOFF_BASE_TIME_SECONDS"] = "0"

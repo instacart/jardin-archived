@@ -3,10 +3,7 @@ import time
 import os
 
 from jardin import config as config
-from jardin.database import client_provider
 from jardin.instrumentation.event import Event
-from jardin.instrumentation.instrumenter import Instrumenter
-from jardin.instrumentation.notifier import Notifer
 from jardin.query_builders import \
     SelectQueryBuilder, \
     InsertQueryBuilder, \
@@ -86,13 +83,13 @@ class DatabaseAdapter(object):
         while True:
             current_client = self.client_provider.next_client()
             if current_client is None:
-                Notifer.report_event(Event("no_available_connections_raised", tags={"db_name": self.client_provider.name}))
+                config.notifier.report_event(Event("no_available_connections_raised", tags={"db_name": self.client_provider.name}))
                 raise NoAvailableConnectionsError(self.client_provider.datasource_name) from last_exception
 
             backoff = self.backoff_base_time
             for attempt_no in range(self.max_retries):
                 if attempt_no > 0:
-                  Notifer.report_event(Event("query_retry", tags=current_client.tags()))
+                  config.notifier.report_event(Event("query_retry", tags=current_client.tags()))
 
                 try:
                     return current_client.execute(*query, **kwargs)

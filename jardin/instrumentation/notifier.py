@@ -1,46 +1,45 @@
-import os
 import uuid
-import queue
-import atexit
-import threading
-
+from threading import Lock
 from jardin import config as config
 from jardin.instrumentation.base_subscriber import BaseSubscriber
 from jardin.instrumentation.event import Event
 
-class Notifer:
-  _subscribers = {}
+class NullNotifier:
+  def subscribe(self, _handler: BaseSubscriber) -> uuid.UUID:
+      return uuid.uuid4()
 
-  @classmethod
-  def is_enabled(self):
-      return os.environ.get("JARDIN_INSTRUMENTATION_ENABLED", "false") == "true"
+  def unsubscribe(self, _subscriber_id: uuid.UUID) -> None:
+      pass
 
-  @classmethod
+  def report_event(self, ev: Event) -> None:
+      pass
+
+
+class SimpleNotifier:
+  def __init__(self):
+      self._subscribers = {}
+      self.lock = Lock()
+
   def subscribe(self, handler: BaseSubscriber) -> uuid.UUID:
-      if not self.is_enabled():
-          return
-      subscriber_id = uuid.uuid4()
-      if not isinstance(handler, BaseSubscriber):
-          raise TypeError("Handler must be subclass of BaseSubscriber")
-      self._subscribers[subscriber_id] = handler
-      return subscriber_id
+      with self.lock:
+          subscriber_id = uuid.uuid4()
+          if not isinstance(handler, BaseSubscriber):
+              raise TypeError("Handler must be subclass of BaseSubscriber")
+          self._subscribers[subscriber_id] = handler
+          return subscriber_id
 
-  @classmethod
-  def unsubscribe(self, subscriber_id: uuid.UUID):
-      if not self.is_enabled():
-          return
-      del self._subscribers[subscriber_id]
+  def unsubscribe(self, subscriber_id: uuid.UUID) -> None:
+      with self.lock:
+          del self._subscribers[subscriber_id]
 
-  @classmethod
-  def report_event(self, ev: Event):
-      subscribers = dict(self._subscribers)
-      for subscriber_id in dict(self._subscribers):
-          subscriber = subscribers[subscriber_id]
-          try:
-              subscriber.report_event(ev)
-          except Exception as e:
-              self.handle_error(ev.name, subscriber, e)
+  def report_event(self, ev: Event) -> None:
+      with self.lock:
+          for subscriber_id in self._subscribers:
+              subscriber = self._subscribers[subscriber_id]
+              try:
+                  subscriber.report_event(ev)
+              except Exception as e:
+                  self.handle_error(ev.name, subscriber, e)
 
-  @classmethod
-  def handle_error(self, event_name, subscriber, exc):
+  def handle_error(self, event_name, subscriber, exc) -> None:
       config.logger.error("Failed to report event {} to {} due to {}".format(event_name, str(type(subscriber)), str(exc)))

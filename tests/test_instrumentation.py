@@ -1,12 +1,9 @@
-import time
 import unittest
-import psycopg2
 from jardin.database.client_provider import ClientProvider
 from jardin.database.database_adapter import DatabaseAdapter, NoAvailableConnectionsError
 from jardin.database.datasources import Datasources
 from jardin.instrumentation.base_subscriber import BaseSubscriber
-from jardin.instrumentation.notifier import Notifer
-from tests.query_tracer import QueryTracer
+from jardin import config as config
 
 
 class TestSubscriber(BaseSubscriber):
@@ -20,10 +17,10 @@ class TestSubscriber(BaseSubscriber):
 class TestInstrumentation(unittest.TestCase):
     def setUp(self):
         self.subscriber = TestSubscriber()
-        self.notifier_id = Notifer.subscribe(self.subscriber)
+        self.notifier_id = config.notifier.subscribe(self.subscriber)
 
     def tearDown(self):
-        Notifer.unsubscribe(self.notifier_id)
+        config.notifier.unsubscribe(self.notifier_id)
         self.subscriber = None
 
     def is_banning_disabled(self):
