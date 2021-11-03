@@ -40,9 +40,11 @@ class TestInstrumentation(unittest.TestCase):
         connection_banned_event_count = 0
         for event in self.subscriber.published_events:
             if event.name == "no_available_connections_raised":
-              found_no_available_connections_raised_event = True
+                found_no_available_connections_raised_event = True
+                self.assertIsNotNone(event.error)
             if event.name == "connection_banned":
-              connection_banned_event_count += 1
+                connection_banned_event_count += 1
+                self.assertIsNotNone(event.error)
 
         self.assertTrue(connection_banned_event_count == provider.connection_count())
         self.assertTrue(found_no_available_connections_raised_event)
