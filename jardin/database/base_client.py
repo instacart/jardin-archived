@@ -1,7 +1,7 @@
 import time
 from abc import ABC, abstractmethod
 import jardin.config as config
-from jardin.instrumentation.event import Event
+from jardin.instrumentation.event import Event, EventExceptionInformation
 from jardin.instrumentation.instrumenter import instrumention
 
 class BaseClient(ABC):
@@ -56,10 +56,11 @@ class BaseClient(ABC):
     def unban(self):
         self._banned_until = None
 
-    def ban(self, seconds=1):
+    def ban(self, seconds=1, exception=None):
         self._banned_until = time.time() + seconds
         self.safely_disconnect()
-        config.notifier.report_event(Event("connection_banned", tags=self.tags()))
+        exception_info = EventExceptionInformation(exception) if exception is not None else None
+        config.notifier.report_event(Event("connection_banned", error=exception_info, tags=self.tags()))
 
     @property
     def is_banned(self):

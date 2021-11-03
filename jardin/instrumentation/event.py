@@ -14,6 +14,11 @@ class EventExceptionInformation:
     exception: Exception
     traceback: TracebackType
 
+    def __init__(self, ex: Exception) -> None:
+        self.type = type(ex)
+        self.exception = ex
+        self.traceback = ex.__traceback__
+
 @dataclass
 class Event:
     name: str

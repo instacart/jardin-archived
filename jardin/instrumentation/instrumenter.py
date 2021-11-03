@@ -13,11 +13,7 @@ def instrumention(event_name, tags={}):
     try:
         yield
     except Exception as e:
-        exception_info = EventExceptionInformation(
-          type=type(e),
-          exception=e,
-          traceback=e.__traceback__
-        )
+        exception_info = EventExceptionInformation(e)
         raise
     finally:
         timing = EventTiming(

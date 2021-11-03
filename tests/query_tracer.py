@@ -36,7 +36,7 @@ class QueryTracer:
         return func.__get__(instance, instance.__class__)
 
     @staticmethod
-    def traced_ban(self, duration_seconds):
+    def traced_ban(self, duration_seconds, exception):
         original_ban = QueryTracer.bound_method(self, QueryTracer.original_ban)
         QueryTracer.ban_list.append({
             "database_id": self.connection_identifier,
