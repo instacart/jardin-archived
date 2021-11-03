@@ -2,7 +2,7 @@ import time
 from abc import ABC, abstractmethod
 import jardin.config as config
 from jardin.instrumentation.event import Event
-from jardin.instrumentation.instrumenter import Instrumenter
+from jardin.instrumentation.instrumenter import instrumention
 
 class BaseClient(ABC):
 
@@ -76,9 +76,9 @@ class BaseClient(ABC):
         cursor = None
         try:
             if self._conn is None:
-                with Instrumenter("connection_initiated", tags=self.tags()):
+                with instrumention("connection_initiated", tags=self.tags()):
                     self._conn = self.connect_impl()
-            with Instrumenter("query", tags=self.tags({"query": query})):
+            with instrumention("query", tags=self.tags({"query": query})):
                 cursor = self.execute_impl(self._conn, *query)
         except self.connectivity_exceptions as e:
             self.safely_disconnect()
@@ -94,7 +94,7 @@ class BaseClient(ABC):
         exceptions_to_swallow = self.connectivity_exceptions + (OSError,)
         try:
             if self._conn is not None:
-                with Instrumenter("connection_closed", tags=self.tags()):
+                with instrumention("connection_closed", tags=self.tags()):
                     self._conn.close()
         except exceptions_to_swallow:
             # Failing to close a connection should be okay
