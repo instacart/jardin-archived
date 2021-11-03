@@ -60,7 +60,7 @@ class TestInstrumentation(unittest.TestCase):
         found_query_event = False
         for event in self.subscriber.published_events:
             if event.name == "query":
-              found_query_event = True
+                found_query_event = True
         self.assertTrue(found_query_event)
 
 

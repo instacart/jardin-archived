@@ -45,6 +45,6 @@ def init():
 
     notifier = NullNotifier()
     if os.environ.get("JARDIN_INSTRUMENTATION_ENABLED", "false") == "true":
-      notifier = SimpleNotifier()
+        notifier = SimpleNotifier()
 
     setattr(this, 'INITIALIZED', True)

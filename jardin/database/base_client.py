@@ -113,5 +113,6 @@ class BaseClient(ABC):
                 columns = [col.lower() for col in columns]
         return columns
 
-    def tags(self, extra_tags={}):
+    def tags(self, extra_tags=None):
+        extra_tags = {} if extra_tags is None else extra_tags
         return {**extra_tags, **{"db_name": self.name, "db_id": self._id}}

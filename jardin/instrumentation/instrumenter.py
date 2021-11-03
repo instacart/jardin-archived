@@ -6,7 +6,8 @@ import jardin.config as config
 
 
 @contextmanager
-def instrumention(event_name, tags={}):
+def instrumention(event_name, tags=None):
+    tags = {} if tags is None else tags
     monotonic_start = time.monotonic()
     start_time = time.time()
     exception_info = None

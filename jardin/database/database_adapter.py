@@ -90,7 +90,7 @@ class DatabaseAdapter(object):
             backoff = self.backoff_base_time
             for attempt_no in range(self.max_retries):
                 if attempt_no > 0:
-                  config.notifier.report_event(Event("query_retry", error=EventExceptionInformation(last_exception), tags=current_client.tags()))
+                    config.notifier.report_event(Event("query_retry", error=EventExceptionInformation(last_exception), tags=current_client.tags()))
 
                 try:
                     return current_client.execute(*query, **kwargs)
