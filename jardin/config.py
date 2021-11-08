@@ -1,6 +1,6 @@
 import imp, os, logging, sys
 
-from jardin.instrumentation.notifier import SimpleNotifier, NullNotifier
+from jardin.instrumentation.notifier import Notifier
 
 DEFAULTS = {
     'WATERMARK': '',
@@ -43,8 +43,6 @@ def init():
     logger = logging.getLogger('jardin')
     logger.setLevel(LOG_LEVEL)
 
-    notifier = NullNotifier()
-    if os.environ.get("JARDIN_INSTRUMENTATION_ENABLED", "false") == "true":
-        notifier = SimpleNotifier()
+    notifier = Notifier()
 
     setattr(this, 'INITIALIZED', True)

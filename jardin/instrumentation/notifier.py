@@ -4,18 +4,7 @@ from jardin import config as config
 from jardin.instrumentation.base_subscriber import BaseSubscriber
 from jardin.instrumentation.event import Event
 
-class NullNotifier:
-    def subscribe(self, _handler: BaseSubscriber) -> uuid.UUID:
-        return uuid.uuid4()
-
-    def unsubscribe(self, _subscriber_id: uuid.UUID) -> None:
-        pass
-
-    def report_event(self, ev: Event) -> None:
-        pass
-
-
-class SimpleNotifier:
+class Notifier:
     def __init__(self):
         self._subscribers = {}
         self.lock = Lock()
@@ -33,6 +22,9 @@ class SimpleNotifier:
             del self._subscribers[subscriber_id]
 
     def report_event(self, ev: Event) -> None:
+        if len(self._subscribers) == 0:
+            return
+
         with self.lock:
             for subscriber_id in self._subscribers:
                 subscriber = self._subscribers[subscriber_id]
