@@ -27,12 +27,14 @@ class Notifier:
         if len(self._subscribers) == 0:
             return
 
+        subscribers = []
         with self.lock:
-            for subscriber in self._subscribers.values():
-                try:
-                    subscriber.report_event(ev)
-                except Exception as e:
-                    self.handle_error(ev.name, subscriber, e)
+            subscribers = list(self._subscribers.values())
+        for subscriber in subscribers:
+            try:
+                subscriber.report_event(ev)
+            except Exception as e:
+                self.handle_error(ev.name, subscriber, e)
 
     def handle_error(self, event_name, subscriber, exc) -> None:
         config.logger.error(f"Failed to report event ({event_name}) to ({type(subscriber)}) due to {exc}")
