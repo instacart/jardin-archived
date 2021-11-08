@@ -1,7 +1,6 @@
 import os
 import logging
 
-os.environ["JARDIN_INSTRUMENTATION_ENABLED"] = "true"
 
 DATABASES = {
     'jardin_test': 'sqlite://localhost/jardin_test.db',
