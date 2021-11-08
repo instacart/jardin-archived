@@ -22,12 +22,13 @@ class Notifier:
             del self._subscribers[subscriber_id]
 
     def report_event(self, ev: Event) -> None:
+        # Taking the lock here is not worth it
+        # a very recent subscriber might miss one event
         if len(self._subscribers) == 0:
             return
 
         with self.lock:
-            for subscriber_id in self._subscribers:
-                subscriber = self._subscribers[subscriber_id]
+            for subscriber in self._subscribers.values():
                 try:
                     subscriber.report_event(ev)
                 except Exception as e:
