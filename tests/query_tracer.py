@@ -5,7 +5,7 @@ class QueryTracer:
     @staticmethod
     def get_report():
         if not getattr(QueryTracer, "is_already_tracing", False):
-            raise RuntimeError(f"get_report must be called within QueryTracer Context")
+            raise RuntimeError("get_report must be called within QueryTracer Context")
         return {
             "ban_list": QueryTracer.ban_list,
             "query_list": QueryTracer.query_list
@@ -13,7 +13,7 @@ class QueryTracer:
 
     def __enter__(self):
         if getattr(QueryTracer, "is_already_tracing", False):
-            raise RuntimeError(f"Already tracing, cannot nest QueryTracer contexts")
+            raise RuntimeError("Already tracing, cannot nest QueryTracer contexts")
 
         QueryTracer.ban_list = []
         QueryTracer.query_list = []
@@ -36,13 +36,13 @@ class QueryTracer:
         return func.__get__(instance, instance.__class__)
 
     @staticmethod
-    def traced_ban(self, duration_seconds):
+    def traced_ban(self, duration_seconds, exception):
         original_ban = QueryTracer.bound_method(self, QueryTracer.original_ban)
         QueryTracer.ban_list.append({
             "database_id": self.connection_identifier,
             "duration": duration_seconds
         })
-        return original_ban(duration_seconds)
+        return original_ban(duration_seconds, exception)
 
     @staticmethod
     def traced_execute(self, *query, **kwargs):

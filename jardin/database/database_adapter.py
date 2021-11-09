@@ -3,6 +3,7 @@ import time
 import os
 
 from jardin import config as config
+from jardin.instrumentation.event import Event, EventExceptionInformation
 from jardin.query_builders import \
     SelectQueryBuilder, \
     InsertQueryBuilder, \
@@ -82,10 +83,15 @@ class DatabaseAdapter(object):
         while True:
             current_client = self.client_provider.next_client()
             if current_client is None:
+                exception_info = EventExceptionInformation(last_exception) if last_exception is not None else None
+                config.notifier.report_event(Event("no_available_connections_raised", error=exception_info, tags={"db_name": self.client_provider.name}))
                 raise NoAvailableConnectionsError(self.client_provider.datasource_name) from last_exception
 
             backoff = self.backoff_base_time
-            for _ in range(self.max_retries):
+            for attempt_no in range(self.max_retries):
+                if attempt_no > 0:
+                    config.notifier.report_event(Event("query_retry", error=EventExceptionInformation(last_exception), tags=current_client.tags()))
+
                 try:
                     return current_client.execute(*query, **kwargs)
                 except current_client.retryable_exceptions as e:
@@ -96,4 +102,4 @@ class DatabaseAdapter(object):
             else:
                 if issubclass(type(last_exception), current_client.connectivity_exceptions):
                     # ban connection for a few seconds and try again with a different connection
-                    current_client.ban(self.ban_time)
+                    current_client.ban(self.ban_time, last_exception)

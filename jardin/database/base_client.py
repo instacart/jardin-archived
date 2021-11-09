@@ -1,5 +1,8 @@
 import time
 from abc import ABC, abstractmethod
+import jardin.config as config
+from jardin.instrumentation.event import Event, EventExceptionInformation
+from jardin.instrumentation.instrumenter import instrumention
 
 class BaseClient(ABC):
 
@@ -8,11 +11,12 @@ class BaseClient(ABC):
         self.name = name
         self._conn = None
         self._banned_until = None
-        self._id = ":".join([self.db_config.host, self.db_config.database])
+        self._id = self.db_config.scheme + "://" + ":".join([self.db_config.host, self.db_config.database])
 
     @property
     def connection_identifier(self):
         return self._id
+
 
     @property
     def default_connect_kwargs(self):
@@ -52,9 +56,11 @@ class BaseClient(ABC):
     def unban(self):
         self._banned_until = None
 
-    def ban(self, seconds=1):
+    def ban(self, seconds=1, exception=None):
         self._banned_until = time.time() + seconds
         self.safely_disconnect()
+        exception_info = EventExceptionInformation(exception) if exception is not None else None
+        config.notifier.report_event(Event("connection_banned", error=exception_info, tags=self.tags()))
 
     @property
     def is_banned(self):
@@ -71,8 +77,10 @@ class BaseClient(ABC):
         cursor = None
         try:
             if self._conn is None:
-                self._conn = self.connect_impl()
-            cursor = self.execute_impl(self._conn, *query)
+                with instrumention("connection_initiated", tags=self.tags()):
+                    self._conn = self.connect_impl()
+            with instrumention("query", tags=self.tags({"query": query})):
+                cursor = self.execute_impl(self._conn, *query)
         except self.connectivity_exceptions as e:
             self.safely_disconnect()
             raise
@@ -87,7 +95,8 @@ class BaseClient(ABC):
         exceptions_to_swallow = self.connectivity_exceptions + (OSError,)
         try:
             if self._conn is not None:
-                self._conn.close()
+                with instrumention("connection_closed", tags=self.tags()):
+                    self._conn.close()
         except exceptions_to_swallow:
             # Failing to close a connection should be okay
             pass
@@ -103,3 +112,7 @@ class BaseClient(ABC):
             if self.db_config.lowercase_columns:
                 columns = [col.lower() for col in columns]
         return columns
+
+    def tags(self, extra_tags=None):
+        extra_tags = {} if extra_tags is None else extra_tags
+        return {**extra_tags, **{"db_name": self.name, "db_id": self._id}}
