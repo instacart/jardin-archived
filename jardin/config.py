@@ -3,6 +3,7 @@ import imp, os, logging, sys
 from jardin.instrumentation.notifier import Notifier
 
 DEFAULTS = {
+    'APPLICATION_NAME': None,
     'WATERMARK': '',
     'LOG_LEVEL': logging.INFO,
     'CACHE': {
@@ -26,7 +27,7 @@ def init():
     if INITIALIZED:
         return
 
-    global DATABASES, CACHE, WATERMARK, LOG_LEVEL, logger, notifier
+    global APPLICATION_NAME, DATABASES, CACHE, WATERMARK, LOG_LEVEL, logger, notifier
 
     config_file = imp.load_source('jardin_conf', os.environ.get('JARDIN_CONF', 'jardin_conf.py'))
 

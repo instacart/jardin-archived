@@ -44,8 +44,8 @@ class DatabaseClient(BaseClient):
             schema=self.db_config.schema,
             autocommit=True
         )
-        if config.WATERMARK:
-            kwargs['session_parameters'] = dict(QUERY_TAG=config.WATERMARK)
+        if config.APPLICATION_NAME:
+            kwargs['session_parameters'] = dict(QUERY_TAG=config.APPLICATION_NAME)
         if 'warehouse' in dir(self.db_config):
             kwargs['warehouse'] = self.db_config.warehouse
         if 'authenticator' in dir(self.db_config):
