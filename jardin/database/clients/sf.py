@@ -4,6 +4,7 @@ import snowflake.connector as sf
 
 from jardin.database.clients.pg import Lexicon as PGLexicon
 from jardin.database.base_client import BaseClient
+import jardin.config as config
 
 
 class Lexicon(PGLexicon):
@@ -43,6 +44,8 @@ class DatabaseClient(BaseClient):
             schema=self.db_config.schema,
             autocommit=True
         )
+        if config.APPLICATION_NAME:
+            kwargs['session_parameters'] = dict(QUERY_TAG=config.APPLICATION_NAME)
         if 'warehouse' in dir(self.db_config):
             kwargs['warehouse'] = self.db_config.warehouse
         if 'authenticator' in dir(self.db_config):
